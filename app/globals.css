@@ -84,6 +84,51 @@ body {
 *::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
 *::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
 
+/* Chat thread: brighter scrollbar + soft fade mask so it's obvious
+   the region scrolls. The mask fades the top when detached (more
+   content above) and the bottom when pinned (more content below). */
+.chat-scroll {
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+  scrollbar-width: thin;
+}
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 4px;
+}
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+.chat-scroll[data-sticky-scroll="pinned"] {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent 100%
+  );
+          mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent 100%
+  );
+}
+.chat-scroll[data-sticky-scroll="detached"] {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 24px,
+    #000 100%
+  );
+          mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 24px,
+    #000 100%
+  );
+}
+
 /* Universal focus ring */
 :focus-visible {
   outline: none;
