@@ -11,9 +11,9 @@ const STEPS: {
   sub: string;
   tone: "ok" | "accent" | "neutral";
 }[] = [
-  { key: "sim", label: "Simulate", sub: "telemetry", tone: "neutral" },
-  { key: "base", label: "Baseline", sub: "reference", tone: "neutral" },
-  { key: "ai", label: "AI score", sub: "advises", tone: "accent" },
+  { key: "sim", label: "Simulate", sub: "live", tone: "neutral" },
+  { key: "base", label: "Baseline", sub: "ref", tone: "neutral" },
+  { key: "ai", label: "AI score", sub: "advise", tone: "accent" },
   { key: "rules", label: "Rules", sub: "decide", tone: "ok" },
   { key: "alert", label: "Alert", sub: "raised", tone: "neutral" },
   { key: "brief", label: "Brief", sub: "by LLM", tone: "accent" },
@@ -90,7 +90,7 @@ export function Pipeline({
                   {s.sub}
                 </span>
               </div>
-              <span className="block truncate font-mono text-sm tabular-nums text-white/80">
+              <span className="block whitespace-normal break-words font-mono text-sm leading-tight tabular-nums text-white/80">
                 {values[i] || "—"}
               </span>
             </motion.button>

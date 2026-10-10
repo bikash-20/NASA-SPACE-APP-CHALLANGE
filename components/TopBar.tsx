@@ -12,10 +12,15 @@ interface TopBarProps {
   onDemo: () => void;
   onReset: () => void;
   onOpenScenarios?: () => void;
-  onToggleAI?: () => void;
   aiOn?: boolean;
   /** Mobile only — shows the compact title row with the open-scenarios button. */
   compact?: boolean;
+  /**
+   * Hide the inline "Run guided demo" / "Reset" buttons in the top bar.
+   * Used at lg+ where the dedicated scenario card in the right rail takes
+   * over. The Play / Pause / Speed controls always stay.
+   */
+  hideScenarios?: boolean;
 }
 
 export function TopBar({
@@ -27,9 +32,8 @@ export function TopBar({
   onDemo,
   onReset,
   onOpenScenarios,
-  onToggleAI,
-  aiOn,
   compact,
+  hideScenarios,
 }: TopBarProps) {
   return (
     <header
@@ -51,33 +55,27 @@ export function TopBar({
         </span>
       </div>
 
-      {/* Center/right: scenarios + controls (desktop), or just play/pause (mobile) */}
       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-        {/* Scenarios — hidden on mobile (replaced by the scenarios sheet) */}
-        <div className="hidden items-center gap-1.5 lg:flex">
-          <Button variant="primary" size="sm" onClick={onDemo}>
-            Run guided demo
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onReset}
-            className="text-white/60"
-          >
-            Reset
-          </Button>
-          {onToggleAI && (
-            <Button
-              variant={aiOn ? "ghost" : "danger"}
-              size="sm"
-              onClick={onToggleAI}
-            >
-              {aiOn ? "AI on" : "AI offline"}
+        {/* Scenarios stay inline on small viewports (sm -> lg-) where the
+            right-rail scenario card isn't visible yet. At lg+ the right-rail
+            ScenarioPanel owns the toggles, so we hide the inline duplicates. */}
+        {!hideScenarios && (
+          <div className="hidden items-center gap-1.5 sm:flex lg:hidden">
+            <Button variant="primary" size="sm" onClick={onDemo}>
+              Run guided demo
             </Button>
-          )}
-        </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onReset}
+              className="text-white/60"
+            >
+              Reset
+            </Button>
+          </div>
+        )}
 
-        <span className="hidden font-mono text-sm tabular-nums text-white/60 lg:hidden sm:inline">
+        <span className="hidden font-mono text-sm tabular-nums text-white/60 sm:hidden md:inline">
           {clock}
         </span>
 
@@ -90,7 +88,7 @@ export function TopBar({
               className="lg:hidden"
               aria-label="Open scenarios"
             >
-              <span aria-hidden>☰</span> Scenarios
+              Inject a problem
             </Button>
           )}
           <Button

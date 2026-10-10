@@ -29,14 +29,22 @@
   :root { font-size: 18px; }
 }
 
-html, body { height: 100%; }
-html { -webkit-text-size-adjust: 100%; }
-
-body {
+html, body { min-height: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Paint the gradient on html so it covers the full document height
+     even when the body is shorter than the page content. */
   background:
     radial-gradient(1200px 800px at 80% -20%, rgba(124, 92, 255, 0.18), transparent 60%),
     radial-gradient(900px 600px at -10% 100%, rgba(16, 185, 129, 0.08), transparent 60%),
     #060912;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+body {
+  /* Keep the body transparent so the html gradient shows through. */
+  background: transparent;
   min-height: 100vh;
   overflow-x: hidden;
 }

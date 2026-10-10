@@ -36,7 +36,7 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
 
   return (
     <Panel tone="accent" density="compact">
-      <PanelTitle title="AI risk score" tone="accent" hint="advisory" />
+      <PanelTitle title="AI risk score" tone="accent" />
       {aiOn ? (
         <>
           <div className="flex items-baseline gap-2">

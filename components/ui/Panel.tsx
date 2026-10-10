@@ -71,17 +71,15 @@ export function PanelTitle({
         className="flex items-center gap-2 text-base font-semibold tracking-tight text-ink"
       >
         <span>{title}</span>
-        {hint && (
-          <span className="text-sm font-normal text-white/55">· {hint}</span>
-        )}
         {tone && (
           <span
             className={cn(
-              "rounded-full border px-2 py-0.5 text-[0.75rem] font-medium",
+              "rounded-full border px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-wider",
               tone === "ok"
                 ? "border-ok/50 text-ok"
                 : "border-accent/50 text-accent"
             )}
+            style={{ letterSpacing: "0.04em" }}
           >
             {tone === "ok" ? "decides" : "advises only"}
           </span>

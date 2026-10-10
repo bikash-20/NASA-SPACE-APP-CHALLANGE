@@ -13,6 +13,8 @@ interface CrewListProps {
   onPick: (i: 0 | 1 | 2) => void;
   /** "rail" = vertical cards (lg+), "row" = horizontal compact (md), "pills" = segmented control (sm) */
   variant: "rail" | "row" | "pills";
+  /** Optional cause hint per crew (e.g. "radiation") to suffix on Alert pills. */
+  causes?: (string | null)[];
 }
 
 function worstLevel(c: Crew): Level {
@@ -24,7 +26,13 @@ function statusDot(c: Crew, aiOn: boolean) {
   return { color: colorForLevel(w), label: LEVEL_NAMES[w], w };
 }
 
-export function CrewList({ crew, selected, aiOn, onPick, variant }: CrewListProps) {
+/** "Alert" -> "Alert · radiation" when cause provided, else just "Alert". */
+function pillText(label: string, cause: string | null | undefined): string {
+  if (!cause || label === "Stable") return label;
+  return `${label} · ${cause}`;
+}
+
+export function CrewList({ crew, selected, aiOn, onPick, variant, causes }: CrewListProps) {
   if (variant === "pills") {
     return (
       <div
@@ -33,7 +41,9 @@ export function CrewList({ crew, selected, aiOn, onPick, variant }: CrewListProp
         className="flex w-full items-stretch gap-1.5 px-3 py-2 sm:px-5"
       >
         {crew.map((c, i) => {
-          const { color, label, w } = statusDot(c, aiOn);
+          const { color, label, w: wLevel } = statusDot(c, aiOn);
+          const cause = causes?.[i] ?? null;
+          const text = pillText(label, cause);
           const isSel = i === selected;
           return (
             <motion.button
@@ -55,7 +65,7 @@ export function CrewList({ crew, selected, aiOn, onPick, variant }: CrewListProp
                 style={{ background: color }}
               />
               <span className="truncate">{c.n.replace(/^(Cdr\.|Dr\.|Eng\.)\s/, "")}</span>
-              <span className="sr-only">{label} (level {w})</span>
+              <span className="sr-only">{text} (level {wLevel})</span>
             </motion.button>
           );
         })}
@@ -68,6 +78,8 @@ export function CrewList({ crew, selected, aiOn, onPick, variant }: CrewListProp
       <div className="grid grid-cols-3 gap-2 px-3 py-2 sm:px-5 md:grid-cols-3">
         {crew.map((c, i) => {
           const { color, label } = statusDot(c, aiOn);
+          const cause = causes?.[i] ?? null;
+          const text = pillText(label, cause);
           const isSel = i === selected;
           return (
             <motion.button
@@ -89,10 +101,10 @@ export function CrewList({ crew, selected, aiOn, onPick, variant }: CrewListProp
                 <div className="truncate text-sm text-white/65">{c.role}</div>
               </div>
               <span
-                className="rounded-full px-2.5 py-0.5 text-sm font-semibold text-white"
+                className="shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-sm font-semibold text-white"
                 style={{ background: color }}
               >
-                {label}
+                {text}
               </span>
             </motion.button>
           );
@@ -106,6 +118,8 @@ export function CrewList({ crew, selected, aiOn, onPick, variant }: CrewListProp
     <div className="flex flex-col gap-2">
       {crew.map((c, i) => {
         const { color, label } = statusDot(c, aiOn);
+        const cause = causes?.[i] ?? null;
+        const text = pillText(label, cause);
         const isSel = i === selected;
         return (
           <motion.button
@@ -133,10 +147,10 @@ export function CrewList({ crew, selected, aiOn, onPick, variant }: CrewListProp
                 <span className="text-sm text-white/65">{c.role}</span>
               </div>
               <span
-                className="shrink-0 rounded-full px-2.5 py-0.5 text-sm font-semibold text-white"
+                className="shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-sm font-semibold text-white"
                 style={{ background: color }}
               >
-                {label}
+                {text}
               </span>
             </div>
             <div className="mt-2 font-mono text-sm tabular-nums text-white/75">

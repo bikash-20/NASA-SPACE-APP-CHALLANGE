@@ -8,7 +8,7 @@ import type { Crew } from "@/lib/types";
 export function RulesCard({ crew }: { crew: Crew }) {
   return (
     <Panel tone="ok" density="compact">
-      <PanelTitle title="Rules" tone="ok" hint="decide" />
+      <PanelTitle title="Rules" tone="ok" />
       <ul className="divide-y divide-white/5">
         {crew.R.map((r) => (
           <li

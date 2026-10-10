@@ -19,13 +19,15 @@ import { TraceCard } from "@/components/TraceCard";
 import { BriefCard } from "@/components/BriefCard";
 import { TabbedPanel, type TabKey } from "@/components/TabbedPanel";
 import { BottomTabs, type TabId } from "@/components/BottomTabs";
-import { ScenarioSheet } from "@/components/ScenarioSheet";
+import { ScenarioPanel } from "@/components/ScenarioPanel";
+import { CrewWideBanner } from "@/components/CrewWideBanner";
 import {
   mkCrew,
   clock as tickClock,
   step as stepSim,
 } from "@/lib/simulation";
 import { mergeAlerts } from "@/lib/alertMerge";
+import { findCrewWideEvents } from "@/lib/crewWide";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Alert, ChatMessage, Crew } from "@/lib/types";
 
@@ -104,7 +106,7 @@ function reducer(s: State, a: Action): State {
       );
       next.pipelineValues = [
         `t+${next.tick} · HR ${Math.round(c.hr)} / SpO₂ ${c.spo2.toFixed(0)}`,
-        `HR ${c.bhr} · SpO₂ ≥94 · Sleep ${c.sleep.toFixed(1)} h`,
+        `HR ${c.bhr} · SpO₂ ≥94 · Sl ${c.sleep.toFixed(1)} h`,
         next.aiOn ? `${Math.round(c.ai)} / 100` : "offline",
         mx === 0 ? "all stable" : `${mx} firing`,
         active > 0 ? `${active} active` : "none",
@@ -214,6 +216,7 @@ export default function Page() {
   const [mobileTab, setMobileTab] = useState<TabId>("vitals");
   const [tabKey, setTabKey] = useState<TabKey>("alerts");
   const [scenariosOpen, setScenariosOpen] = useState(false);
+  const [demoActive, setDemoActive] = useState(false);
 
   useEffect(() => {
     setMobileTab("vitals");
@@ -231,6 +234,13 @@ export default function Page() {
         const s = demoRef.current.shift()!;
         s.fn();
         dispatch({ type: "SET_CAPTION", v: s.msg });
+        if (demoRef.current.length === 0) {
+          // Demo is fully consumed; clear the "active" flag so the next
+          // "Run guided demo" is treated as a fresh run, and let the
+          // caption sit with its last message (it will be cleared on Reset).
+          setDemoActive(false);
+          demoRef.current = null;
+        }
       }
       const newAlerts: Alert[] = [];
       stepSim(state.crew, {
@@ -344,6 +354,7 @@ export default function Page() {
 
   const startDemo = useCallback(() => {
     dispatch({ type: "RESET" });
+    setDemoActive(true);
     demoRef.current = [
       {
         at: 4,
@@ -388,6 +399,7 @@ export default function Page() {
 
   const reset = useCallback(() => {
     demoRef.current = null;
+    setDemoActive(false);
     dispatch({ type: "RESET" });
     setScenariosOpen(false);
   }, []);
@@ -410,6 +422,34 @@ export default function Page() {
     [state.alerts, state.crew]
   );
   const activeAlertCount = mergedAlerts.filter((g) => g.active).length;
+
+  // Crew-wide event detection (e.g. all 3 in Alert for radiation).
+  const crewWide = useMemo(
+    () => findCrewWideEvents(state.crew),
+    [state.crew]
+  );
+
+  // Per-crew cause hints: factor name of the worst rule for that crew.
+  // Used to add "Alert · radiation" suffixes on the status pills.
+  const crewCauses = useMemo<(string | null)[]>(
+    () =>
+      state.crew.map((c) => {
+        let worstIdx = 0;
+        let worstLv = 0;
+        for (let j = 0; j < c.r.length; j++) {
+          if (c.r[j] > worstLv) {
+            worstLv = c.r[j];
+            worstIdx = j;
+          }
+        }
+        if (worstLv === 0) return null;
+        return c.R[worstIdx]?.n.toLowerCase() ?? null;
+      }),
+    [state.crew]
+  );
+
+  // Only show the demo caption while a demo is running; otherwise clear.
+  const showCaption = demoActive && state.caption && state.caption !== CAP0;
 
   const stageClass = (n: number) => (stage === n ? "ring-accent" : "");
 
@@ -451,8 +491,21 @@ export default function Page() {
     />
   );
 
+  const scenariosNode = (
+    <ScenarioPanel
+      variant="inline"
+      storm={state.storm}
+      aiOn={state.aiOn}
+      selectedFlags={sel.f}
+      selected={sel}
+      onToggle={(k) => dispatch({ type: "TOG_FLAG", k })}
+      onDemo={startDemo}
+      onReset={reset}
+    />
+  );
+
   return (
-    <div className="relative z-10 flex min-h-dvh flex-col">
+    <div className="relative z-10 flex min-h-dvh flex-col lg:h-dvh lg:min-h-0 lg:overflow-hidden">
       <TopBar
         clock={tickClock(state.tick)}
         running={state.running}
@@ -462,9 +515,9 @@ export default function Page() {
         onDemo={startDemo}
         onReset={reset}
         onOpenScenarios={() => setScenariosOpen(true)}
-        onToggleAI={() => dispatch({ type: "TOG_FLAG", k: "ai" })}
         aiOn={state.aiOn}
         compact={isMobile}
+        hideScenarios={isLg}
       />
 
       <Pipeline
@@ -476,7 +529,7 @@ export default function Page() {
         briefReady={!!state.brief}
       />
 
-      {state.caption && state.caption !== CAP0 && (
+      {showCaption && (
         <div
           className="border-b border-white/5 bg-accent/5 px-3 py-2 text-sm font-medium text-accent sm:px-5"
           role="status"
@@ -486,46 +539,15 @@ export default function Page() {
         </div>
       )}
 
-      {/* Crew selector */}
-      {isLg ? (
-        <div className={stageClass(2)}>
-          <CrewList
-            crew={state.crew}
-            selected={state.selected}
-            aiOn={state.aiOn}
-            onPick={(i) => dispatch({ type: "SELECT_CREW", i })}
-            variant="rail"
-          />
-        </div>
-      ) : isTablet ? (
-        <div className={stageClass(2)}>
-          <CrewList
-            crew={state.crew}
-            selected={state.selected}
-            aiOn={state.aiOn}
-            onPick={(i) => dispatch({ type: "SELECT_CREW", i })}
-            variant="row"
-          />
-        </div>
-      ) : (
-        <div className={stageClass(2)}>
-          <CrewList
-            crew={state.crew}
-            selected={state.selected}
-            aiOn={state.aiOn}
-            onPick={(i) => dispatch({ type: "SELECT_CREW", i })}
-            variant="pills"
-          />
-        </div>
-      )}
+      <CrewWideBanner event={crewWide} />
 
       <main
-        className={`flex-1 px-3 py-3 sm:px-5 sm:py-4 ${
+        className={`flex min-h-0 flex-1 flex-col px-3 py-3 sm:px-5 sm:py-4 lg:min-h-0 lg:overflow-hidden ${
           isMobile ? "pb-24" : ""
         }`}
       >
         {isMobile ? (
-          // Mobile: one panel at a time, switched by BottomTabs
+          // Mobile: one panel at a time, switched by BottomTabs.
           <div className="space-y-3">
             {mobileTab === "vitals" && (
               <div className={stageClass(1)}>{vitalsNode}</div>
@@ -549,6 +571,16 @@ export default function Page() {
         ) : isTablet ? (
           // Tablet: 2-col above, tabbed full-width below
           <div className="space-y-3">
+            <div className={stageClass(2)}>
+              <CrewList
+                crew={state.crew}
+                selected={state.selected}
+                aiOn={state.aiOn}
+                onPick={(i) => dispatch({ type: "SELECT_CREW", i })}
+                variant="row"
+                causes={crewCauses}
+              />
+            </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div className={stageClass(1)}>{vitalsNode}</div>
               <div className="flex flex-col gap-3">
@@ -559,11 +591,12 @@ export default function Page() {
             <div className={stageClass(5)}>{tabbedNode}</div>
           </div>
         ) : (
-          // Desktop lg+: 3-column (rail | vitals+tabbed | AI+rules).
-          // Layout: top row crew pills are now embedded in the left column header
-          // for true single-viewport fit. Crew cards in left column.
+          // Desktop lg+: 3-column grid that fits one viewport at 1470x956.
+          // The middle column has a fixed-height flex column where the tabbed
+          // panel fills any remaining vertical space and scrolls internally,
+          // so the rails match the centre column's height exactly.
           <div
-            className={`grid h-full gap-3 ${
+            className={`grid h-full min-h-0 gap-3 ${
               isXxl
                 ? "grid-cols-[280px_minmax(0,1fr)_360px]"
                 : isXl
@@ -571,8 +604,8 @@ export default function Page() {
                 : "grid-cols-[240px_minmax(0,1fr)_320px]"
             }`}
           >
-            {/* Left: crew rail */}
-            <div
+            {/* Left rail: crew list fills the column height. */}
+            <aside
               className={`${stageClass(2)} flex min-h-0 flex-col gap-2 overflow-y-auto`}
             >
               <CrewList
@@ -581,21 +614,26 @@ export default function Page() {
                 aiOn={state.aiOn}
                 onPick={(i) => dispatch({ type: "SELECT_CREW", i })}
                 variant="rail"
+                causes={crewCauses}
               />
-            </div>
+            </aside>
 
-            {/* Middle: vitals + tabbed panel */}
+            {/* Middle: vitals on top, tabbed panel fills remaining height. */}
             <div className="flex min-h-0 flex-col gap-3">
-              <div className={stageClass(1)}>{vitalsNode}</div>
+              <div className={`${stageClass(1)} shrink-0`}>{vitalsNode}</div>
               <div className={`${stageClass(5)} min-h-0 flex-1`}>
                 {tabbedNode}
               </div>
             </div>
 
-            {/* Right: AI + Rules */}
-            <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto">
+            {/* Right rail: AI score, Rules, scenario controls.
+                Scrolls internally if the column is taller than the viewport. */}
+            <aside
+              className={`flex min-h-0 flex-col gap-3 overflow-y-auto pr-1`}
+            >
               <div className={stageClass(3)}>{aiNode}</div>
               <div className={stageClass(4)}>{rulesNode}</div>
+              <div className={stageClass(7)}>{scenariosNode}</div>
             </aside>
           </div>
         )}
@@ -609,18 +647,20 @@ export default function Page() {
         />
       )}
 
-      <ScenarioSheet
+      <ScenarioPanel
+        variant="sheet"
         open={scenariosOpen}
         onClose={() => setScenariosOpen(false)}
         storm={state.storm}
         aiOn={state.aiOn}
         selectedFlags={sel.f}
+        selected={sel}
         onToggle={(k) => dispatch({ type: "TOG_FLAG", k })}
         onDemo={startDemo}
         onReset={reset}
       />
 
-      {!isMobile && (
+      {!isMobile && !isLg && (
         <footer className="mt-auto px-3 py-2 text-center text-sm text-white/55 sm:px-5">
           Simulation runs in the browser · the LLM only writes prose · rules
           always decide alerts · deployed on Vercel
