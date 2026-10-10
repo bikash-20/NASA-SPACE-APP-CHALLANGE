@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Panel } from "./ui/Panel";
 import { cn } from "@/lib/cn";
 
-export type TabKey = "alerts" | "why" | "brief";
+export type TabKey = "alerts" | "why" | "brief" | "ask";
 
 interface TabbedPanelProps {
   active: TabKey;
@@ -13,13 +12,15 @@ interface TabbedPanelProps {
   alerts: React.ReactNode;
   why: React.ReactNode;
   brief: React.ReactNode;
+  ask: React.ReactNode;
   alertsBadge?: number;
 }
 
-const TABS: { id: TabKey; label: string }[] = [
+const TABS: { id: TabKey; label: string; icon?: string }[] = [
   { id: "alerts", label: "Alerts" },
   { id: "why", label: "Why" },
-  { id: "brief", label: "Brief & ask" },
+  { id: "brief", label: "Brief" },
+  { id: "ask", label: "Ask the surgeon", icon: "💬" },
 ];
 
 export function TabbedPanel({
@@ -28,6 +29,7 @@ export function TabbedPanel({
   alerts,
   why,
   brief,
+  ask,
   alertsBadge,
 }: TabbedPanelProps) {
   return (
@@ -48,13 +50,18 @@ export function TabbedPanel({
               aria-controls={`tabpanel-${t.id}`}
               onClick={() => onChange(t.id)}
               className={cn(
-                "tappable relative px-3 py-2 text-sm font-medium",
+                "tappable relative flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm font-medium",
                 isOn ? "text-ink" : "text-white/65 hover:text-ink"
               )}
             >
-              {t.label}
+              {t.icon && (
+                <span aria-hidden className="text-sm leading-none">
+                  {t.icon}
+                </span>
+              )}
+              <span>{t.label}</span>
               {t.id === "alerts" && alertsBadge && alertsBadge > 0 ? (
-                <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-bad px-1 text-[0.625rem] font-semibold text-white">
+                <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-bad px-1 text-[0.625rem] font-semibold text-white">
                   {alertsBadge}
                 </span>
               ) : null}
@@ -68,7 +75,7 @@ export function TabbedPanel({
           );
         })}
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto" id={`tabpanel-${active}`} role="tabpanel">
+      <div className="min-h-0 flex-1" id={`tabpanel-${active}`} role="tabpanel">
         <AnimatePresence mode="wait">
           <motion.div
             key={active}
@@ -76,10 +83,12 @@ export function TabbedPanel({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.18 }}
+            className="h-full"
           >
             {active === "alerts" && alerts}
             {active === "why" && why}
             {active === "brief" && brief}
+            {active === "ask" && ask}
           </motion.div>
         </AnimatePresence>
       </div>

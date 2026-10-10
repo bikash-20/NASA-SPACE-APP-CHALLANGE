@@ -65,7 +65,7 @@ export function ScenarioPanel({
             active={!aiOn}
             onClick={() => onToggle("ai")}
             label="AI risk scorer"
-            target="offline"
+            target={!aiOn ? "offline" : "online"}
             pillTone="bad"
           />
         </div>
@@ -231,7 +231,8 @@ function ScenarioRow({
   );
 }
 
-/** "Dr. Lin Zhao" -> "Dr. Lin Zhao" (kept full for clarity). Used as target text. */
+/** "Cdr. Amara Okafor" -> "Amara", "Dr. Lin Zhao" -> "Lin", "Eng. Rafi Ahmed" -> "Rafi". */
 function crewShortName(n: string): string {
-  return n;
+  const cleaned = n.replace(/^(Cdr\.|Dr\.|Eng\.)\s+/, "");
+  return cleaned.split(/\s+/)[0] ?? cleaned;
 }

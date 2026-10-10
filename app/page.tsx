@@ -17,6 +17,7 @@ import { RulesCard } from "@/components/RulesCard";
 import { AlertsCard } from "@/components/AlertsCard";
 import { TraceCard } from "@/components/TraceCard";
 import { BriefCard } from "@/components/BriefCard";
+import { AskCard } from "@/components/AskCard";
 import { TabbedPanel, type TabKey } from "@/components/TabbedPanel";
 import { BottomTabs, type TabId } from "@/components/BottomTabs";
 import { ScenarioPanel } from "@/components/ScenarioPanel";
@@ -488,6 +489,15 @@ export default function Page() {
       alerts={alertsNode}
       why={whyNode}
       brief={briefNode}
+      ask={
+        <AskCard
+          crew={sel}
+          chat={state.chat}
+          chatStreaming={state.chatStreaming}
+          chatModel={state.chatModel}
+          onSendChat={sendChat}
+        />
+      }
     />
   );
 
@@ -517,7 +527,7 @@ export default function Page() {
         onOpenScenarios={() => setScenariosOpen(true)}
         aiOn={state.aiOn}
         compact={isMobile}
-        hideScenarios={isLg}
+        hideScenarios={false}
       />
 
       <Pipeline
@@ -604,9 +614,11 @@ export default function Page() {
                 : "grid-cols-[240px_minmax(0,1fr)_320px]"
             }`}
           >
-            {/* Left rail: crew list fills the column height. */}
+            {/* Left rail: crew list + Inject a problem card. Both must fit
+                in the column without inner scroll so the toggle labels and
+                the Run guided demo button are visible at first paint. */}
             <aside
-              className={`${stageClass(2)} flex min-h-0 flex-col gap-2 overflow-y-auto`}
+              className={`${stageClass(2)} flex min-h-0 flex-col gap-2`}
             >
               <CrewList
                 crew={state.crew}
@@ -616,6 +628,7 @@ export default function Page() {
                 variant="rail"
                 causes={crewCauses}
               />
+              <div className={stageClass(7)}>{scenariosNode}</div>
             </aside>
 
             {/* Middle: vitals on top, tabbed panel fills remaining height. */}
@@ -626,14 +639,13 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Right rail: AI score, Rules, scenario controls.
-                Scrolls internally if the column is taller than the viewport. */}
+            {/* Right rail: AI score + Rules. No inner scroll so the entire
+                Rules card is visible at the MacBook Air 1470x956 size. */}
             <aside
-              className={`flex min-h-0 flex-col gap-3 overflow-y-auto pr-1`}
+              className={`flex min-h-0 flex-col gap-3`}
             >
               <div className={stageClass(3)}>{aiNode}</div>
               <div className={stageClass(4)}>{rulesNode}</div>
-              <div className={stageClass(7)}>{scenariosNode}</div>
             </aside>
           </div>
         )}

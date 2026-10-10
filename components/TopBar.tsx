@@ -42,7 +42,7 @@ export function TopBar({
         compact ? "sticky top-0" : ""
       )}
     >
-      {/* Left: title + clock */}
+      {/* Left: title */}
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-accent" />
@@ -50,17 +50,14 @@ export function TopBar({
             Crew Health Monitor
           </h1>
         </div>
-        <span className="hidden font-mono text-sm tabular-nums text-white/60 sm:inline">
-          {clock}
-        </span>
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-        {/* Scenarios stay inline on small viewports (sm -> lg-) where the
-            right-rail scenario card isn't visible yet. At lg+ the right-rail
-            ScenarioPanel owns the toggles, so we hide the inline duplicates. */}
+        {/* Scenarios stay inline in the header. The desktop "Inject a problem"
+            card in the left rail is a second entry point — both are present
+            intentionally so a judge can find them either way. */}
         {!hideScenarios && (
-          <div className="hidden items-center gap-1.5 sm:flex lg:hidden">
+          <div className="hidden items-center gap-1.5 sm:flex">
             <Button variant="primary" size="sm" onClick={onDemo}>
               Run guided demo
             </Button>
@@ -74,10 +71,6 @@ export function TopBar({
             </Button>
           </div>
         )}
-
-        <span className="hidden font-mono text-sm tabular-nums text-white/60 sm:hidden md:inline">
-          {clock}
-        </span>
 
         <div className="flex items-center gap-1.5">
           {onOpenScenarios && (
@@ -120,6 +113,11 @@ export function TopBar({
               </button>
             ))}
           </div>
+          {/* Single clock, next to Pause / Speed. Hidden on mobile where
+              vertical space is tight. */}
+          <span className="hidden font-mono text-sm tabular-nums text-white/60 sm:inline">
+            {clock}
+          </span>
         </div>
       </div>
     </header>
