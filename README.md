@@ -1,4 +1,8 @@
 # NASA Space App Challenge — Crew Health Monitor
+live link: https://crew-health-monitoring.vercel.app/
+<img width="1280" height="761" alt="image" src="https://github.com/user-attachments/assets/f865a4e6-1598-4f41-8a2d-da066a50dd27" />
+<img width="1280" height="761" alt="image" src="https://github.com/user-attachments/assets/6848eeca-9077-484d-bcc5-0fa425451a9c" />
+
 
 A mission-control-style dashboard that simulates live crew telemetry, runs a **deterministic, rule-based** alert engine in the browser, and uses an LLM (via [OpenRouter](https://openrouter.ai)) to **write prose only** — never to raise alerts. Built for the NASA Space Apps Challenge.
 
