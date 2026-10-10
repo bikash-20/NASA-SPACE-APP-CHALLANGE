@@ -65,7 +65,7 @@ function Md({ children }: { children: string }) {
     flush();
     if (line.startsWith("**") && line.endsWith("**") && line.length > 4) {
       out.push(
-        <p key={i} className="mt-2 first:mt-0 text-ink">
+        <p key={i} className="mt-2 first:mt-0 text-base text-ink">
           {inline(line)}
         </p>
       );
@@ -73,19 +73,18 @@ function Md({ children }: { children: string }) {
       out.push(<div key={i} className="h-1" />);
     } else {
       out.push(
-        <p key={i} className="text-white/80">
+        <p key={i} className="text-base text-white/85">
           {inline(line)}
         </p>
       );
     }
   });
   flush();
-  return <div className="text-sm leading-relaxed">{out}</div>;
+  return <div className="leading-relaxed">{out}</div>;
 }
 
 export function BriefCard({
   crew,
-  alerts,
   brief,
   briefModel,
   briefLoading,
@@ -111,7 +110,6 @@ export function BriefCard({
   const onScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
-    // distance from bottom in px
     const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
     setStickToBottom(distance < 32);
   };
@@ -131,46 +129,47 @@ export function BriefCard({
         right={
           <Button
             variant="primary"
+            size="sm"
             onClick={onWriteBrief}
             disabled={briefLoading}
           >
-            {briefLoading ? "Writing…" : brief ? "Rewrite brief" : "Write brief"}
+            {briefLoading ? "Writing…" : brief ? "Rewrite" : "Write brief"}
           </Button>
         }
       />
 
-      {brief ? (
-        <>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={brief}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Md>{brief}</Md>
-            </motion.div>
-          </AnimatePresence>
-          {briefModel && (
-            <p className="mt-3 text-[11px] text-white/40">
-              model · <span className="font-mono">{briefModel}</span>
-            </p>
-          )}
-        </>
-      ) : (
-        <p className="text-sm text-white/50">
-          {briefLoading
-            ? "Asking the LLM via OpenRouter…"
-            : "No brief yet. Click Write brief to generate one from the live snapshot of " +
-              crew.n +
-              "."}
-        </p>
-      )}
+      <div className="min-h-0 flex-1">
+        {brief ? (
+          <>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={brief}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Md>{brief}</Md>
+              </motion.div>
+            </AnimatePresence>
+            {briefModel && (
+              <p className="mt-2 text-sm text-white/65">
+                model · <span className="font-mono">{briefModel}</span>
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-white/65">
+            {briefLoading
+              ? "Asking the LLM via OpenRouter…"
+              : `No brief yet. Click Write brief to generate one from the live snapshot of ${crew.n}.`}
+          </p>
+        )}
+      </div>
 
       {/* Sticky chat thread: fixed max height, scrolls internally. Input is pinned below. */}
-      <div className="mt-5 flex min-h-0 flex-1 flex-col border-t border-white/10 pt-4">
+      <div className="mt-4 flex min-h-0 flex-col border-t border-white/10 pt-3">
         <div className="mb-2 flex items-center justify-between">
-          <div className="text-[11px] uppercase tracking-wider text-white/40">
+          <div className="text-sm font-semibold text-white/70">
             Ask the surgeon
           </div>
           {!stickToBottom && chat.length > 0 && (
@@ -181,7 +180,7 @@ export function BriefCard({
                 const el = scrollRef.current;
                 if (el) el.scrollTop = el.scrollHeight;
               }}
-              className="rounded-full border border-accent/50 bg-accent/15 px-2 py-0.5 text-[10px] font-medium text-accent hover:bg-accent/25"
+              className="rounded-full border border-accent/50 bg-accent/15 px-2.5 py-1 text-sm font-medium text-accent hover:bg-accent/25"
             >
               ↓ Jump to latest
             </button>
@@ -191,14 +190,10 @@ export function BriefCard({
         <div
           ref={scrollRef}
           onScroll={onScroll}
-          className="max-h-[320px] min-h-[120px] flex-1 space-y-2 overflow-y-auto rounded-md border border-white/5 bg-white/[0.015] p-2 no-scrollbar"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "rgba(255,255,255,0.15) transparent",
-          }}
+          className="max-h-[320px] min-h-[100px] flex-1 space-y-2 overflow-y-auto rounded-md border border-white/5 bg-white/[0.015] p-2"
         >
           {chat.length === 0 && !chatStreaming && (
-            <div className="flex h-full min-h-[96px] items-center justify-center text-center text-[12px] text-white/40">
+            <div className="flex h-full min-h-[80px] items-center justify-center text-center text-sm text-white/55">
               Ask follow-up questions about {crew.n}. Answers use the same
               snapshot the brief was written from.
             </div>
@@ -209,18 +204,18 @@ export function BriefCard({
               className={`rounded-md p-2 text-sm ${
                 m.role === "user"
                   ? "bg-accent/15 text-ink"
-                  : "bg-white/[0.04] text-white/80"
+                  : "bg-white/[0.04] text-white/85"
               }`}
             >
-              <span className="block text-[10px] uppercase tracking-wider text-white/40">
+              <span className="block text-sm uppercase tracking-wider text-white/55">
                 {m.role === "user" ? "you" : "surgeon"}
               </span>
               <span className="whitespace-pre-wrap">{m.content}</span>
             </div>
           ))}
           {chatStreaming && (
-            <div className="rounded-md bg-white/[0.04] p-2 text-sm text-white/60">
-              <span className="block text-[10px] uppercase tracking-wider text-white/40">
+            <div className="rounded-md bg-white/[0.04] p-2 text-sm text-white/65">
+              <span className="block text-sm uppercase tracking-wider text-white/55">
                 surgeon
               </span>
               <span className="inline-block h-3 w-1.5 animate-pulse bg-accent align-middle" />
@@ -239,8 +234,11 @@ export function BriefCard({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about this crew member…"
-            className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-ink placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-accent/50"
+            className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-base text-ink placeholder:text-white/40 focus:outline-none"
             disabled={chatStreaming}
+            inputMode="text"
+            autoComplete="off"
+            style={{ fontSize: "1rem" }}
           />
           <Button
             type="submit"
@@ -251,7 +249,7 @@ export function BriefCard({
           </Button>
         </form>
         {chatModel && (
-          <p className="mt-1.5 text-[11px] text-white/40">
+          <p className="mt-1.5 text-sm text-white/65">
             chat model · <span className="font-mono">{chatModel}</span>
           </p>
         )}

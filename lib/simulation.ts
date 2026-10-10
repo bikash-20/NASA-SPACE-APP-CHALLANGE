@@ -24,6 +24,7 @@ export function mkCrew(i: 0 | 1 | 2): Crew {
     rate: 0.04,
     H: { hr: [], spo2: [], stress: [], rate: [] },
     r: [0, 0, 0, 0, 0],
+    armed: [true, true, true, true, true],
     ai: 0,
     F: [],
     R: [],
@@ -93,7 +94,12 @@ export function step(crew: Crew[], opts: StepOpts): void {
     aiScore(c);
     const R = evalRules(c);
     R.forEach((x, j) => {
-      if (emitAlerts && x.lv > c.r[j]) {
+      // Hysteresis: re-arm when the level drops back to 0 so the next
+      // crossing can fire. While the level stays >0, suppress repeats.
+      if (x.lv === 0) c.armed[j] = true;
+      const risingOrSteppingUp = x.lv > c.r[j];
+      const fresh = x.lv > 0 && c.armed[j];
+      if (emitAlerts && (risingOrSteppingUp || fresh)) {
         const a: Alert = {
           id: `${tick}-${i}-${j}`,
           t: clock(tick),
@@ -107,6 +113,7 @@ export function step(crew: Crew[], opts: StepOpts): void {
           aiOn,
         };
         onAlert?.(a);
+        c.armed[j] = false;
       }
       c.r[j] = x.lv;
     });

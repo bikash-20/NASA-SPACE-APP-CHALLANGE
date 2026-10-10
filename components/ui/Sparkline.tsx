@@ -15,6 +15,7 @@ interface SparklineProps {
   yMin?: number;
   yMax?: number;
   height?: number;
+  strokeWidth?: number;
 }
 
 /**
@@ -27,7 +28,8 @@ export function Sparkline({
   color,
   yMin,
   yMax,
-  height = 56,
+  height = 64,
+  strokeWidth = 2,
 }: SparklineProps) {
   const points = data.map((v, i) => ({ i, v }));
   if (points.length < 2) {
@@ -53,7 +55,7 @@ export function Sparkline({
             type="monotone"
             dataKey="v"
             stroke={color}
-            strokeWidth={1.8}
+            strokeWidth={strokeWidth}
             dot={false}
             isAnimationActive
             animationDuration={300}

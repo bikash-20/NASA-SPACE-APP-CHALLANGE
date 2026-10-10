@@ -28,6 +28,10 @@ export interface Crew {
   rate: number; // current mSv/h
   H: VitalsHistory;
   r: Level[]; // last rule levels (5 slots)
+  /** Per-rule "armed" state for hysteresis: true means the next crossing
+   *  from level 0 to non-zero should fire a new alert. Reset to true when
+   *  the level drops back to 0. */
+  armed: boolean[];
   ai: number; // ai score 0..100
   F: [FactorName, number, number][]; // factor contributions
   R: RuleResult[];

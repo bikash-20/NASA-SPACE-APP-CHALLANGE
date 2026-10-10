@@ -7,40 +7,37 @@ import type { Crew } from "@/lib/types";
 
 export function RulesCard({ crew }: { crew: Crew }) {
   return (
-    <Panel>
-      <PanelTitle title="Rules" tone="ok" />
-      <table className="w-full text-sm">
-        <tbody>
-          {crew.R.map((r, i) => (
-            <tr
-              key={r.n}
-              className="border-b border-white/5 last:border-b-0 align-top"
-            >
-              <td className="py-2 pr-2">
-                <span
-                  className="inline-block h-2.5 w-2.5 rounded-full"
-                  style={{ background: colorForLevel(r.lv) }}
-                />
-              </td>
-              <td className="py-2 pr-2">
-                <b className="text-ink">{r.n}</b>
-                <br />
-                <span className="text-[11px] text-white/40">{r.th}</span>
-              </td>
-              <td className="py-2 text-right">
-                <span className="font-mono tabular-nums text-ink">{r.val}</span>
-                <br />
-                <span
-                  className="text-[11px] font-medium"
-                  style={{ color: colorForLevel(r.lv) }}
-                >
-                  {LEVEL_NAMES[r.lv]}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <Panel tone="ok" density="compact">
+      <PanelTitle title="Rules" tone="ok" hint="decide" />
+      <ul className="divide-y divide-white/5">
+        {crew.R.map((r) => (
+          <li
+            key={r.n}
+            className="grid grid-cols-[1.5rem_1fr_auto] items-start gap-2 py-2 first:pt-0 last:pb-0"
+          >
+            <span
+              className="mt-1.5 inline-block h-3 w-3 shrink-0 rounded-full"
+              style={{ background: colorForLevel(r.lv) }}
+              aria-label={LEVEL_NAMES[r.lv]}
+            />
+            <div className="min-w-0">
+              <b className="block text-sm font-semibold text-ink">{r.n}</b>
+              <span className="block text-sm text-white/65">{r.th}</span>
+            </div>
+            <div className="text-right">
+              <div className="font-mono text-sm tabular-nums text-ink">
+                {r.val}
+              </div>
+              <div
+                className="text-sm font-semibold"
+                style={{ color: colorForLevel(r.lv) }}
+              >
+                {LEVEL_NAMES[r.lv]}
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
     </Panel>
   );
 }

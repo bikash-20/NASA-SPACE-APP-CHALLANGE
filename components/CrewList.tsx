@@ -11,53 +11,141 @@ interface CrewListProps {
   selected: 0 | 1 | 2;
   aiOn: boolean;
   onPick: (i: 0 | 1 | 2) => void;
+  /** "rail" = vertical cards (lg+), "row" = horizontal compact (md), "pills" = segmented control (sm) */
+  variant: "rail" | "row" | "pills";
 }
 
 function worstLevel(c: Crew): Level {
   return c.r.reduce((m, v) => (v > m ? v : m), 0) as Level;
 }
 
-export function CrewList({ crew, selected, aiOn, onPick }: CrewListProps) {
+function statusDot(c: Crew, aiOn: boolean) {
+  const w = worstLevel(c);
+  return { color: colorForLevel(w), label: LEVEL_NAMES[w], w };
+}
+
+export function CrewList({ crew, selected, aiOn, onPick, variant }: CrewListProps) {
+  if (variant === "pills") {
+    return (
+      <div
+        role="tablist"
+        aria-label="Select crew member"
+        className="flex w-full items-stretch gap-1.5 px-3 py-2 sm:px-5"
+      >
+        {crew.map((c, i) => {
+          const { color, label, w } = statusDot(c, aiOn);
+          const isSel = i === selected;
+          return (
+            <motion.button
+              key={c.id}
+              role="tab"
+              aria-selected={isSel}
+              onClick={() => onPick(i as 0 | 1 | 2)}
+              whileTap={{ scale: 0.97 }}
+              className={cn(
+                "tappable flex flex-1 items-center justify-center gap-2 rounded-lg border px-2 py-2 text-sm font-medium",
+                isSel
+                  ? "border-ink/40 bg-white/[0.06] text-ink"
+                  : "border-white/10 bg-white/[0.02] text-white/70"
+              )}
+            >
+              <span
+                aria-hidden
+                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: color }}
+              />
+              <span className="truncate">{c.n.replace(/^(Cdr\.|Dr\.|Eng\.)\s/, "")}</span>
+              <span className="sr-only">{label} (level {w})</span>
+            </motion.button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (variant === "row") {
+    return (
+      <div className="grid grid-cols-3 gap-2 px-3 py-2 sm:px-5 md:grid-cols-3">
+        {crew.map((c, i) => {
+          const { color, label } = statusDot(c, aiOn);
+          const isSel = i === selected;
+          return (
+            <motion.button
+              key={c.id}
+              onClick={() => onPick(i as 0 | 1 | 2)}
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              className={cn(
+                "tappable flex items-center justify-between gap-2 rounded-lg border p-2 text-left",
+                isSel
+                  ? "border-ink/40 bg-white/[0.06]"
+                  : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
+              )}
+            >
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-ink">
+                  {c.n}
+                </div>
+                <div className="truncate text-sm text-white/65">{c.role}</div>
+              </div>
+              <span
+                className="rounded-full px-2.5 py-0.5 text-sm font-semibold text-white"
+                style={{ background: color }}
+              >
+                {label}
+              </span>
+            </motion.button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // rail (desktop)
   return (
-    <aside className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2">
       {crew.map((c, i) => {
-        const w = worstLevel(c);
+        const { color, label } = statusDot(c, aiOn);
+        const isSel = i === selected;
         return (
           <motion.button
             key={c.id}
             onClick={() => onPick(i as 0 | 1 | 2)}
             whileHover={{ x: 2 }}
-            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            whileTap={{ scale: 0.99 }}
             className={cn(
-              "relative overflow-hidden rounded-xl border p-3 text-left transition-colors",
-              "border-white/10 bg-white/[0.03]",
-              selected === i && "border-ink/60"
+              "tappable relative overflow-hidden rounded-xl border p-3 text-left",
+              isSel
+                ? "border-ink/40 bg-white/[0.05]"
+                : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
             )}
             style={
-              selected === i
-                ? { boxShadow: `inset 4px 0 0 ${colorForLevel(w)}` }
+              isSel
+                ? { boxShadow: `inset 4px 0 0 ${color}` }
                 : undefined
             }
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <b className="block text-sm font-medium text-ink">{c.n}</b>
-                <span className="text-[11px] text-white/40">{c.role}</span>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <b className="block truncate text-base font-semibold text-ink">
+                  {c.n}
+                </b>
+                <span className="text-sm text-white/65">{c.role}</span>
               </div>
               <span
-                className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white"
-                style={{ background: colorForLevel(w) }}
+                className="shrink-0 rounded-full px-2.5 py-0.5 text-sm font-semibold text-white"
+                style={{ background: color }}
               >
-                {LEVEL_NAMES[w]}
+                {label}
               </span>
             </div>
-            <div className="mt-2 font-mono text-[11px] tabular-nums text-white/50">
-              {aiOn ? `AI ${Math.round(c.ai)}` : "AI offline"} · HR{" "}
+            <div className="mt-2 font-mono text-sm tabular-nums text-white/75">
+              {aiOn ? `AI ${Math.round(c.ai)}` : "AI off"} · HR{" "}
               {Math.round(c.hr)} · SpO₂ {c.spo2.toFixed(0)}
             </div>
           </motion.button>
         );
       })}
-    </aside>
+    </div>
   );
 }

@@ -10,19 +10,29 @@ interface VitalsCardProps {
   crew: Crew;
 }
 
+const DOSE_LIMIT = 250;
+
 export function VitalsCard({ crew }: VitalsCardProps) {
   const r = crew.R;
   const col = (i: number): string => (r[i] ? colorForLevel(r[i].lv as Level) : "#10b981");
 
+  const dosePct = (crew.dose / DOSE_LIMIT) * 100;
+  const doseOver = dosePct > 100;
+  const sleepPct = (crew.sleep / 9) * 100;
+
   return (
     <Panel>
-      <PanelTitle title={`${crew.n} · live vitals`} />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <PanelTitle
+        title={`${crew.n} — live vitals`}
+        hint={crew.role}
+      />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Tile
           label="Heart rate"
           big={Math.round(crew.hr)}
           unit="bpm"
-          sub={`baseline ${crew.bhr} bpm · dashed = alert threshold`}
+          sub={`Baseline ${crew.bhr} bpm. Dashed line = alert threshold (+30%).`}
+          tone={col(0)}
         >
           <Sparkline
             data={crew.H.hr}
@@ -36,7 +46,8 @@ export function VitalsCard({ crew }: VitalsCardProps) {
           label="Blood oxygen"
           big={crew.spo2.toFixed(1)}
           unit="%"
-          sub="watch < 94%"
+          sub="Alert below 90% · Watch below 94%."
+          tone={col(1)}
         >
           <Sparkline
             data={crew.H.spo2}
@@ -47,22 +58,25 @@ export function VitalsCard({ crew }: VitalsCardProps) {
           />
         </Tile>
         <Tile
-          label="Sleep · 3-night avg"
+          label="Sleep, 3-night average"
           big={crew.sleep.toFixed(1)}
           unit="h"
-          sub="watch < 5.5 h"
+          sub="Alert below 4.5 h · Watch below 5.5 h."
+          tone={col(2)}
         >
           <ProgressBar
-            value={(crew.sleep / 9) * 100}
+            value={sleepPct}
             color={col(2)}
             marks={[61, 50]}
+            height={10}
           />
         </Tile>
         <Tile
           label="Stress index"
           big={Math.round(crew.stress)}
           unit="/ 100"
-          sub="watch > 75"
+          sub="Alert above 90 · Watch above 75."
+          tone={col(3)}
         >
           <Sparkline
             data={crew.H.stress}
@@ -72,28 +86,37 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             yMax={100}
           />
         </Tile>
-        <Tile
-          label="Radiation · 30-day"
-          big={crew.dose.toFixed(0)}
-          unit="/ 250 mSv"
-          sub={`rate ${crew.rate.toFixed(2)} mSv/h · marks 80/95%`}
-        >
-          <ProgressBar
-            value={crew.dose / 2.5}
-            color={col(4)}
-            marks={[80, 95]}
-          />
-          <div className="mt-2">
-            <Sparkline
-              data={crew.H.rate}
-              threshold={1}
+        <div className="sm:col-span-2">
+          <Tile
+            label="Radiation, 30-day dose"
+            big={Math.round(crew.dose)}
+            unit={`/ ${DOSE_LIMIT} mSv`}
+            sub={
+              doseOver
+                ? `Over limit — ${Math.round(dosePct)}% of ${DOSE_LIMIT} mSv. Rate ${crew.rate.toFixed(2)} mSv/h.`
+                : `${Math.round(dosePct)}% of ${DOSE_LIMIT} mSv · rate ${crew.rate.toFixed(2)} mSv/h. Marks at 80% and 95%.`
+            }
+            tone={col(4)}
+            badge={doseOver ? "Over" : null}
+          >
+            <ProgressBar
+              value={dosePct}
               color={col(4)}
-              yMin={0}
-              yMax={4}
-              height={32}
+              marks={[80, 95]}
+              height={10}
             />
-          </div>
-        </Tile>
+            <div className="mt-2">
+              <Sparkline
+                data={crew.H.rate}
+                threshold={1}
+                color={col(4)}
+                yMin={0}
+                yMax={4}
+                height={40}
+              />
+            </div>
+          </Tile>
+        </div>
       </div>
     </Panel>
   );
@@ -105,24 +128,39 @@ function Tile({
   unit,
   sub,
   children,
+  tone,
+  badge,
 }: {
   label: string;
   big: string | number;
   unit: string;
   sub: string;
   children: React.ReactNode;
+  tone: string;
+  badge?: string | null;
 }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-      <div className="text-[11px] uppercase tracking-wider text-white/40">
-        {label}
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-sm font-medium text-white/70">{label}</div>
+        {badge && (
+          <span
+            className="rounded-full px-2.5 py-0.5 text-sm font-semibold text-white"
+            style={{ background: tone }}
+          >
+            {badge}
+          </span>
+        )}
       </div>
-      <div className="mt-0.5 font-mono text-2xl font-semibold tabular-nums text-ink">
+      <div
+        className="mt-1 font-mono font-bold tabular-nums text-ink"
+        style={{ fontSize: "var(--fs-vital)", lineHeight: "var(--lh-display)" }}
+      >
         {big}
-        <span className="ml-1 text-xs font-normal text-white/50">{unit}</span>
+        <span className="ml-1 text-sm font-normal text-white/55">{unit}</span>
       </div>
-      {children}
-      <div className="mt-1 text-[11px] text-white/40">{sub}</div>
+      <div className="mt-2">{children}</div>
+      <div className="mt-2 text-sm text-white/65">{sub}</div>
     </div>
   );
 }

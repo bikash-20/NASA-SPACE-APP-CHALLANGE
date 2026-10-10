@@ -7,7 +7,9 @@ import type { HTMLAttributes, ReactNode } from "react";
 interface PanelProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   highlight?: boolean;
-  tone?: "default" | "accent";
+  tone?: "default" | "accent" | "ok";
+  density?: "comfortable" | "compact";
+  as?: "div" | "section" | "aside";
 }
 
 export function Panel({
@@ -15,17 +17,22 @@ export function Panel({
   className,
   highlight,
   tone = "default",
+  density = "comfortable",
+  as = "div",
   ...rest
 }: PanelProps) {
+  const Tag = motion[as];
   return (
-    <motion.div
+    <Tag
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "relative overflow-hidden rounded-2xl border p-5 backdrop-blur-md",
+        "relative overflow-hidden rounded-2xl border backdrop-blur-md",
+        density === "comfortable" ? "p-4 sm:p-5" : "p-3",
         "bg-white/[0.03] border-white/10",
         tone === "accent" && "border-accent/40",
+        tone === "ok" && "border-ok/30",
         highlight && "ring-2 ring-accent/70",
         className
       )}
@@ -40,7 +47,7 @@ export function Panel({
         }}
       />
       {children}
-    </motion.div>
+    </Tag>
   );
 }
 
@@ -48,19 +55,29 @@ export function PanelTitle({
   title,
   right,
   tone,
+  hint,
+  id,
 }: {
   title: string;
   right?: ReactNode;
   tone?: "ok" | "accent";
+  hint?: string;
+  id?: string;
 }) {
   return (
     <div className="mb-3 flex items-center justify-between gap-3">
-      <h2 className="flex items-center gap-2 text-[13px] font-medium uppercase tracking-[0.14em] text-white/60">
+      <h2
+        id={id}
+        className="flex items-center gap-2 text-base font-semibold tracking-tight text-ink"
+      >
         <span>{title}</span>
+        {hint && (
+          <span className="text-sm font-normal text-white/55">· {hint}</span>
+        )}
         {tone && (
           <span
             className={cn(
-              "rounded-full border px-2 py-0.5 text-[10px] font-medium normal-case tracking-normal",
+              "rounded-full border px-2 py-0.5 text-[0.75rem] font-medium",
               tone === "ok"
                 ? "border-ok/50 text-ok"
                 : "border-accent/50 text-accent"
@@ -70,7 +87,7 @@ export function PanelTitle({
           </span>
         )}
       </h2>
-      {right}
+      {right && <div className="flex items-center gap-2 shrink-0">{right}</div>}
     </div>
   );
 }

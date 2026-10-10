@@ -35,41 +35,48 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
   }, [score, mv, display]);
 
   return (
-    <Panel tone="accent">
-      <PanelTitle title="AI risk score" tone="accent" />
+    <Panel tone="accent" density="compact">
+      <PanelTitle title="AI risk score" tone="accent" hint="advisory" />
       {aiOn ? (
         <>
           <div className="flex items-baseline gap-2">
             <span
               ref={ref}
-              className="font-mono text-5xl font-bold tabular-nums text-accent"
+              className="font-mono font-bold tabular-nums text-accent"
+              style={{
+                fontSize: "var(--fs-ai)",
+                lineHeight: "var(--lh-display)",
+              }}
             >
               {score}
             </span>
-            <span className="text-sm text-white/50">/ 100 · {band(score)}</span>
+            <span className="text-sm text-white/65">
+              of 100 · {band(score)}
+            </span>
           </div>
           <div className="mt-3 space-y-1.5">
             {crew.F.map(([name, val, max]) => (
               <div
                 key={name}
-                className="grid grid-cols-[80px_1fr] items-center gap-2 text-xs text-white/60"
+                className="grid grid-cols-[7.5rem_1fr] items-center gap-2 text-sm text-white/75"
               >
-                <span>{name}</span>
+                <span className="truncate">{name}</span>
                 <ProgressBar
                   value={(val / max) * 100}
                   color="#7c5cff"
+                  height={6}
                 />
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[11px] text-white/40">
+          <p className="mt-3 text-sm text-white/65">
             {mx === 0 && crew.ai >= 45
-              ? "The AI sees a combined pattern no single rule caught. It is flagged for review, not raised as an alert."
+              ? "The AI sees a combined pattern no single rule caught. It's flagged for review, not raised as an alert."
               : "The score never raises an alert on its own. Rules do that."}
           </p>
         </>
       ) : (
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-white/75">
           <b className="text-bad">Scorer offline.</b> Rules keep running, so
           alerts still fire.
         </p>

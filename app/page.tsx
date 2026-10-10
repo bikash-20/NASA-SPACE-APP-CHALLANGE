@@ -1,9 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { TopBar } from "@/components/TopBar";
 import { Pipeline } from "@/components/Pipeline";
-import { ScenarioBar } from "@/components/ScenarioBar";
 import { CrewList } from "@/components/CrewList";
 import { VitalsCard } from "@/components/VitalsCard";
 import { AIScoreCard } from "@/components/AIScoreCard";
@@ -11,7 +17,16 @@ import { RulesCard } from "@/components/RulesCard";
 import { AlertsCard } from "@/components/AlertsCard";
 import { TraceCard } from "@/components/TraceCard";
 import { BriefCard } from "@/components/BriefCard";
-import { mkCrew, clock as tickClock, step as stepSim, type StepOpts } from "@/lib/simulation";
+import { TabbedPanel, type TabKey } from "@/components/TabbedPanel";
+import { BottomTabs, type TabId } from "@/components/BottomTabs";
+import { ScenarioSheet } from "@/components/ScenarioSheet";
+import {
+  mkCrew,
+  clock as tickClock,
+  step as stepSim,
+} from "@/lib/simulation";
+import { mergeAlerts } from "@/lib/alertMerge";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Alert, ChatMessage, Crew } from "@/lib/types";
 
 const CAP0 =
@@ -54,8 +69,6 @@ type Action =
   | { type: "FINALIZE_CHAT"; model: string }
   | { type: "SET_CHAT_STREAMING"; v: boolean }
   | { type: "RESET" }
-  | { type: "DEMO_SET"; demo: DemoStep[] | null }
-  | { type: "DEMO_FIRE" }
   | { type: "SET_CAPTION"; v: string };
 
 const initial: State = {
@@ -82,21 +95,19 @@ function reducer(s: State, a: Action): State {
   switch (a.type) {
     case "TICK": {
       const next: State = { ...s, tick: s.tick + 1 };
-      // update pipeline values
       const c = next.crew[next.selected];
+      const merged = mergeAlerts(next.alerts, next.crew);
+      const active = merged.filter((g) => g.active).length;
       const mx = next.crew.reduce(
         (m, x) => Math.max(m, ...x.r),
         0
       );
-      const active = next.alerts.filter(
-        (al) => next.crew[al.i].r[al.j] >= al.lv
-      ).length;
       next.pipelineValues = [
-        `t+${next.tick}`,
-        `HR/SpO₂ ${Math.round(c.hr)}/${c.spo2.toFixed(0)}`,
-        next.aiOn ? `${Math.round(c.ai)}/100` : "offline",
-        `${mx === 0 ? "0" : mx === 1 ? "watch" : "alert"}`,
-        `${active} active`,
+        `t+${next.tick} · HR ${Math.round(c.hr)} / SpO₂ ${c.spo2.toFixed(0)}`,
+        `HR ${c.bhr} · SpO₂ ≥94 · Sleep ${c.sleep.toFixed(1)} h`,
+        next.aiOn ? `${Math.round(c.ai)} / 100` : "offline",
+        mx === 0 ? "all stable" : `${mx} firing`,
+        active > 0 ? `${active} active` : "none",
         s.brief ? "ready" : "—",
       ];
       return next;
@@ -106,7 +117,17 @@ function reducer(s: State, a: Action): State {
     case "SET_SPEED":
       return { ...s, speed: a.speed };
     case "SELECT_CREW":
-      return { ...s, selected: a.i, selectedAlert: null };
+      return {
+        ...s,
+        selected: a.i,
+        selectedAlert: null,
+        brief: null,
+        briefModel: null,
+        briefLoading: false,
+        chat: [],
+        chatStreaming: false,
+        chatModel: null,
+      };
     case "TOG_FLAG":
       if (a.k === "storm") return { ...s, storm: !s.storm };
       if (a.k === "ai") return { ...s, aiOn: !s.aiOn };
@@ -145,15 +166,13 @@ function reducer(s: State, a: Action): State {
       return { ...s, caption: a.v };
     case "RESET": {
       const crew = [0, 1, 2].map((i) => mkCrew(i as 0 | 1 | 2));
-      // pre-roll 60 ticks so charts aren't empty
       for (let i = 0; i < 60; i++) {
-        const opts: StepOpts = {
+        stepSim(crew, {
           storm: false,
           aiOn: true,
           emitAlerts: false,
           tick: 0,
-        };
-        stepSim(crew, opts);
+        });
       }
       return {
         ...initial,
@@ -162,11 +181,6 @@ function reducer(s: State, a: Action): State {
         pipelineValues: ["", "", "", "", "", ""],
       };
     }
-    case "DEMO_SET":
-      // store demo steps in a ref-like outside reducer; not in state
-      return s;
-    case "DEMO_FIRE":
-      return s;
     default:
       return s;
   }
@@ -174,7 +188,6 @@ function reducer(s: State, a: Action): State {
 
 export default function Page() {
   const [state, dispatch] = useReducer(reducer, initial, (s) => {
-    // pre-roll 60 ticks
     const crew = s.crew;
     for (let i = 0; i < 60; i++) {
       stepSim(crew, {
@@ -187,23 +200,38 @@ export default function Page() {
     return s;
   });
 
-  // Demo script (ref to avoid re-render thrash)
   const demoRef = useRef<DemoStep[] | null>(null);
   const tickRef = useRef(state.tick);
   tickRef.current = state.tick;
 
-  // Main simulation tick
+  // Responsive flags
+  const isMobile = useMediaQuery("(max-width: 639px)", false);
+  const isTablet = useMediaQuery("(min-width: 640px) and (max-width: 1023px)", false);
+  const isLg = useMediaQuery("(min-width: 1024px)", true);
+  const isXl = useMediaQuery("(min-width: 1280px)", true);
+  const isXxl = useMediaQuery("(min-width: 1600px)", true);
+
+  const [mobileTab, setMobileTab] = useState<TabId>("vitals");
+  const [tabKey, setTabKey] = useState<TabKey>("alerts");
+  const [scenariosOpen, setScenariosOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileTab("vitals");
+  }, [state.selected]);
+
   useEffect(() => {
     if (!state.running) return;
     const id = setInterval(() => {
       const t = tickRef.current;
-      // fire any demo step that matches this tick
-      if (demoRef.current && demoRef.current.length && t >= demoRef.current[0].at) {
+      if (
+        demoRef.current &&
+        demoRef.current.length &&
+        t >= demoRef.current[0].at
+      ) {
         const s = demoRef.current.shift()!;
         s.fn();
         dispatch({ type: "SET_CAPTION", v: s.msg });
       }
-      // run sim
       const newAlerts: Alert[] = [];
       stepSim(state.crew, {
         storm: state.storm,
@@ -212,7 +240,6 @@ export default function Page() {
         tick: t,
         onAlert: (a) => newAlerts.push(a),
       });
-      // dispatch tick + alerts
       for (const a of newAlerts) dispatch({ type: "ADD_ALERT", a });
       dispatch({ type: "TICK" });
     }, 1000 / state.speed);
@@ -235,6 +262,7 @@ export default function Page() {
       }
       const j = (await res.json()) as { text: string; model: string };
       dispatch({ type: "SET_BRIEF", text: j.text, model: j.model });
+      if (isMobile) setMobileTab("brief");
     } catch (err) {
       dispatch({
         type: "SET_BRIEF",
@@ -242,7 +270,7 @@ export default function Page() {
         model: "—",
       });
     }
-  }, [state.briefLoading, state.crew, state.selected]);
+  }, [state.briefLoading, state.crew, state.selected, isMobile]);
 
   const sendChat = useCallback(
     async (text: string) => {
@@ -315,16 +343,13 @@ export default function Page() {
   );
 
   const startDemo = useCallback(() => {
-    // reset first
     dispatch({ type: "RESET" });
-    // schedule steps relative to next ticks
     demoRef.current = [
       {
         at: 4,
         msg: "Step 1 of 4 — Rafi's heart rate climbs under cardiac strain.",
         fn: () => {
           dispatch({ type: "SELECT_CREW", i: 2 });
-          // toggle card flag on rafi's clone
           const next = state.crew.map((c, i) =>
             i === 2 ? { ...c, f: { ...c.f, card: 1 as const } } : c
           );
@@ -343,33 +368,30 @@ export default function Page() {
       {
         at: 28,
         msg: "Step 3 of 4 — rules raise the alerts. The AI score only advises.",
-        fn: () => {
-          /* no-op, the tick will fire alerts naturally */
-        },
+        fn: () => undefined,
       },
       {
         at: 38,
         msg: "Step 4 of 4 — open an alert to see why it fired, then write the brief.",
         fn: () => {
-          // auto-select the most recent active alert
-          const a =
-            state.alerts.find(
-              (x) => state.crew[x.i].r[x.j] >= x.lv
-            ) ?? state.alerts[0];
-          if (a) dispatch({ type: "SELECT_ALERT", id: a.id });
+          const merged = mergeAlerts(state.alerts, state.crew);
+          const first = merged[0];
+          if (first) dispatch({ type: "SELECT_ALERT", id: first.key });
+          if (isMobile) setMobileTab("alerts");
+          else setTabKey("alerts");
         },
       },
     ];
     dispatch({ type: "SET_CAPTION", v: "Demo starting…" });
-  }, [state.crew, state.alerts]);
+    setScenariosOpen(false);
+  }, [state.crew, state.alerts, isMobile]);
 
   const reset = useCallback(() => {
     demoRef.current = null;
     dispatch({ type: "RESET" });
+    setScenariosOpen(false);
   }, []);
 
-  // Pipeline stage highlight
-  const stageRef = useRef<number | null>(null);
   const [stage, setStage] = useState<number | null>(null);
   useEffect(() => {
     if (stage === null) return;
@@ -379,88 +401,231 @@ export default function Page() {
 
   const sel = state.crew[state.selected];
   const selAlert =
-    state.alerts.find((a) => a.id === state.selectedAlert) ?? null;
+    state.alerts.find((a) => `${a.i}-${a.j}` === state.selectedAlert) ??
+    state.alerts.find((a) => a.id === state.selectedAlert) ??
+    null;
+
+  const mergedAlerts = useMemo(
+    () => mergeAlerts(state.alerts, state.crew),
+    [state.alerts, state.crew]
+  );
+  const activeAlertCount = mergedAlerts.filter((g) => g.active).length;
 
   const stageClass = (n: number) => (stage === n ? "ring-accent" : "");
 
+  // Reusable content blocks
+  const alertsNode = (
+    <AlertsCard
+      alerts={state.alerts}
+      crew={state.crew}
+      selected={state.selectedAlert}
+      onSelect={(id) => dispatch({ type: "SELECT_ALERT", id })}
+    />
+  );
+  const whyNode = <TraceCard alert={selAlert} crew={state.crew} />;
+  const briefNode = (
+    <BriefCard
+      crew={sel}
+      alerts={state.alerts}
+      brief={state.brief}
+      briefModel={state.briefModel}
+      briefLoading={state.briefLoading}
+      chat={state.chat}
+      chatStreaming={state.chatStreaming}
+      chatModel={state.chatModel}
+      onWriteBrief={writeBrief}
+      onSendChat={sendChat}
+    />
+  );
+  const vitalsNode = <VitalsCard crew={sel} />;
+  const aiNode = <AIScoreCard crew={sel} aiOn={state.aiOn} />;
+  const rulesNode = <RulesCard crew={sel} />;
+  const tabbedNode = (
+    <TabbedPanel
+      active={tabKey}
+      onChange={setTabKey}
+      alertsBadge={activeAlertCount}
+      alerts={alertsNode}
+      why={whyNode}
+      brief={briefNode}
+    />
+  );
+
   return (
-    <main className="relative z-10 mx-auto max-w-[1500px] pb-12">
+    <div className="relative z-10 flex min-h-dvh flex-col">
       <TopBar
         clock={tickClock(state.tick)}
         running={state.running}
         speed={state.speed}
         onToggle={() => dispatch({ type: "TOGGLE_RUN" })}
         onSpeed={(s) => dispatch({ type: "SET_SPEED", speed: s })}
-      />
-      <Pipeline
-        onStage={(n) => setStage(n)}
-        values={state.pipelineValues}
-      />
-      <ScenarioBar
-        storm={state.storm}
-        aiOn={state.aiOn}
-        selectedFlags={sel.f}
-        onToggle={(k) => dispatch({ type: "TOG_FLAG", k })}
         onDemo={startDemo}
         onReset={reset}
-        caption={state.caption}
+        onOpenScenarios={() => setScenariosOpen(true)}
+        onToggleAI={() => dispatch({ type: "TOG_FLAG", k: "ai" })}
+        aiOn={state.aiOn}
+        compact={isMobile}
       />
 
-      <div className="mx-6 grid grid-cols-1 gap-3 lg:grid-cols-[220px_1fr_360px]">
+      <Pipeline
+        onStage={setStage}
+        values={state.pipelineValues}
+        selected={sel}
+        aiOn={state.aiOn}
+        activeCount={activeAlertCount}
+        briefReady={!!state.brief}
+      />
+
+      {state.caption && state.caption !== CAP0 && (
+        <div
+          className="border-b border-white/5 bg-accent/5 px-3 py-2 text-sm font-medium text-accent sm:px-5"
+          role="status"
+          aria-live="polite"
+        >
+          {state.caption}
+        </div>
+      )}
+
+      {/* Crew selector */}
+      {isLg ? (
         <div className={stageClass(2)}>
           <CrewList
             crew={state.crew}
             selected={state.selected}
             aiOn={state.aiOn}
             onPick={(i) => dispatch({ type: "SELECT_CREW", i })}
+            variant="rail"
           />
         </div>
+      ) : isTablet ? (
+        <div className={stageClass(2)}>
+          <CrewList
+            crew={state.crew}
+            selected={state.selected}
+            aiOn={state.aiOn}
+            onPick={(i) => dispatch({ type: "SELECT_CREW", i })}
+            variant="row"
+          />
+        </div>
+      ) : (
+        <div className={stageClass(2)}>
+          <CrewList
+            crew={state.crew}
+            selected={state.selected}
+            aiOn={state.aiOn}
+            onPick={(i) => dispatch({ type: "SELECT_CREW", i })}
+            variant="pills"
+          />
+        </div>
+      )}
 
-        <main className="flex flex-col gap-3">
-          <div className={stageClass(1)}>
-            <VitalsCard crew={sel} />
+      <main
+        className={`flex-1 px-3 py-3 sm:px-5 sm:py-4 ${
+          isMobile ? "pb-24" : ""
+        }`}
+      >
+        {isMobile ? (
+          // Mobile: one panel at a time, switched by BottomTabs
+          <div className="space-y-3">
+            {mobileTab === "vitals" && (
+              <div className={stageClass(1)}>{vitalsNode}</div>
+            )}
+            {mobileTab === "alerts" && (
+              <div className="space-y-3">
+                <div className={stageClass(5)}>{alertsNode}</div>
+                <div className={stageClass(5)}>{whyNode}</div>
+              </div>
+            )}
+            {mobileTab === "ai" && (
+              <div className="space-y-3">
+                <div className={stageClass(3)}>{aiNode}</div>
+                <div className={stageClass(4)}>{rulesNode}</div>
+              </div>
+            )}
+            {mobileTab === "brief" && (
+              <div className={stageClass(6)}>{briefNode}</div>
+            )}
           </div>
-          <div className={stageClass(5)}>
-            <AlertsCard
-              alerts={state.alerts}
-              crew={state.crew}
-              selected={state.selectedAlert}
-              onSelect={(id) => dispatch({ type: "SELECT_ALERT", id })}
-            />
+        ) : isTablet ? (
+          // Tablet: 2-col above, tabbed full-width below
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className={stageClass(1)}>{vitalsNode}</div>
+              <div className="flex flex-col gap-3">
+                <div className={stageClass(3)}>{aiNode}</div>
+                <div className={stageClass(4)}>{rulesNode}</div>
+              </div>
+            </div>
+            <div className={stageClass(5)}>{tabbedNode}</div>
           </div>
-          <div className={stageClass(5)}>
-            <TraceCard alert={selAlert} crew={state.crew} />
-          </div>
-        </main>
+        ) : (
+          // Desktop lg+: 3-column (rail | vitals+tabbed | AI+rules).
+          // Layout: top row crew pills are now embedded in the left column header
+          // for true single-viewport fit. Crew cards in left column.
+          <div
+            className={`grid h-full gap-3 ${
+              isXxl
+                ? "grid-cols-[280px_minmax(0,1fr)_360px]"
+                : isXl
+                ? "grid-cols-[260px_minmax(0,1fr)_340px]"
+                : "grid-cols-[240px_minmax(0,1fr)_320px]"
+            }`}
+          >
+            {/* Left: crew rail */}
+            <div
+              className={`${stageClass(2)} flex min-h-0 flex-col gap-2 overflow-y-auto`}
+            >
+              <CrewList
+                crew={state.crew}
+                selected={state.selected}
+                aiOn={state.aiOn}
+                onPick={(i) => dispatch({ type: "SELECT_CREW", i })}
+                variant="rail"
+              />
+            </div>
 
-        <aside className="flex flex-col gap-3">
-          <div className={stageClass(3)}>
-            <AIScoreCard crew={sel} aiOn={state.aiOn} />
-          </div>
-          <div className={stageClass(4)}>
-            <RulesCard crew={sel} />
-          </div>
-          <div className={stageClass(6)}>
-            <BriefCard
-              crew={sel}
-              alerts={state.alerts}
-              brief={state.brief}
-              briefModel={state.briefModel}
-              briefLoading={state.briefLoading}
-              chat={state.chat}
-              chatStreaming={state.chatStreaming}
-              chatModel={state.chatModel}
-              onWriteBrief={writeBrief}
-              onSendChat={sendChat}
-            />
-          </div>
-        </aside>
-      </div>
+            {/* Middle: vitals + tabbed panel */}
+            <div className="flex min-h-0 flex-col gap-3">
+              <div className={stageClass(1)}>{vitalsNode}</div>
+              <div className={`${stageClass(5)} min-h-0 flex-1`}>
+                {tabbedNode}
+              </div>
+            </div>
 
-      <footer className="mx-6 mt-6 text-center text-[11px] text-white/30">
-        Simulation is fully client-side · the LLM only writes prose · rules
-        always decide alerts · deployed on Vercel
-      </footer>
-    </main>
+            {/* Right: AI + Rules */}
+            <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto">
+              <div className={stageClass(3)}>{aiNode}</div>
+              <div className={stageClass(4)}>{rulesNode}</div>
+            </aside>
+          </div>
+        )}
+      </main>
+
+      {isMobile && (
+        <BottomTabs
+          active={mobileTab}
+          onChange={setMobileTab}
+          alertsBadge={activeAlertCount}
+        />
+      )}
+
+      <ScenarioSheet
+        open={scenariosOpen}
+        onClose={() => setScenariosOpen(false)}
+        storm={state.storm}
+        aiOn={state.aiOn}
+        selectedFlags={sel.f}
+        onToggle={(k) => dispatch({ type: "TOG_FLAG", k })}
+        onDemo={startDemo}
+        onReset={reset}
+      />
+
+      {!isMobile && (
+        <footer className="mt-auto px-3 py-2 text-center text-sm text-white/55 sm:px-5">
+          Simulation runs in the browser · the LLM only writes prose · rules
+          always decide alerts · deployed on Vercel
+        </footer>
+      )}
+    </div>
   );
 }
