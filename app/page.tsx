@@ -23,6 +23,7 @@ import { ScenarioPanel } from "@/components/ScenarioPanel";
 import { CrewWideBanner } from "@/components/CrewWideBanner";
 import { MissionTimeline } from "@/components/MissionTimeline";
 import { CrewComparison } from "@/components/CrewComparison";
+import { TabbedPanel, type TabKey } from "@/components/TabbedPanel";
 import {
   mkCrew,
   clock as tickClock,
@@ -494,12 +495,11 @@ export default function Page() {
 
   // Responsive flags
   const isMobile = useMediaQuery("(max-width: 639px)", false);
-  const isCompact = useMediaQuery("(max-width: 1279px)", false);
+  const isCompact = useMediaQuery("(max-width: 1023px)", false);
   const isLg = useMediaQuery("(min-width: 1024px)", true);
-  const isXl = useMediaQuery("(min-width: 1280px)", true);
-  const isXxl = useMediaQuery("(min-width: 1600px)", true);
 
   const [mobileTab, setMobileTab] = useState<TabId>("chat");
+  const [desktopTab, setDesktopTab] = useState<TabKey>("ask");
   const [scenariosOpen, setScenariosOpen] = useState(false);
   const previousSelectedCrew = useRef(state.selected);
 
@@ -799,6 +799,21 @@ export default function Page() {
       />
     </div>
   );
+  const desktopAlertsNode = (
+    <AlertsCard
+      alerts={state.alerts}
+      crew={state.crew}
+      selected={state.selectedAlert}
+      onSelect={inspectAlert}
+    />
+  );
+  const timelineNode = (
+    <MissionTimeline
+      events={state.events}
+      onInspectAlert={inspectAlert}
+      onReplay={replayScenario}
+    />
+  );
   const whyNode = <TraceCard alert={selAlert} crew={state.crew} />;
   const crewNode = (
     <CrewComparison crew={state.crew} selected={state.selected} onSelect={selectCrew} />
@@ -814,7 +829,11 @@ export default function Page() {
     />
   );
   const chatNode = (
-    <div className="h-[min(60dvh,680px)] min-h-[360px]">
+    <div
+      className={
+        isCompact ? "h-[min(60dvh,680px)] min-h-[360px]" : "h-full min-h-0"
+      }
+    >
       <AskCard
         crew={sel}
         chat={state.chat}
@@ -845,7 +864,7 @@ export default function Page() {
   );
 
   return (
-    <div className="relative z-10 flex min-h-dvh flex-col">
+    <div className="dashboard-root relative z-10 flex min-h-dvh flex-col">
       <TopBar
         clock={tickClock(state.tick)}
         running={state.running}
@@ -863,7 +882,7 @@ export default function Page() {
         hideScenarios={false}
       />
 
-      <div className="flex items-center justify-between gap-3 border-b border-white/5 px-3 py-1 text-xs sm:px-5">
+      <div className="desktop-simulation-row flex items-center justify-between gap-3 border-b border-white/5 px-3 py-1 text-xs sm:px-5">
         <span className="font-semibold tracking-[0.12em] text-cyan-200">
           SIMULATION
         </span>
@@ -875,6 +894,7 @@ export default function Page() {
       <Pipeline
         onStage={setStage}
         values={state.pipelineValues}
+        desktop={!isCompact}
         selected={sel}
         aiOn={state.aiOn}
         activeCount={activeAlertCount}
@@ -895,7 +915,7 @@ export default function Page() {
       <CrewWideBanner event={crewWide} />
 
       <main
-        className={`flex flex-1 flex-col px-3 py-3 sm:px-5 sm:py-4 ${
+        className={`desktop-dashboard-main flex flex-1 flex-col px-3 py-3 sm:px-5 sm:py-4 ${
           isCompact ? "pb-24" : ""
         }`}
       >
@@ -931,19 +951,9 @@ export default function Page() {
             )}
           </div>
         ) : (
-          // Wide screens keep the dashboard panels visible together. The page
-          // scrolls naturally on shorter displays instead of clipping panels.
-          <div
-            className={`grid min-h-0 content-start items-start gap-3 ${
-              isXxl
-                ? "grid-cols-[minmax(220px,0.85fr)_minmax(300px,1.1fr)_minmax(300px,1.05fr)_minmax(360px,1.2fr)]"
-                : isXl
-                ? "grid-cols-[minmax(200px,0.85fr)_minmax(270px,1.1fr)_minmax(300px,1.1fr)_minmax(320px,1.15fr)]"
-                : "grid-cols-1"
-            }`}
-          >
+          <div className="desktop-dashboard-grid grid min-h-0 items-stretch gap-3">
             <aside
-              className={`${stageClass(2)} flex min-w-0 flex-col gap-3`}
+              className={`${stageClass(2)} desktop-dashboard-left flex min-w-0 flex-col gap-3`}
             >
               <CrewList
                 crew={state.crew}
@@ -953,24 +963,32 @@ export default function Page() {
                 variant="rail"
                 causes={crewCauses}
               />
-              <div className={stageClass(7)}>{scenariosNode}</div>
+              <div className={`${stageClass(7)} desktop-scenario-wrap`}>
+                {scenariosNode}
+              </div>
             </aside>
 
-            <div className="flex min-w-0 flex-col gap-3">
-              <div className={stageClass(1)}>{vitalsNode}</div>
-              <div className={stageClass(2)}>{crewNode}</div>
-              <div className={stageClass(3)}>{aiNode}</div>
-              <div className={stageClass(4)}>{rulesNode}</div>
+            <div className="desktop-dashboard-center flex min-w-0 flex-col gap-3">
+              <div className={`${stageClass(1)} desktop-vitals-wrap`}>
+                {vitalsNode}
+              </div>
+              <TabbedPanel
+                active={desktopTab}
+                onChange={setDesktopTab}
+                alerts={desktopAlertsNode}
+                why={whyNode}
+                timeline={timelineNode}
+                brief={briefNode}
+                ask={chatNode}
+                alertsBadge={activeAlertCount}
+              />
             </div>
 
-            <aside className="flex min-w-0 flex-col gap-3">
-              <div className={stageClass(5)}>{alertsNode}</div>
-              <div className={stageClass(5)}>{whyNode}</div>
-              <div className={stageClass(6)}>{briefNode}</div>
-            </aside>
-
-            <aside className="min-w-0">
-              <div className={stageClass(6)}>{chatNode}</div>
+            <aside className="desktop-dashboard-right flex min-w-0 flex-col gap-3">
+              <div className={stageClass(3)}>{aiNode}</div>
+              <div className={`${stageClass(4)} desktop-rules-wrap`}>
+                {rulesNode}
+              </div>
             </aside>
           </div>
         )}

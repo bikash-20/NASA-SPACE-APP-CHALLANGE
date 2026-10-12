@@ -41,6 +41,7 @@ export function TopBar({
     <header
       className={cn(
         "z-20 flex flex-wrap items-center justify-between gap-2 border-b border-white/5 bg-bg-deep/70 px-3 py-2 backdrop-blur-md sm:gap-3 sm:px-5",
+        "dashboard-topbar",
         compact ? "sticky top-0" : ""
       )}
     >
@@ -59,13 +60,14 @@ export function TopBar({
           <p className="hidden pl-4 text-xs text-white/55 sm:block">
             Rule-based decision support · synthetic telemetry
           </p>
+          <p className="hidden pl-4 text-sm text-white/65 lg:block">
+            Synthetic telemetry · deterministic rules decide · AI only advises
+          </p>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-        {/* Scenarios stay inline in the header. The desktop "Inject a problem"
-            card in the left rail is a second entry point — both are present
-            intentionally so a judge can find them either way. */}
+        {/* The demo and reset controls stay in the header on desktop. */}
         {!hideScenarios && (
           <div className="hidden items-center gap-1.5 sm:flex">
             <Button variant="primary" size="sm" onClick={onDemo}>

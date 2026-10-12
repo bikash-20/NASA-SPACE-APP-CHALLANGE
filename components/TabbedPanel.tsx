@@ -4,14 +4,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Panel } from "./ui/Panel";
 import { cn } from "@/lib/cn";
 
-export type TabKey = "alerts" | "why" | "crew" | "brief" | "ask";
+export type TabKey = "alerts" | "why" | "timeline" | "brief" | "ask";
 
 interface TabbedPanelProps {
   active: TabKey;
   onChange: (k: TabKey) => void;
   alerts: React.ReactNode;
   why: React.ReactNode;
-  crew: React.ReactNode;
+  timeline: React.ReactNode;
   brief: React.ReactNode;
   ask: React.ReactNode;
   alertsBadge?: number;
@@ -20,9 +20,9 @@ interface TabbedPanelProps {
 const TABS: { id: TabKey; label: string }[] = [
   { id: "alerts", label: "Alerts" },
   { id: "why", label: "Why" },
-  { id: "crew", label: "Crew" },
+  { id: "timeline", label: "Timeline" },
   { id: "brief", label: "Brief" },
-  { id: "ask", label: "Ask assistant" },
+  { id: "ask", label: "Chat" },
 ];
 
 export function TabbedPanel({
@@ -30,7 +30,7 @@ export function TabbedPanel({
   onChange,
   alerts,
   why,
-  crew,
+  timeline,
   brief,
   ask,
   alertsBadge,
@@ -57,6 +57,19 @@ export function TabbedPanel({
                 isOn ? "text-ink" : "text-white/65 hover:text-ink"
               )}
             >
+              {t.id === "ask" && (
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  className="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                >
+                  <path d="M3.5 4.5h13v9h-7l-4 3v-3h-2z" />
+                  <path d="M6.5 8h7M6.5 10.5h4.5" />
+                </svg>
+              )}
               <span>{t.label}</span>
               {t.id === "alerts" && alertsBadge && alertsBadge > 0 ? (
                 <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-bad px-1 text-[0.625rem] font-semibold text-white">
@@ -73,7 +86,14 @@ export function TabbedPanel({
           );
         })}
       </div>
-      <div className="min-h-0 flex-1" id={`tabpanel-${active}`} role="tabpanel">
+      <div
+        className={cn(
+          "desktop-tab-content min-h-0 flex-1",
+          active === "ask" ? "overflow-hidden" : "overflow-y-auto"
+        )}
+        id={`tabpanel-${active}`}
+        role="tabpanel"
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={active}
@@ -85,7 +105,7 @@ export function TabbedPanel({
           >
             {active === "alerts" && alerts}
             {active === "why" && why}
-            {active === "crew" && crew}
+            {active === "timeline" && timeline}
             {active === "brief" && brief}
             {active === "ask" && ask}
           </motion.div>

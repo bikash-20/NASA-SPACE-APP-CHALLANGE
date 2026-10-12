@@ -21,17 +21,19 @@ export function VitalsCard({ crew }: VitalsCardProps) {
   const sleepPct = (crew.sleep / 9) * 100;
 
   return (
-    <Panel>
+    <Panel className="desktop-vitals">
       <PanelTitle
         title={`${crew.n} — current vitals`}
         hint={crew.role}
       />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(165px,1fr))]">
         <Tile
           label="Heart rate"
+          desktopLabel="Heart rate"
           big={Math.round(crew.hr)}
           unit="bpm"
           sub={`Baseline ${crew.bhr} bpm. Dashed line = alert threshold (+30%).`}
+          desktopSub={`Baseline ${crew.bhr} · watch +30%`}
           tone={col(0)}
         >
           <Sparkline
@@ -44,9 +46,11 @@ export function VitalsCard({ crew }: VitalsCardProps) {
         </Tile>
         <Tile
           label="Blood oxygen"
+          desktopLabel="Blood oxygen"
           big={crew.spo2.toFixed(1)}
           unit="%"
           sub="Alert below 90% · Watch below 94%."
+          desktopSub="Watch <94% · alert <90%"
           tone={col(1)}
         >
           <Sparkline
@@ -59,9 +63,11 @@ export function VitalsCard({ crew }: VitalsCardProps) {
         </Tile>
         <Tile
           label="Sleep, 3-night average"
+          desktopLabel="Sleep, 3-night avg"
           big={crew.sleep.toFixed(1)}
           unit="h"
           sub="Alert below 4.5 h · Watch below 5.5 h."
+          desktopSub="Watch <5.5 h · alert <4.5 h"
           tone={col(2)}
         >
           <ProgressBar
@@ -73,9 +79,11 @@ export function VitalsCard({ crew }: VitalsCardProps) {
         </Tile>
         <Tile
           label="Stress index"
+          desktopLabel="Stress index"
           big={Math.round(crew.stress)}
           unit="/ 100"
           sub="Alert above 90 · Watch above 75."
+          desktopSub="Watch >75 · alert >90"
           tone={col(3)}
         >
           <Sparkline
@@ -86,9 +94,10 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             yMax={100}
           />
         </Tile>
-        <div className="sm:col-span-2">
+        <div className="sm:col-span-2 lg:col-span-full">
           <Tile
             label="Radiation, 30-day dose"
+            desktopLabel="Radiation"
             big={Math.round(crew.dose)}
             unit={`/ ${DOSE_LIMIT} mSv`}
             sub={
@@ -96,8 +105,10 @@ export function VitalsCard({ crew }: VitalsCardProps) {
                 ? `Over limit — ${Math.round(dosePct)}% of ${DOSE_LIMIT} mSv. Rate ${crew.rate.toFixed(2)} mSv/h.`
                 : `${Math.round(dosePct)}% of ${DOSE_LIMIT} mSv · rate ${crew.rate.toFixed(2)} mSv/h. Marks at 80% and 95%.`
             }
+            desktopSub={`${Math.round(dosePct)}% of ${DOSE_LIMIT} mSv · rate ${crew.rate.toFixed(2)} mSv/h`}
             tone={col(4)}
             badge={doseOver ? "Over" : null}
+            dose
           >
             <ProgressBar
               value={dosePct}
@@ -105,7 +116,7 @@ export function VitalsCard({ crew }: VitalsCardProps) {
               marks={[80, 95]}
               height={10}
             />
-            <div className="mt-2">
+            <div className="mt-2 desktop-dose-rate">
               <Sparkline
                 data={crew.H.rate}
                 threshold={1}
@@ -124,25 +135,38 @@ export function VitalsCard({ crew }: VitalsCardProps) {
 
 function Tile({
   label,
+  desktopLabel,
   big,
   unit,
   sub,
+  desktopSub,
   children,
   tone,
   badge,
+  dose = false,
 }: {
   label: string;
+  desktopLabel: string;
   big: string | number;
   unit: string;
   sub: string;
+  desktopSub: string;
   children: React.ReactNode;
   tone: string;
   badge?: string | null;
+  dose?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:p-4">
+    <div
+      className={`desktop-vital-tile rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:p-4 ${
+        dose ? "desktop-dose-tile" : ""
+      }`}
+    >
       <div className="flex items-center justify-between gap-2">
-        <div className="text-sm font-medium text-white/70">{label}</div>
+        <div className="desktop-vital-title text-sm font-medium text-white/70">
+          <span className="lg:hidden">{label}</span>
+          <span className="hidden lg:inline">{desktopLabel}</span>
+        </div>
         {badge && (
           <span
             className="rounded-full px-2.5 py-0.5 text-sm font-semibold text-white"
@@ -153,14 +177,17 @@ function Tile({
         )}
       </div>
       <div
-        className="mt-1 font-mono font-bold tabular-nums text-ink"
+        className="desktop-vital-value mt-1 font-mono font-bold tabular-nums text-ink"
         style={{ fontSize: "var(--fs-vital)", lineHeight: "var(--lh-display)" }}
       >
         {big}
         <span className="ml-1 text-sm font-normal text-white/55">{unit}</span>
       </div>
-      <div className="mt-2">{children}</div>
-      <div className="mt-2 text-sm text-white/65">{sub}</div>
+      <div className="desktop-vital-chart mt-2">{children}</div>
+      <div className="desktop-vital-caption mt-2 text-sm text-white/65">
+        <span className="lg:hidden">{sub}</span>
+        <span className="hidden lg:inline">{desktopSub}</span>
+      </div>
     </div>
   );
 }

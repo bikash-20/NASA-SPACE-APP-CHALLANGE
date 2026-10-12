@@ -37,7 +37,7 @@ export function MissionTimeline({
           Scenario changes and rule alerts will appear here as the simulation runs.
         </p>
       ) : (
-        <ol className="max-h-64 space-y-2 overflow-y-auto pr-1">
+        <ol className="desktop-timeline-list max-h-64 space-y-2 overflow-y-auto pr-1">
           {events.slice(0, 8).map((event) => (
             <li
               key={event.id}

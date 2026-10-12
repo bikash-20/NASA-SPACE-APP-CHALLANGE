@@ -22,6 +22,7 @@ const STEPS: {
 interface PipelineProps {
   onStage: (n: number) => void;
   values: string[];
+  desktop?: boolean;
   selected?: Crew | null;
   aiOn?: boolean;
   activeCount?: number;
@@ -38,6 +39,7 @@ const toneColor = (tone: PipelineProps["values"] extends never ? never : "ok" | 
 export function Pipeline({
   onStage,
   values,
+  desktop = false,
   selected,
   aiOn = true,
   activeCount = 0,
@@ -64,20 +66,23 @@ export function Pipeline({
 
   return (
     <ol
-      className="snap-row flex w-full items-stretch gap-1.5 overflow-x-auto px-3 py-2 sm:gap-2 sm:px-5"
+      className={`snap-row flex w-full items-stretch gap-1.5 overflow-x-auto px-3 py-2 sm:gap-2 sm:px-5 ${
+        desktop ? "desktop-pipeline" : ""
+      }`}
       aria-label="Pipeline"
     >
       {STEPS.map((s, i) => {
         const { dot } = stepHints(i);
         return (
-          <li key={s.key} className="flex-1 min-w-[140px]">
+          <li key={s.key} className="min-w-[140px] flex-1">
             <motion.button
               whileHover={{ y: -1 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
               onClick={() => onStage(i + 1)}
               className={cn(
                 "tappable group flex w-full flex-col items-stretch gap-1 rounded-lg border bg-white/[0.04] p-2 text-left",
-                "border-white/10 hover:border-white/25"
+                "border-white/10 hover:border-white/25",
+                desktop && "desktop-pipeline-card"
               )}
               style={{ borderTopColor: dot, borderTopWidth: 3 }}
               aria-label={`Step ${i + 1}: ${s.label}`}
@@ -91,7 +96,7 @@ export function Pipeline({
                 </span>
               </div>
               <span className="block whitespace-normal break-words font-mono text-sm leading-tight tabular-nums text-white/80">
-                {values[i] || "—"}
+                {desktop ? compactPipelineValue(i, values[i]) : values[i] || "—"}
               </span>
             </motion.button>
           </li>
@@ -99,4 +104,15 @@ export function Pipeline({
       })}
     </ol>
   );
+}
+
+function compactPipelineValue(index: number, value: string): string {
+  if (!value) return "—";
+  if (index === 0) return value.split(" / ")[0] ?? value;
+  if (index === 1) {
+    return value
+      .replace("SpO₂ ≥94", "SpO2 94+")
+      .replace("Sl ", "sleep ");
+  }
+  return value;
 }

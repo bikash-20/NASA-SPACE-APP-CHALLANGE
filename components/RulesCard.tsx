@@ -7,13 +7,13 @@ import type { Crew } from "@/lib/types";
 
 export function RulesCard({ crew }: { crew: Crew }) {
   return (
-    <Panel tone="ok" density="compact">
+    <Panel tone="ok" density="compact" className="desktop-rules">
       <PanelTitle title="Rules" tone="ok" />
       <ul className="divide-y divide-white/5">
         {crew.R.map((r) => (
           <li
             key={r.n}
-            className="grid grid-cols-[1.5rem_1fr_auto] items-start gap-2 py-2 first:pt-0 last:pb-0"
+            className="desktop-rule-row grid grid-cols-[1.5rem_1fr_auto] items-start gap-2 py-2 first:pt-0 last:pb-0"
           >
             <span
               className="mt-1.5 inline-block h-3 w-3 shrink-0 rounded-full"
@@ -21,10 +21,14 @@ export function RulesCard({ crew }: { crew: Crew }) {
               aria-label={LEVEL_NAMES[r.lv]}
             />
             <div className="min-w-0">
-              <b className="block text-sm font-semibold text-ink">{r.n}</b>
-              <span className="block text-sm text-white/65">{r.th}</span>
+              <b className="desktop-rule-name block text-sm font-semibold text-ink">
+                {r.n}
+              </b>
+              <span className="desktop-rule-threshold block text-sm text-white/65">
+                {r.th}
+              </span>
             </div>
-            <div className="text-right">
+            <div className="desktop-rule-result text-right">
               <div className="font-mono text-sm tabular-nums text-ink">
                 {r.val}
               </div>

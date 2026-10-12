@@ -115,7 +115,7 @@ export function CrewList({ crew, selected, aiOn, onPick, variant, causes }: Crew
 
   // rail (desktop)
   return (
-    <div className="flex flex-col gap-2">
+    <div className="desktop-crew-list flex flex-col gap-2">
       {crew.map((c, i) => {
         const { color, label } = statusDot(c, aiOn);
         const cause = causes?.[i] ?? null;
@@ -141,7 +141,7 @@ export function CrewList({ crew, selected, aiOn, onPick, variant, causes }: Crew
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <b className="block truncate text-base font-semibold text-ink">
+                <b className="block text-base font-semibold text-ink">
                   {c.n}
                 </b>
                 <span className="text-sm text-white/65">{c.role}</span>

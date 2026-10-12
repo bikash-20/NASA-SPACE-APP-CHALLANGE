@@ -82,14 +82,9 @@ export function ScenarioPanel({
 
   if (variant === "inline") {
     return (
-      <Panel density="compact" tone="default">
+      <Panel density="compact" tone="default" className="desktop-scenarios">
         <PanelTitle title="Inject a problem" />
-        <PresetButtons
-          compact
-          activePreset={activePreset}
-          onPreset={onPreset}
-        />
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 desktop-scenario-rows">
           <ScenarioRow
             active={storm}
             onClick={() => onToggle("storm")}
@@ -119,10 +114,7 @@ export function ScenarioPanel({
             pillTone="bad"
           />
         </div>
-        <div className="mt-3 flex gap-2">
-          <Button block variant="primary" size="sm" onClick={onDemo}>
-            Run guided demo
-          </Button>
+        <div className="mt-2 flex justify-end">
           <Button size="sm" variant="default" onClick={onReset}>
             Reset
           </Button>

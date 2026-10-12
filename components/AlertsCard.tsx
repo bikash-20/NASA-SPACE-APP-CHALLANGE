@@ -48,7 +48,7 @@ export function AlertsCard({
   );
 
   return (
-    <Panel>
+    <Panel className="desktop-alert-card">
       <PanelTitle
         title="Alerts"
         tone="ok"
@@ -149,7 +149,7 @@ function AlertList({
               aria-pressed={isSel}
               aria-label={`${crewFull} — ${g.n}: ${g.why}`}
             >
-              <div className="flex items-center gap-2">
+              <div className="desktop-alert-crew flex items-center gap-2">
                 <span
                   aria-hidden
                   className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-[0.6875rem] font-bold uppercase tracking-wider text-ink"
@@ -175,11 +175,14 @@ function AlertList({
                 )}
               </div>
               <div className="mt-1 flex items-baseline justify-between gap-2">
-                <b className="text-sm font-semibold text-ink">
+                <b className="desktop-alert-title hidden text-sm font-semibold text-ink lg:block">
+                  {crewShort}: {g.n}: {g.why}
+                </b>
+                <b className="text-sm font-semibold text-ink lg:hidden">
                   {g.n}: {g.why}
                 </b>
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-white/65">
+              <div className="desktop-alert-meta mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-white/65">
                 <span className="font-mono tabular-nums">{g.val}</span>
                 <span aria-hidden>·</span>
                 <span style={{ color: colorForLevel(g.lv) }} className="font-semibold">

@@ -35,14 +35,14 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
   }, [score, mv, display]);
 
   return (
-    <Panel tone="accent" density="compact">
+    <Panel tone="accent" density="compact" className="desktop-ai-score">
       <PanelTitle title="AI risk score" tone="accent" />
       {aiOn ? (
         <>
           <div className="flex items-baseline gap-2">
             <span
               ref={ref}
-              className="font-mono font-bold tabular-nums text-accent"
+              className="desktop-ai-number font-mono font-bold tabular-nums text-accent"
               style={{
                 fontSize: "var(--fs-ai)",
                 lineHeight: "var(--lh-display)",
@@ -50,15 +50,15 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
             >
               {score}
             </span>
-            <span className="text-sm text-white/65">
+            <span className="desktop-ai-label text-sm text-white/65">
               of 100 · {band(score)}
             </span>
           </div>
-          <div className="mt-3 space-y-1.5">
+          <div className="desktop-ai-factors mt-3 space-y-1.5">
             {crew.F.map(([name, val, max]) => (
               <div
                 key={name}
-                className="grid grid-cols-[7.5rem_1fr] items-center gap-2 text-sm text-white/75"
+                className="desktop-ai-factor grid grid-cols-[7.5rem_1fr] items-center gap-2 text-sm text-white/75"
               >
                 <span className="truncate">{name}</span>
                 <ProgressBar
@@ -69,10 +69,15 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
               </div>
             ))}
           </div>
-          <p className="mt-3 text-sm text-white/65">
-            {mx === 0 && crew.ai >= 45
-              ? "The AI sees a combined pattern no single rule caught. It's flagged for review, not raised as an alert."
-              : "The score never raises an alert on its own. Rules do that."}
+          <p className="desktop-ai-advice mt-3 text-sm text-white/65">
+            <span className="lg:hidden">
+              {mx === 0 && crew.ai >= 45
+                ? "The AI sees a combined pattern no single rule caught. It's flagged for review, not raised as an alert."
+                : "The score never raises an alert on its own. Rules do that."}
+            </span>
+            <span className="hidden lg:inline">
+              Advises only. Rules decide.
+            </span>
           </p>
         </>
       ) : (
