@@ -13,7 +13,11 @@
 const ENDPOINT = "https://openrouter.ai/api/v1/models";
 const CHAT_URL = "https://openrouter.ai/api/v1/chat/completions";
 const CACHE_TTL_MS = 10 * 60 * 1000;
-const PER_REQUEST_TIMEOUT_MS = 8_000;
+// Free-tier models on OpenRouter are often slow to cold-start, especially
+// for non-streaming requests. Keep this in sync with the streaming timeout
+// so a brief that needs 600 tokens has the same wall-clock budget as a chat
+// turn that streams 800.
+const PER_REQUEST_TIMEOUT_MS = 16_000;
 
 const PREFERRED_FAMILIES = [
   "llama",
@@ -72,9 +76,19 @@ function isFree(m: OpenRouterModel): boolean {
 
 function rank(m: OpenRouterModel): number {
   let score = 0;
-  if ((m.context_length ?? 0) >= 32_000) score += 100;
+  // Small-context models are usually the "flash" or "mini" variants and
+  // respond much faster on the free tier. Prefer them so most requests
+  // succeed on the first try instead of timing out on a heavyweight model
+  // and falling through to one that would have answered.
+  const ctx = m.context_length ?? 0;
+  if (ctx > 0 && ctx < 16_000) score += 150;
+  if (ctx >= 32_000) score += 50;
   const id = m.id.toLowerCase();
   if (PREFERRED_FAMILIES.some((f) => id.includes(f))) score += 50;
+  // "flash", "mini", "lite", "small" suffixes are a strong signal of speed.
+  if (/(?:^|[^a-z])(flash|mini|lite|small|nano)(?:[^a-z]|$)/.test(id)) {
+    score += 80;
+  }
   return score;
 }
 

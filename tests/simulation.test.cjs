@@ -298,6 +298,108 @@ test("the OpenRouter cascade fails rather than selecting paid models when no fre
   }
 });
 
+test("the OpenRouter cascade ranks fast flash-class free models above large-context ones", async () => {
+  const openrouter = loadOpenRouter();
+  const originalFetch = global.fetch;
+  const models = [
+    {
+      id: "free/heavy-llama-70b",
+      context_length: 131_072,
+      pricing: { prompt: "0", completion: "0" },
+      architecture: { output_modalities: ["text"] },
+    },
+    {
+      id: "free/llama-3-8b-flash",
+      context_length: 8_192,
+      pricing: { prompt: "0", completion: "0" },
+      architecture: { output_modalities: ["text"] },
+    },
+    {
+      id: "free/qwen-mini",
+      context_length: 4_096,
+      pricing: { prompt: "0", completion: "0" },
+      architecture: { output_modalities: ["text"] },
+    },
+    {
+      id: "free/medium-32k",
+      context_length: 32_000,
+      pricing: { prompt: "0", completion: "0" },
+      architecture: { output_modalities: ["text"] },
+    },
+  ];
+  global.fetch = async () =>
+    new Response(JSON.stringify({ data: models }), {
+      headers: { "Content-Type": "application/json" },
+    });
+
+  try {
+    const cascade = await openrouter.getCascade();
+    // Flash/mini/8k models should be picked over the 70b and the 32k
+    // general-purpose model. We don't pin exact IDs (the upstream
+    // catalog changes), but the order should not start with a heavy
+    // multi-100k-context model.
+    assert.equal(cascade.length, 4);
+    assert.notEqual(cascade[0], "free/heavy-llama-70b");
+    assert.notEqual(cascade[0], "free/medium-32k");
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("callCascade surfaces a timeout rather than silently retrying forever", async () => {
+  const openrouter = loadOpenRouter();
+  const originalFetch = global.fetch;
+  const originalApiKey = process.env.OPENROUTER_API_KEY;
+  process.env.OPENROUTER_API_KEY = "test-key";
+  // The catalog returns one fast model. We then make chat completions
+  // hang forever (never resolve) so the per-model AbortController must
+  // fire and the cascade must throw "all cascade models failed" once the
+  // budget is exhausted.
+  global.fetch = async (input) => {
+    if (String(input).endsWith("/models")) {
+      return new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "free/slow-flash",
+              context_length: 8_192,
+              pricing: { prompt: "0", completion: "0" },
+              architecture: { output_modalities: ["text"] },
+            },
+          ],
+        }),
+        { headers: { "Content-Type": "application/json" } }
+      );
+    }
+    return new Promise<Response>(() => {});
+  };
+
+  try {
+    const startedAt = Date.now();
+    await assert.rejects(
+      openrouter.callCascade([
+        { role: "system", content: "You are a brief writer." },
+        { role: "user", content: "Write a brief." },
+      ]),
+      /all cascade models failed/
+    );
+    const elapsed = Date.now() - startedAt;
+    // The cascade only has one slow model, so it should give up in roughly
+    // one per-request timeout, not to wait the 30s client-side budget.
+    assert.ok(
+      elapsed < 30_000,
+      `callCascade should fail fast when the only model hangs (took ${elapsed}ms)`
+    );
+  } finally {
+    global.fetch = originalFetch;
+    if (originalApiKey === undefined) {
+      delete process.env.OPENROUTER_API_KEY;
+    } else {
+      process.env.OPENROUTER_API_KEY = originalApiKey;
+    }
+  }
+});
+
 test("chat streaming falls back when a provider returns an SSE error", async () => {
   const openrouter = loadOpenRouter();
   const originalFetch = global.fetch;

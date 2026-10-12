@@ -88,9 +88,9 @@ export async function POST(req: NextRequest) {
         }
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
-      } catch {
+      } catch (e) {
         if (!upstreamSignal.aborted) {
-          console.error("[/api/chat] upstream service failed");
+          console.error("[/api/chat] upstream service failed", e);
           controller.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({ error: "chat service temporarily unavailable" })}\n\n`

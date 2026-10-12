@@ -565,8 +565,9 @@ export default function Page() {
       if (requestId !== briefRequestId.current) return;
       dispatch({ type: "SET_BRIEF", text: j.text, model: j.model });
       if (isCompact) setMobileTab("brief");
-    } catch {
+    } catch (err) {
       if (requestId !== briefRequestId.current) return;
+      console.error("[brief] request failed", err);
       dispatch({
         type: "SET_BRIEF_ERROR",
         message: controller.signal.aborted

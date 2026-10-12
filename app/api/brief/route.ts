@@ -53,8 +53,8 @@ export async function POST(req: NextRequest) {
       },
     ]);
     return NextResponse.json({ text, model });
-  } catch {
-    console.error("[/api/brief] upstream service failed");
+  } catch (e) {
+    console.error("[/api/brief] upstream service failed", e);
     return NextResponse.json(
       { error: "brief service temporarily unavailable" },
       { status: 503 }
