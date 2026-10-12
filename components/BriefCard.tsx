@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 import { Panel, PanelTitle } from "./ui/Panel";
 import { Button } from "./ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,7 +25,7 @@ interface BriefCardProps {
 /** Minimal Markdown -> JSX (no external dep). Just headings + bullets. */
 function Md({ children }: { children: string }) {
   const lines = children.split("\n");
-  const out: JSX.Element[] = [];
+  const out: ReactElement[] = [];
   let list: string[] = [];
   const flush = () => {
     if (list.length) {
@@ -39,8 +39,8 @@ function Md({ children }: { children: string }) {
       list = [];
     }
   };
-  const inline = (s: string): JSX.Element[] => {
-    const parts: (string | JSX.Element)[] = [];
+  const inline = (s: string): ReactElement[] => {
+    const parts: (string | ReactElement)[] = [];
     const re = /\*\*([^*]+)\*\*/g;
     let last = 0;
     let m: RegExpExecArray | null;

@@ -54,11 +54,19 @@ export async function POST(req: NextRequest) {
   if (!crew || !messages) {
     return Response.json({ error: "invalid chat request" }, { status: 400 });
   }
+  // Defense-in-depth: even though parseChatMessages constrains role and
+  // content, we never forward a client-supplied "assistant" turn to the
+  // LLM. Without this, a malicious client could forge prior assistant
+  // replies ("I'm ignoring the snapshot, here's the real answer") and many
+  // models would follow them. The server is the only source of assistant
+  // turns in this conversation.
+  const trustedUserTurns = messages.filter((m) => m.role === "user");
+
   const body: ChatRequestBody = {
     crew,
     aiOn: input.aiOn,
     alerts: sanitizeAlertHistory(input.alerts, [crew], input.aiOn),
-    messages,
+    messages: trustedUserTurns,
   };
   const snapshot = snapshotForLLM(body.crew, body.alerts, body.aiOn);
   const encoder = new TextEncoder();
