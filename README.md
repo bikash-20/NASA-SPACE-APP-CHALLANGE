@@ -201,7 +201,7 @@ The net effect is that you see a **fresh row each time the level steps up**, but
 
 ### The cascade
 
-On first use, `loadCascade()` fetches `https://openrouter.ai/api/v1/models` (no auth required) with a 10-minute `revalidate`. It filters to chat-capable models (`output_modalities` includes `text`, or `modality` contains `text` / `->text`) and ranks them by:
+On first use, `loadCascade()` fetches `https://openrouter.ai/api/v1/models` (no auth required). It filters to chat-capable models (`output_modalities` includes `text`, or `modality` contains `text` / `->text`) and ranks them by:
 
 1. **Free first**: +1000 if both prompt and completion pricing are 0, +500 if prompt is 0 only.
 2. **Price**: otherwise `-1000 · (prompt + completion)`.
@@ -213,7 +213,7 @@ The top **5** ids are cached in module-scope memory for 10 minutes, with an infl
 - **Non-streaming** (`callCascade`): 8 s per model, 600 max tokens default, `temperature ≈ 0.4`.
 - **Streaming** (`streamCascade`): 16 s per model, 800 max tokens default, `temperature ≈ 0.5`.
 
-On `401`/`403` the cascade aborts immediately — the key is bad, retrying won't help. On any other failure the loop logs a warning and tries the next model. The first model to return a non-empty `choices[0].message.content` wins. Vercel function logs show `[openrouter] served by: <id>` for every success.
+On `401`/`403` the cascade aborts immediately — the key is bad, retrying won't help. On other failures it tries the next model. Chat streaming also treats upstream SSE errors, empty replies, and incomplete streams as failures instead of reporting an empty success. Vercel function logs record the model and a sanitized failure category (and HTTP status when available), but never log credentials, prompts, or provider response bodies. Successful chat logs show `[openrouter] stream completed by: <id>`; non-streaming calls show `[openrouter] served by: <id>`.
 
 ### `/api/brief` (POST, non-streaming)
 
@@ -228,7 +228,7 @@ data: {"delta":"<text>","model":"<id>"}
 data: [DONE]
 ```
 
-The client (`sendChat` in `app/page.tsx`) reads the stream with a `ReadableStreamDefaultReader`, decodes chunks, parses each `data:` line, dispatches `ADD_CHAT_DELTA` to the reducer, and finalizes the model on `[DONE]`. Client disconnects cancel upstream generation. Routes return generic upstream errors rather than provider error text. These request bounds are not a substitute for persistent per-user rate limiting; add an appropriate backend rate-limit store before exposing paid model access publicly.
+The client (`sendChat` in `app/page.tsx`) reads the stream with a `ReadableStreamDefaultReader`, decodes chunks, parses each `data:` line, dispatches `ADD_CHAT_DELTA` to the reducer, and finalizes the model on `[DONE]`. Client disconnects cancel upstream generation. If generation fails, the submitted user message remains visible and the UI shows a generic error; the HTTP response can still be 200 because the failure is reported inside the SSE stream. Routes never return provider error text. These request bounds are not a substitute for persistent per-user rate limiting; add an appropriate backend rate-limit store before exposing paid model access publicly.
 
 Both routes are `runtime = "nodejs"` and `dynamic = "force-dynamic"` because they read the API key from the environment on every request.
 

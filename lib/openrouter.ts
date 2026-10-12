@@ -65,10 +65,14 @@ function rank(m: OpenRouterModel): number {
 async function loadCascade(): Promise<string[]> {
   const res = await fetch(ENDPOINT, {
     headers: { Accept: "application/json" },
-    // short cache, server-side
-    next: { revalidate: 600 },
   });
-  if (!res.ok) throw new Error(`openrouter models list failed: ${res.status}`);
+  if (!res.ok) {
+    console.warn("[openrouter] model catalog failed", {
+      category: "http_error",
+      status: res.status,
+    });
+    throw new Error(`openrouter models list failed: ${res.status}`);
+  }
   const data = (await res.json()) as { data?: OpenRouterModel[] };
   const list = (data.data ?? []).filter(isChatCapable);
   list.sort((a, b) => rank(b) - rank(a));
@@ -88,6 +92,12 @@ export async function getCascade(): Promise<string[]> {
       cascadeCache = { at: Date.now(), ids };
       return ids;
     })
+    .catch((error: unknown) => {
+      console.warn("[openrouter] model catalog failed", {
+        category: errorCategory(error),
+      });
+      throw error;
+    })
     .finally(() => {
       cascadeInflight = null;
     });
@@ -105,6 +115,28 @@ export interface CascadeOpts {
   signal?: AbortSignal;
 }
 
+function logStreamFailure(
+  model: string,
+  category: string,
+  status?: number
+): void {
+  console.warn("[openrouter] stream attempt failed", {
+    model,
+    category,
+    ...(status === undefined ? {} : { status }),
+  });
+}
+
+function errorCategory(error: unknown): string {
+  if (!(error instanceof Error)) return "unknown";
+  if (error.name === "AbortError" || error.name === "TimeoutError") {
+    return "timeout";
+  }
+  return "network_or_stream_error";
+}
+
+class PartialStreamError extends Error {}
+
 /** One non-streaming cascade call. Returns the text + which model served. */
 export async function callCascade(
   messages: CascadeMessage[],
@@ -113,6 +145,9 @@ export async function callCascade(
   opts.signal?.throwIfAborted();
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
+    console.error("[openrouter] request configuration failed", {
+      category: "missing_api_key",
+    });
     throw new Error("OPENROUTER_API_KEY is not set on the server");
   }
   const ids = await getCascade();
@@ -187,6 +222,9 @@ export async function* streamCascade(
   opts.signal?.throwIfAborted();
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
+    console.error("[openrouter] chat configuration failed", {
+      category: "missing_api_key",
+    });
     throw new Error("OPENROUTER_API_KEY is not set on the server");
   }
   const ids = await getCascade();
@@ -200,6 +238,7 @@ export async function* streamCascade(
     const signal = opts.signal
       ? AbortSignal.any([controller.signal, opts.signal])
       : controller.signal;
+    let receivedDelta = false;
     try {
       const res = await fetch(CHAT_URL, {
         method: "POST",
@@ -220,42 +259,104 @@ export async function* streamCascade(
       });
 
       if (res.status === 401 || res.status === 403) {
+        console.warn("[openrouter] stream attempt failed", {
+          model,
+          category: "authentication",
+          status: res.status,
+        });
         throw new Error(`openrouter auth failed (${res.status})`);
       }
       if (!res.ok || !res.body) {
+        logStreamFailure(
+          model,
+          res.body ? "http_error" : "missing_response_body",
+          res.body ? res.status : undefined
+        );
         continue;
       }
-      console.log("[openrouter] stream served by:", model);
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let streamDone = false;
+      let failureCategory: string | null = null;
       while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
+        if (done) {
+          buffer += decoder.decode();
+          if (buffer) buffer += "\n";
+        } else {
+          buffer += decoder.decode(value, { stream: true });
+        }
         const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
+        buffer = done ? "" : lines.pop() ?? "";
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed.startsWith("data:")) continue;
           const payload = trimmed.slice(5).trim();
-          if (payload === "[DONE]") return;
+          if (payload === "[DONE]") {
+            streamDone = true;
+            break;
+          }
           try {
             const parsed = JSON.parse(payload) as {
+              error?: unknown;
               choices?: { delta?: { content?: string } }[];
             };
+            if (parsed.error) {
+              failureCategory = "upstream_sse_error";
+              break;
+            }
             const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) yield { delta, model };
+            if (delta) {
+              receivedDelta = true;
+              yield { delta, model };
+            }
           } catch {
-            // ignore malformed chunk
+            failureCategory = "malformed_sse";
+            break;
           }
         }
+        if (failureCategory || streamDone || done) break;
       }
+      if (failureCategory) {
+        await reader.cancel();
+        logStreamFailure(model, failureCategory);
+        if (receivedDelta) {
+          throw new PartialStreamError(
+            "OpenRouter stream failed after partial output"
+          );
+        }
+        continue;
+      }
+      if (!streamDone) {
+        logStreamFailure(model, "incomplete_stream");
+        if (receivedDelta) {
+          throw new PartialStreamError(
+            "OpenRouter stream failed after partial output"
+          );
+        }
+        continue;
+      }
+      if (!receivedDelta) {
+        logStreamFailure(model, "empty_stream");
+        continue;
+      }
+      if (streamDone) await reader.cancel();
+      console.log("[openrouter] stream completed by:", model);
       return;
     } catch (err) {
       if (opts.signal?.aborted) throw err;
       if (err instanceof Error && err.message.startsWith("openrouter auth")) {
         throw err;
+      }
+      if (err instanceof PartialStreamError) {
+        throw err;
+      }
+      logStreamFailure(model, errorCategory(err));
+      if (receivedDelta) {
+        throw new PartialStreamError(
+          "OpenRouter stream failed after partial output"
+        );
       }
       continue;
     } finally {
