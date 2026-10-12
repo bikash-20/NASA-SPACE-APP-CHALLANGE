@@ -67,11 +67,11 @@ export function AskCard({
 
   return (
     <Panel tone="accent" className="flex h-full min-h-0 flex-col">
-      <PanelTitle title="Ask the simulation assistant" hint={crew.n} />
+      <PanelTitle title="Chat with the assistant" hint={crew.n} />
 
       <div className="mb-2 text-sm text-white/65">
-        Follow-up questions about the current snapshot. The model never raises
-        alerts — rules do that.
+        Ask about the crew snapshot or chat about everyday topics. Only the
+        rules engine can raise alerts.
       </div>
 
       {/* Sticky chat thread: grows inside a fixed-height region and
@@ -82,12 +82,15 @@ export function AskCard({
           ref={scrollRef}
           onScroll={onScroll}
           data-sticky-scroll={isAtBottom ? "pinned" : "detached"}
+          role="log"
+          aria-label="Conversation"
+          aria-relevant="additions text"
           className="chat-scroll absolute inset-0 overflow-y-auto overscroll-contain rounded-md border border-white/5 bg-white/[0.02] p-2"
         >
           {chat.length === 0 && !chatStreaming && (
             <div className="flex h-full min-h-[160px] items-center justify-center text-center text-sm text-white/55">
-              Ask {crew.n} anything — vitals, recent alerts, what to do next.
-              Answers use the same snapshot the brief was written from.
+              Start a conversation. Ask about {crew.n}&apos;s simulated health
+              or anything else.
             </div>
           )}
           {chat.map((m, i) => (
@@ -110,6 +113,7 @@ export function AskCard({
               <span className="block text-sm uppercase tracking-wider text-white/55">
                 assistant
               </span>
+              <span className="sr-only">Thinking</span>
               <span className="inline-block h-3 w-1.5 animate-pulse bg-accent align-middle" />
             </div>
           )}
@@ -145,13 +149,13 @@ export function AskCard({
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={`Ask about ${crew.n}…`}
+          placeholder="Type a message…"
           maxLength={1200}
           className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-base text-ink placeholder:text-white/40 focus:outline-none"
           disabled={chatStreaming}
           inputMode="text"
           autoComplete="off"
-          aria-label={`Ask the simulation assistant about ${crew.n}`}
+          aria-label="Message the assistant"
           aria-describedby="ask-card-message-limit"
           style={{ fontSize: "1rem" }}
         />
@@ -170,10 +174,10 @@ export function AskCard({
       <div className="mt-1.5 flex min-h-[1.25rem] items-center justify-between text-sm text-white/55">
         <span>
           {chat.length > 0
-            ? `${chat.filter((m) => m.role === "user").length} question${
+            ? `${chat.filter((m) => m.role === "user").length} message${
                 chat.filter((m) => m.role === "user").length === 1 ? "" : "s"
               }`
-            : "No questions yet"}
+            : "No messages yet"}
         </span>
         {chatModel && (
           <span>

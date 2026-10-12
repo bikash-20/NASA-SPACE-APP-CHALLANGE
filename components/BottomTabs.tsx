@@ -3,13 +3,14 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
 
-export type TabId = "vitals" | "alerts" | "ai" | "brief";
+export type TabId = "vitals" | "alerts" | "ai" | "brief" | "chat";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "vitals", label: "Vitals" },
   { id: "alerts", label: "Alerts" },
   { id: "ai", label: "AI & rules" },
   { id: "brief", label: "Brief" },
+  { id: "chat", label: "Chat" },
 ];
 
 interface BottomTabsProps {
@@ -23,7 +24,7 @@ export function BottomTabs({ active, onChange, alertsBadge }: BottomTabsProps) {
     <nav
       role="tablist"
       aria-label="Dashboard sections"
-      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-white/10 bg-bg-deep/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-white/10 bg-bg-deep/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
       {TABS.map((t) => {
         const isOn = active === t.id;

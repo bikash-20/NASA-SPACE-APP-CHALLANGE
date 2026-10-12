@@ -8,7 +8,7 @@ A mission-control-style dashboard that simulates live crew telemetry, runs a **d
 
 > **The contract:** *rules decide, AI advises.*
 
-The simulation, the AI risk score, and every alert are computed locally in the browser. The LLM is invoked server-side only to author a simulation status brief and answer follow-up questions about the synthetic snapshot. It is not a real flight surgeon and does not provide medical guidance. The API key never leaves the server.
+The simulation, the AI risk score, and every alert are computed locally in the browser. The LLM is invoked server-side to author a simulation status brief and chat about the synthetic snapshot or general topics. It is not a real flight surgeon and does not provide medical guidance. The API key never leaves the server.
 
 ---
 
@@ -48,10 +48,10 @@ Crew Health Monitor is a single-page dashboard that demonstrates a realistic spl
 - **Raises alerts** when a rule's level *increases* or when a previously-cleared rule re-enters alarm (with hysteresis). Each alert records the reading, the rule that fired, the threshold, the current AI score, and the timestamp.
 - **Merges consecutive firings** of the same `(crew, rule)` into a single row, distinguishing **active** (the rule is still in alarm right now) from **cleared** (the rule returned to stable).
 - **Generates a simulation brief** by calling the server, which in turn calls an LLM through OpenRouter. The brief is structured as **Status / Active concerns / Suggested next step** and is explicitly not medical guidance.
-- **Streams a chat** so the user can ask follow-up questions about the selected crew member. Answers are grounded in a validated, server-rebuilt snapshot.
+- **Streams a visible chat** in its own Chat section so the user can discuss the crew snapshot or have casual conversations. Crew-health answers are grounded in a validated, server-rebuilt snapshot.
 - **Compares crew readings** and records scenario changes and alert events in an inspectable mission timeline with replay actions.
 - **Supports repeatable simulation runs** with immutable seeded ticks, cardiac/sleep/storm presets, pause, and one-tick stepping.
-- **Stays responsive** across mobile, tablet, and desktop breakpoints with three distinct layouts, a 4-tab bottom nav on mobile, and a single-viewport 3-column grid on desktop.
+- **Stays responsive** across mobile, tablet, and desktop breakpoints with three distinct layouts, a 5-tab bottom nav on mobile that opens to Chat, and a single-viewport 3-column grid on desktop that opens to Ask assistant.
 
 There is a **Run guided demo** button that automates a scripted 4-step scenario (cardiac strain → solar storm → rules fire → brief written).
 
@@ -266,9 +266,10 @@ nasa-space-app/
 │  ├─ TraceCard.tsx             # "Why did this alert fire?" 5-line decision trace.
 │  ├─ MissionTimeline.tsx      # Recent alert/scenario events with inspect and replay actions.
 │  ├─ CrewComparison.tsx        # Cross-crew synthetic-reading comparison.
-│  ├─ BriefCard.tsx             # Markdown-rendered brief + sticky chat thread + input.
-│  ├─ TabbedPanel.tsx           # Desktop/tablet container with Alerts / Why / Brief & ask tabs.
-│  ├─ BottomTabs.tsx            # Mobile bottom tab bar (Vitals / Alerts / AI & rules / Brief).
+│  ├─ BriefCard.tsx             # Markdown-rendered simulation brief.
+│  ├─ AskCard.tsx               # Visible assistant conversation and message input.
+│  ├─ TabbedPanel.tsx           # Desktop/tablet container with Alerts / Why / Brief / Ask assistant tabs.
+│  ├─ BottomTabs.tsx            # Mobile bottom tab bar (Vitals / Alerts / AI & rules / Brief / Chat).
 │  ├─ ScenarioBar.tsx           # Inline scenario inject row (used on tablet).
 │  ├─ ScenarioSheet.tsx         # Mobile bottom sheet for scenario injection.
 │  └─ ui/                       # Tiny design system
@@ -288,6 +289,7 @@ nasa-space-app/
 │  ├─ alertMerge.ts             # mergeAlerts(alerts, crew) → MergedAlert[].
 │  ├─ serialize.ts              # snapshotForLLM(c, alerts) — the prompt payload.
 │  ├─ llmInput.ts               # Bounded JSON parsing and server-side snapshot validation.
+│  ├─ chatPrompt.ts             # Chat behavior rules and snapshot-grounded conversation context.
 │  ├─ openrouter.ts             # Cascade: getCascade, callCascade, streamCascade. Server-only.
 │  ├─ cn.ts                     # clsx + tailwind-merge helper.
 │  └─ colors.ts                 # Level → color and a constants table.
@@ -316,7 +318,7 @@ The layout is a hand-rolled three-breakpoint responsive grid driven by `useMedia
 
 The top **Pipeline** strip is always visible. Clicking a step briefly highlights the corresponding panel on screen with a `ring-accent` ring for ~2.2 s, so a presenter can walk a viewer through the six steps in order.
 
-`TabbedPanel` (desktop/tablet) hosts **Alerts / Why / Brief & ask** under one container. `BottomTabs` (mobile) provides **Vitals / Alerts / AI & rules / Brief** with an animated underline and an alerts badge.
+`TabbedPanel` (desktop/tablet) hosts **Alerts / Why / Brief / Ask assistant** under one container and opens to Ask assistant. `BottomTabs` (mobile) provides **Vitals / Alerts / AI & rules / Brief / Chat** with an animated underline and an alerts badge, and opens directly to Chat.
 
 `ScenarioSheet` is a motion-spring bottom sheet that locks body scroll while open and renders a clear hierarchy of toggles with their scope ("Affects all crew" vs "Selected crew member").
 

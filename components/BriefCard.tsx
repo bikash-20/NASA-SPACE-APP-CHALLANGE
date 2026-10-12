@@ -1,25 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactElement } from "react";
+import type { ReactElement } from "react";
 import { Panel, PanelTitle } from "./ui/Panel";
 import { Button } from "./ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
-import { useStickyScroll } from "@/hooks/useStickyScroll";
-import type { Alert, ChatMessage, Crew } from "@/lib/types";
+import type { Crew } from "@/lib/types";
 
 interface BriefCardProps {
   crew: Crew;
-  alerts: Alert[];
   brief: string | null;
   briefModel: string | null;
   briefLoading: boolean;
   briefError: string | null;
-  chat: ChatMessage[];
-  chatStreaming: boolean;
-  chatModel: string | null;
-  chatError: string | null;
   onWriteBrief: () => void;
-  onSendChat: (text: string) => void;
 }
 
 /** Minimal Markdown -> JSX (no external dep). Just headings + bullets. */
@@ -88,48 +81,12 @@ function Md({ children }: { children: string }) {
 
 export function BriefCard({
   crew,
+  onWriteBrief,
   brief,
   briefModel,
   briefLoading,
   briefError,
-  chat,
-  chatStreaming,
-  chatModel,
-  chatError,
-  onWriteBrief,
-  onSendChat,
 }: BriefCardProps) {
-  const [input, setInput] = useState("");
-  const messageCount = chat.length;
-  const {
-    ref: scrollRef,
-    isAtBottom: stickToBottom,
-    onScroll,
-    scrollToBottom,
-  } = useStickyScroll<HTMLDivElement>([chat, chatStreaming, messageCount]);
-
-  // After a stream finishes, snap to the bottom so the user sees the
-  // completed reply without having to scroll.
-  const wasStreaming = useRef(false);
-  useEffect(() => {
-    if (chatStreaming) {
-      wasStreaming.current = true;
-      return;
-    }
-    if (wasStreaming.current) {
-      wasStreaming.current = false;
-      scrollToBottom();
-    }
-  }, [chatStreaming, scrollToBottom]);
-
-  const send = () => {
-    const v = input.trim();
-    if (!v || chatStreaming) return;
-    setInput("");
-    scrollToBottom();
-    onSendChat(v);
-  };
-
   return (
     <Panel tone="accent" className="flex h-full min-h-0 flex-col">
       <PanelTitle
@@ -175,109 +132,6 @@ export function BriefCard({
             {briefLoading
               ? "Asking the LLM via OpenRouter…"
               : `No brief yet. Click Write brief to generate one from the live snapshot of ${crew.n}.`}
-          </p>
-        )}
-      </div>
-
-      {/* Sticky chat thread: fills the remaining vertical space, scrolls
-          internally, and pins the latest message to the bottom unless the
-          user has scrolled up to read history. */}
-      <div className="mt-4 flex min-h-0 flex-1 flex-col border-t border-white/10 pt-3">
-        <div className="mb-2 text-sm font-semibold text-white/70">
-          Ask the simulation assistant
-        </div>
-
-        <div className="relative min-h-0 flex-1">
-          <div
-            ref={scrollRef}
-            onScroll={onScroll}
-            data-sticky-scroll={stickToBottom ? "pinned" : "detached"}
-            className="chat-scroll absolute inset-0 overflow-y-auto overscroll-contain rounded-md border border-white/5 bg-white/[0.02] p-2"
-          >
-            {chat.length === 0 && !chatStreaming && (
-              <div className="flex h-full min-h-[80px] items-center justify-center text-center text-sm text-white/55">
-                Ask follow-up questions about {crew.n}. Answers use the same
-                snapshot the brief was written from.
-              </div>
-            )}
-            {chat.map((m, i) => (
-              <div
-                key={i}
-                className={`mb-2 rounded-md p-2 text-sm ${
-                  m.role === "user"
-                    ? "bg-accent/15 text-ink"
-                    : "bg-white/[0.04] text-white/85"
-                }`}
-              >
-                <span className="block text-sm uppercase tracking-wider text-white/55">
-                  {m.role === "user" ? "you" : "assistant"}
-                </span>
-                <span className="whitespace-pre-wrap">{m.content}</span>
-              </div>
-            ))}
-            {chatStreaming && (
-              <div className="rounded-md bg-white/[0.04] p-2 text-sm text-white/65">
-                <span className="block text-sm uppercase tracking-wider text-white/55">
-                  assistant
-                </span>
-                <span className="inline-block h-3 w-1.5 animate-pulse bg-accent align-middle" />
-              </div>
-            )}
-          </div>
-
-          {/* Floating "Jump to latest" pill, anchored over the scroll
-              region so the fade mask doesn't clip it. */}
-          {!stickToBottom && chat.length > 0 && (
-            <button
-              type="button"
-              onClick={scrollToBottom}
-              className="pointer-events-auto absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-full border border-accent/50 bg-accent/85 px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-black/40 hover:bg-accent"
-            >
-              ↓ Jump to latest
-            </button>
-          )}
-        </div>
-
-        {chatError && (
-          <p className="mt-2 text-sm text-bad" role="alert">
-            {chatError}
-          </p>
-        )}
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            send();
-          }}
-          className="mt-2 flex gap-2"
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about this crew member…"
-            maxLength={1200}
-            className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-base text-ink placeholder:text-white/40 focus:outline-none"
-            disabled={chatStreaming}
-            inputMode="text"
-            autoComplete="off"
-            aria-label="Ask a follow-up question about this crew member"
-            aria-describedby="brief-chat-message-limit"
-            style={{ fontSize: "1rem" }}
-          />
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={chatStreaming || !input.trim()}
-          >
-            Send
-          </Button>
-        </form>
-        <p id="brief-chat-message-limit" className="mt-1 text-xs text-white/55">
-          Messages are limited to 1,200 characters.
-        </p>
-        {chatModel && (
-          <p className="mt-1.5 text-sm text-white/65">
-            chat model · <span className="font-mono">{chatModel}</span>
           </p>
         )}
       </div>

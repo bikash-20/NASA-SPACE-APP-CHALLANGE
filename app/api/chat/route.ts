@@ -5,6 +5,7 @@ import {
   readBoundedJson,
   sanitizeAlertHistory,
 } from "@/lib/llmInput";
+import { buildChatMessages } from "@/lib/chatPrompt";
 import { streamCascade } from "@/lib/openrouter";
 import { snapshotForLLM } from "@/lib/serialize";
 import type { Alert, ChatMessage, Crew } from "@/lib/types";
@@ -12,15 +13,6 @@ import type { Alert, ChatMessage, Crew } from "@/lib/types";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const MAX_REQUEST_BYTES = 64 * 1024;
-
-const SYSTEM_PROMPT = `You are a concise assistant for an educational crew-health simulation, not a real flight surgeon. You answer follow-up questions about one crew member's synthetic snapshot, provided in the first user message.
-
-Hard rules:
-- Use ONLY the data in the snapshot. If a value is needed but not present, say "not enough data" — never invent.
-- Plain English. No emojis. No exclamation marks. Be terse.
-- If the user asks about something unrelated to the snapshot, politely redirect.
-- Do NOT diagnose, recommend treatment, raise new alerts, or contradict the rules engine. You may explain what the rules already decided.
-- The values are synthetic and are not medical guidance. Direct real medical concerns to a qualified professional.`;
 
 interface ChatRequestBody {
   crew: Crew;
@@ -79,32 +71,14 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const messages: {
-          role: "system" | "user" | "assistant";
-          content: string;
-        }[] = [
-          { role: "system", content: SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: `Crew snapshot (reference for the rest of this conversation):\n\n${snapshot}`,
-          },
-          {
-            role: "assistant",
-            content: "Understood. I have the snapshot. What would you like to know?",
-          },
-          ...body.messages.map(
-            (message): { role: "user" | "assistant"; content: string } => ({
-              role: message.role,
-              content: message.content,
-            })
-          ),
-        ];
-
         let model = "unknown";
-        for await (const chunk of streamCascade(messages, {
-          temperature: 0.4,
-          signal: upstreamSignal,
-        })) {
+        for await (const chunk of streamCascade(
+          buildChatMessages(snapshot, body.messages),
+          {
+            temperature: 0.4,
+            signal: upstreamSignal,
+          }
+        )) {
           model = chunk.model;
           controller.enqueue(
             encoder.encode(

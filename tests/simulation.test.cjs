@@ -9,6 +9,7 @@ const buildDir = mkdtempSync(join(tmpdir(), "crew-health-simulation-"));
 let simulation;
 let llmInput;
 let serialize;
+let chatPrompt;
 
 before(() => {
   execFileSync(
@@ -28,12 +29,14 @@ before(() => {
       "lib/llmInput.ts",
       "lib/serialize.ts",
       "lib/openrouter.ts",
+      "lib/chatPrompt.ts",
     ],
     { cwd: process.cwd(), stdio: "inherit" }
   );
   simulation = require(join(buildDir, "simulation.js"));
   llmInput = require(join(buildDir, "llmInput.js"));
   serialize = require(join(buildDir, "serialize.js"));
+  chatPrompt = require(join(buildDir, "chatPrompt.js"));
 });
 
 after(() => rmSync(buildDir, { recursive: true, force: true }));
@@ -139,6 +142,21 @@ test("disabling the scorer omits its score and contributions from the LLM snapsh
   assert.deepEqual(clean.F, []);
   assert.match(snapshot, /not included \(scorer offline\)/);
   assert.doesNotMatch(snapshot, /Deterministic AI risk score: \d+ \/ 100/);
+});
+
+test("chat accepts casual messages while keeping crew-health claims snapshot-grounded", () => {
+  const conversation = chatPrompt.buildChatMessages("Synthetic crew snapshot", [
+    { role: "user", content: "Hi! How are you?" },
+  ]);
+
+  assert.equal(conversation.at(-1).content, "Hi! How are you?");
+  assert.match(conversation[0].content, /casual conversation/i);
+  assert.match(
+    conversation[0].content,
+    /For questions about the simulated crew, use only the provided snapshot/i
+  );
+  assert.match(conversation[0].content, /not medical guidance/i);
+  assert.equal(conversation[1].content.includes("Synthetic crew snapshot"), true);
 });
 
 test("LLM request parsers reject invalid metrics and bound chat input", () => {

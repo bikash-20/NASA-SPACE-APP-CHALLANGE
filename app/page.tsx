@@ -500,9 +500,10 @@ export default function Page() {
   const isXl = useMediaQuery("(min-width: 1280px)", true);
   const isXxl = useMediaQuery("(min-width: 1600px)", true);
 
-  const [mobileTab, setMobileTab] = useState<TabId>("vitals");
-  const [tabKey, setTabKey] = useState<TabKey>("alerts");
+  const [mobileTab, setMobileTab] = useState<TabId>("chat");
+  const [tabKey, setTabKey] = useState<TabKey>("ask");
   const [scenariosOpen, setScenariosOpen] = useState(false);
+  const previousSelectedCrew = useRef(state.selected);
 
   const cancelPendingAi = useCallback(() => {
     briefRequestId.current += 1;
@@ -522,7 +523,10 @@ export default function Page() {
   );
 
   useEffect(() => {
-    setMobileTab("vitals");
+    if (previousSelectedCrew.current !== state.selected) {
+      previousSelectedCrew.current = state.selected;
+      setMobileTab("vitals");
+    }
   }, [state.selected]);
 
   useEffect(() => {
@@ -806,18 +810,24 @@ export default function Page() {
   const briefNode = (
     <BriefCard
       crew={sel}
-      alerts={state.alerts}
       brief={state.brief}
       briefModel={state.briefModel}
       briefLoading={state.briefLoading}
       briefError={state.briefError}
-      chat={state.chat}
-      chatStreaming={state.chatStreaming}
-      chatModel={state.chatModel}
-      chatError={state.chatError}
       onWriteBrief={writeBrief}
-      onSendChat={sendChat}
     />
+  );
+  const chatNode = (
+    <div className="h-[min(70dvh,680px)] min-h-[360px] lg:h-full lg:min-h-0">
+      <AskCard
+        crew={sel}
+        chat={state.chat}
+        chatStreaming={state.chatStreaming}
+        chatModel={state.chatModel}
+        chatError={state.chatError}
+        onSendChat={sendChat}
+      />
+    </div>
   );
   const vitalsNode = <VitalsCard crew={sel} />;
   const aiNode = <AIScoreCard crew={sel} aiOn={state.aiOn} />;
@@ -831,16 +841,7 @@ export default function Page() {
       why={whyNode}
       crew={crewNode}
       brief={briefNode}
-      ask={
-        <AskCard
-          crew={sel}
-          chat={state.chat}
-          chatStreaming={state.chatStreaming}
-          chatModel={state.chatModel}
-          chatError={state.chatError}
-          onSendChat={sendChat}
-        />
-      }
+      ask={chatNode}
     />
   );
 
@@ -940,6 +941,9 @@ export default function Page() {
             )}
             {mobileTab === "brief" && (
               <div className={stageClass(6)}>{briefNode}</div>
+            )}
+            {mobileTab === "chat" && (
+              <div className={stageClass(6)}>{chatNode}</div>
             )}
           </div>
         ) : isTablet ? (
