@@ -4,23 +4,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Panel } from "./ui/Panel";
 import { cn } from "@/lib/cn";
 
-export type TabKey = "alerts" | "why" | "brief" | "ask";
+export type TabKey = "alerts" | "why" | "crew" | "brief" | "ask";
 
 interface TabbedPanelProps {
   active: TabKey;
   onChange: (k: TabKey) => void;
   alerts: React.ReactNode;
   why: React.ReactNode;
+  crew: React.ReactNode;
   brief: React.ReactNode;
   ask: React.ReactNode;
   alertsBadge?: number;
 }
 
-const TABS: { id: TabKey; label: string; icon?: string }[] = [
+const TABS: { id: TabKey; label: string }[] = [
   { id: "alerts", label: "Alerts" },
   { id: "why", label: "Why" },
+  { id: "crew", label: "Crew" },
   { id: "brief", label: "Brief" },
-  { id: "ask", label: "Ask the surgeon", icon: "💬" },
+  { id: "ask", label: "Ask assistant" },
 ];
 
 export function TabbedPanel({
@@ -28,6 +30,7 @@ export function TabbedPanel({
   onChange,
   alerts,
   why,
+  crew,
   brief,
   ask,
   alertsBadge,
@@ -54,11 +57,6 @@ export function TabbedPanel({
                 isOn ? "text-ink" : "text-white/65 hover:text-ink"
               )}
             >
-              {t.icon && (
-                <span aria-hidden className="text-sm leading-none">
-                  {t.icon}
-                </span>
-              )}
               <span>{t.label}</span>
               {t.id === "alerts" && alertsBadge && alertsBadge > 0 ? (
                 <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-bad px-1 text-[0.625rem] font-semibold text-white">
@@ -87,6 +85,7 @@ export function TabbedPanel({
           >
             {active === "alerts" && alerts}
             {active === "why" && why}
+            {active === "crew" && crew}
             {active === "brief" && brief}
             {active === "ask" && ask}
           </motion.div>

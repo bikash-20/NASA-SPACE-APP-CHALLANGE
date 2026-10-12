@@ -11,9 +11,6 @@ export function TraceCard({
   alert: Alert | null;
   crew: Crew[];
 }) {
-  // Resolve the merged key if the selected key matches a group
-  // (we receive an Alert — but the panel key from the new AlertsCard is `${i}-${j}`).
-  // Convert it for display.
   const a = alert;
   return (
     <Panel>
@@ -23,31 +20,35 @@ export function TraceCard({
           Select an alert to see how it was decided.
         </p>
       ) : (
-        <ol className="ml-5 list-decimal space-y-1.5 text-base text-white/85">
-          <li>
-            <b className="text-ink">Reading.</b> {a.why}.
-          </li>
-          <li>
-            <b className="text-ink">Rule.</b> {a.n} threshold: {a.th}. Result:{" "}
-            {LEVEL_NAMES[a.lv]}.
-          </li>
-          <li>
-            <b className="text-ink">AI score at the time.</b>{" "}
-            {a.aiOn
-              ? `${a.ai} of 100, advisory only`
-              : "scorer was offline, not needed"}
-            .
-          </li>
-          <li>
-            <b className="text-ink">Decision.</b> Made by the rule, not the AI.
-          </li>
-          <li>
-            <b className="text-ink">Action.</b>{" "}
-            {a.lv === 2
-              ? "Page the flight surgeon now and start the protocol."
-              : "Notify the flight surgeon and re-check in 30 minutes."}
-          </li>
-        </ol>
+        <div className="space-y-3">
+          <dl className="grid grid-cols-[7rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
+            <dt className="text-white/60">Rule</dt>
+            <dd className="text-ink">{a.n}</dd>
+            <dt className="text-white/60">Observed</dt>
+            <dd className="text-ink">{a.why}</dd>
+            <dt className="text-white/60">Threshold</dt>
+            <dd className="text-ink">{a.th}</dd>
+            <dt className="text-white/60">Decision</dt>
+            <dd className="font-semibold text-ink">
+              {LEVEL_NAMES[a.lv]} · produced by the deterministic rule engine
+            </dd>
+            <dt className="text-white/60">At firing</dt>
+            <dd className="font-mono tabular-nums text-ink">{a.t}</dd>
+            <dt className="text-white/60">Current state</dt>
+            <dd className="text-ink">
+              {(crew[a.i]?.r[a.j] ?? 0) >= a.lv ? "Active" : "Cleared"}
+            </dd>
+            <dt className="text-white/60">AI score</dt>
+            <dd className="text-ink">
+              {a.aiOn ? `${a.ai} / 100 · advisory only` : "Scorer offline"}
+            </dd>
+          </dl>
+          <p className="rounded-lg border border-cyan-300/20 bg-cyan-300/5 p-2.5 text-sm text-cyan-100/85">
+            This is a simulation, not a medical device or clinical
+            recommendation. Follow approved mission protocols in real
+            operations.
+          </p>
+        </div>
       )}
     </Panel>
   );

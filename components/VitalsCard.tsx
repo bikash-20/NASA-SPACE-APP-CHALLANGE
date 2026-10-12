@@ -23,7 +23,7 @@ export function VitalsCard({ crew }: VitalsCardProps) {
   return (
     <Panel>
       <PanelTitle
-        title={`${crew.n} — live vitals`}
+        title={`${crew.n} — current vitals`}
         hint={crew.role}
       />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

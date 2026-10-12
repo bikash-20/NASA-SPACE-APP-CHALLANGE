@@ -28,7 +28,7 @@ export function Button({
         "inline-flex items-center justify-center gap-1.5 rounded-lg border text-base font-medium leading-none transition-colors",
         "focus-visible:outline-none",
         // sizes
-        size === "sm" && "min-h-[36px] px-2.5 py-1.5 text-sm",
+        size === "sm" && "min-h-[44px] px-2.5 py-1.5 text-sm",
         size === "md" && "min-h-[40px] sm:min-h-[44px] px-3 py-2 text-base",
         size === "lg" && "min-h-[48px] px-4 py-2.5 text-base",
         block && "w-full",
@@ -41,7 +41,7 @@ export function Button({
         variant === "danger" &&
           "border-bad/40 bg-bad/10 text-bad hover:bg-bad/20",
         variant === "primary" &&
-          "border-accent bg-accent text-white hover:bg-accent-soft",
+          "border-accent bg-accent text-bg-deep hover:bg-accent-soft",
         className
       )}
       {...(rest as any)}

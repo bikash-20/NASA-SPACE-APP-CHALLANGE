@@ -5,11 +5,11 @@ import { cn } from "@/lib/cn";
 
 export type TabId = "vitals" | "alerts" | "ai" | "brief";
 
-const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: "vitals", label: "Vitals", icon: "❤" },
-  { id: "alerts", label: "Alerts", icon: "!" },
-  { id: "ai", label: "AI & rules", icon: "◆" },
-  { id: "brief", label: "Brief", icon: "✎" },
+const TABS: { id: TabId; label: string }[] = [
+  { id: "vitals", label: "Vitals" },
+  { id: "alerts", label: "Alerts" },
+  { id: "ai", label: "AI & rules" },
+  { id: "brief", label: "Brief" },
 ];
 
 interface BottomTabsProps {
@@ -30,9 +30,10 @@ export function BottomTabs({ active, onChange, alertsBadge }: BottomTabsProps) {
         return (
           <motion.button
             key={t.id}
+            id={`mobile-tab-${t.id}`}
             role="tab"
             aria-selected={isOn}
-            aria-controls={`tabpanel-${t.id}`}
+            aria-controls="mobile-dashboard-panel"
             onClick={() => onChange(t.id)}
             whileTap={{ scale: 0.96 }}
             className={cn(
@@ -40,9 +41,6 @@ export function BottomTabs({ active, onChange, alertsBadge }: BottomTabsProps) {
               isOn ? "text-accent" : "text-white/65 hover:text-ink"
             )}
           >
-            <span aria-hidden className="text-base">
-              {t.icon}
-            </span>
             <span>{t.label}</span>
             {t.id === "alerts" && alertsBadge && alertsBadge > 0 ? (
               <span

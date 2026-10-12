@@ -110,13 +110,13 @@ export async function callCascade(
   messages: CascadeMessage[],
   opts: CascadeOpts = {}
 ): Promise<{ text: string; model: string }> {
+  opts.signal?.throwIfAborted();
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is not set on the server");
   }
   const ids = await getCascade();
 
-  let lastErr: unknown = null;
   for (const model of ids) {
     const controller = new AbortController();
     const timer = setTimeout(
@@ -146,10 +146,11 @@ export async function callCascade(
       });
 
       if (res.status === 401 || res.status === 403) {
-        throw new Error(`openrouter auth failed (${res.status}) — check OPENROUTER_API_KEY`);
+        throw new Error(
+          `openrouter auth failed (${res.status}) — check OPENROUTER_API_KEY`
+        );
       }
       if (!res.ok) {
-        lastErr = new Error(`model ${model} → ${res.status}`);
         console.warn("[openrouter] model failed", model, res.status);
         continue;
       }
@@ -158,25 +159,21 @@ export async function callCascade(
       };
       const text = json.choices?.[0]?.message?.content?.trim();
       if (!text) {
-        lastErr = new Error(`model ${model} returned empty content`);
         continue;
       }
       console.log("[openrouter] served by:", model);
       return { text, model };
     } catch (err) {
+      if (opts.signal?.aborted) throw err;
       if (err instanceof Error && err.message.startsWith("openrouter auth")) {
         throw err;
       }
-      lastErr = err;
-      console.warn("[openrouter] model threw", model, err);
       continue;
     } finally {
       clearTimeout(timer);
     }
   }
-  throw new Error(
-    `all cascade models failed: ${lastErr instanceof Error ? lastErr.message : String(lastErr)}`
-  );
+  throw new Error("all cascade models failed");
 }
 
 /**
@@ -187,19 +184,22 @@ export async function* streamCascade(
   messages: CascadeMessage[],
   opts: CascadeOpts = {}
 ): AsyncGenerator<{ delta: string; model: string }> {
+  opts.signal?.throwIfAborted();
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is not set on the server");
   }
   const ids = await getCascade();
 
-  let lastErr: unknown = null;
   for (const model of ids) {
     const controller = new AbortController();
     const timer = setTimeout(
       () => controller.abort(),
       PER_REQUEST_TIMEOUT_MS * 2
     );
+    const signal = opts.signal
+      ? AbortSignal.any([controller.signal, opts.signal])
+      : controller.signal;
     try {
       const res = await fetch(CHAT_URL, {
         method: "POST",
@@ -216,14 +216,13 @@ export async function* streamCascade(
           max_tokens: opts.maxTokens ?? 800,
           stream: true,
         }),
-        signal: controller.signal,
+        signal,
       });
 
       if (res.status === 401 || res.status === 403) {
         throw new Error(`openrouter auth failed (${res.status})`);
       }
       if (!res.ok || !res.body) {
-        lastErr = new Error(`model ${model} → ${res.status}`);
         continue;
       }
       console.log("[openrouter] stream served by:", model);
@@ -254,16 +253,14 @@ export async function* streamCascade(
       }
       return;
     } catch (err) {
+      if (opts.signal?.aborted) throw err;
       if (err instanceof Error && err.message.startsWith("openrouter auth")) {
         throw err;
       }
-      lastErr = err;
       continue;
     } finally {
       clearTimeout(timer);
     }
   }
-  throw new Error(
-    `all cascade models failed: ${lastErr instanceof Error ? lastErr.message : String(lastErr)}`
-  );
+  throw new Error("all cascade models failed");
 }

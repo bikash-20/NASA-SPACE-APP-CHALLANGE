@@ -8,7 +8,7 @@ A mission-control-style dashboard that simulates live crew telemetry, runs a **d
 
 > **The contract:** *rules decide, AI advises.*
 
-The simulation, the AI risk score, and every alert are computed locally in the browser. The LLM is invoked server-side only to author a flight-surgeon status brief and to answer follow-up questions about that brief. The API key never leaves the server.
+The simulation, the AI risk score, and every alert are computed locally in the browser. The LLM is invoked server-side only to author a simulation status brief and answer follow-up questions about the synthetic snapshot. It is not a real flight surgeon and does not provide medical guidance. The API key never leaves the server.
 
 ---
 
@@ -47,8 +47,10 @@ Crew Health Monitor is a single-page dashboard that demonstrates a realistic spl
 - **Computes a deterministic AI risk score** (0–100) in the browser. The score blends each rule's contribution, with an additive bonus when three or more factors are simultaneously elevated. The score is purely advisory and is never used to raise an alert.
 - **Raises alerts** when a rule's level *increases* or when a previously-cleared rule re-enters alarm (with hysteresis). Each alert records the reading, the rule that fired, the threshold, the current AI score, and the timestamp.
 - **Merges consecutive firings** of the same `(crew, rule)` into a single row, distinguishing **active** (the rule is still in alarm right now) from **cleared** (the rule returned to stable).
-- **Generates a flight-surgeon brief** by calling the server, which in turn calls an LLM through OpenRouter. The brief is structured as **Status / Active concerns / Suggested next step**.
-- **Streams a chat** so the user can ask follow-up questions about the selected crew member. Answers are grounded in the same snapshot that produced the brief.
+- **Generates a simulation brief** by calling the server, which in turn calls an LLM through OpenRouter. The brief is structured as **Status / Active concerns / Suggested next step** and is explicitly not medical guidance.
+- **Streams a chat** so the user can ask follow-up questions about the selected crew member. Answers are grounded in a validated, server-rebuilt snapshot.
+- **Compares crew readings** and records scenario changes and alert events in an inspectable mission timeline with replay actions.
+- **Supports repeatable simulation runs** with immutable seeded ticks, cardiac/sleep/storm presets, pause, and one-tick stepping.
 - **Stays responsive** across mobile, tablet, and desktop breakpoints with three distinct layouts, a 4-tab bottom nav on mobile, and a single-viewport 3-column grid on desktop.
 
 There is a **Run guided demo** button that automates a scripted 4-step scenario (cardiac strain → solar storm → rules fire → brief written).
@@ -78,7 +80,9 @@ npm run dev
 
 Open <http://localhost:3000>.
 
-Without a key the dashboard still runs end-to-end — the simulation, rules, AI score, and UI all work — but the **Write brief** and **Send** buttons will return 500 with `OPENROUTER_API_KEY is not set on the server`.
+Run the dependency-free simulation and request-validation regression tests with `npm test`.
+
+Without a key the dashboard still runs end-to-end — the simulation, rules, AI score, and UI all work — but the **Write brief** and **Send** actions show a generic service-unavailable error. Provider configuration and upstream error details are not returned to the browser.
 
 ---
 
@@ -96,7 +100,7 @@ Without a key the dashboard still runs end-to-end — the simulation, rules, AI 
 
 ## The crew and the simulation model
 
-`lib/simulation.ts` creates three crew members and a tick loop that mutates each crew member in place.
+`lib/simulation.ts` creates three crew members and advances them using immutable, seeded ticks. Each tick returns fresh crew state and the next seed, so snapshots can be replayed without mutating previous state.
 
 | Slot | Name              | Role            | Baseline HR | 30-day dose seed (mSv) |
 |------|-------------------|-----------------|-------------|------------------------|
@@ -111,11 +115,11 @@ Each tick (`step()`) runs the following per-crew updates:
 - **Blood oxygen**: pulls toward `93.2%` if `cardFlag` is set, otherwise `98%`, with damping (`0.2`) and `±0.3` jitter. Capped at 100.
 - **Sleep (3-night average)**: pulls toward `3.8 h` if `sleepFlag` is set, otherwise `7.2 h`, with damping (`0.07`).
 - **Radiation dose rate**: `3 mSv/h ± 0.5` if a solar storm is active, otherwise `0.04 ± 0.02 mSv/h`.
-- **30-day dose**: `dose += rate · 0.5` per tick (each tick is ~30 s of mission time).
+- **30-day dose**: `dose += rate · 0.5` per tick (each tick represents 30 minutes of mission time).
 
 A 60-sample rolling history is kept per metric (`crew.H.hr`, `crew.H.spo2`, etc.) for sparkline and rule evaluation.
 
-The mission clock (`clock()`) is also driven by ticks. `clock(tick) = "Day 112 + …  · HH:MM"`. Each tick represents 30 minutes of mission time, so a 4-step demo at ~1 tick/s compresses about 2 hours of mission activity.
+The mission clock (`clock()`) is also driven by ticks. `clock(tick) = "Day 112 + …  · HH:MM"`. Each tick represents 30 minutes of mission time. At the default one tick per second, the guided demo's first 38 ticks represent roughly 19 hours of simulated mission time.
 
 ### Scenario flags
 
@@ -213,18 +217,18 @@ On `401`/`403` the cascade aborts immediately — the key is bad, retrying won't
 
 ### `/api/brief` (POST, non-streaming)
 
-`app/api/brief/route.ts`. Request body: `{ crew: Crew }`. Builds a deterministic text snapshot of the selected crew member with `snapshotForLLM(crew, [])` (rounded numbers, no PII, no timestamps that would tie the LLM to one specific tick). Sends it under a system prompt that fixes the output shape to three sections — **Status** / **Active concerns** / **Suggested next step** — and forbids raising new alerts. Response: `{ text, model }`. Errors return `{ error }` with status 500.
+`app/api/brief/route.ts`. Request body: `{ crew: Crew, aiOn: boolean }`, limited to 24 KiB. The route validates metric bounds, rebuilds canonical crew identity and rule evidence, then builds a deterministic text snapshot. When the scorer is offline, its score and factor contributions are omitted from the model context. The system prompt fixes the output shape to three sections — **Status** / **Active concerns** / **Suggested next step** — and forbids diagnosis, treatment advice, and new alerts. Response: `{ text, model }`. Invalid requests return 400, oversized requests return 413, and upstream failures return a generic 503.
 
 ### `/api/chat` (POST, streaming)
 
-`app/api/chat/route.ts`. Request body: `{ crew, alerts, messages }`. The route always prepends the snapshot as a hidden first user message and a fixed assistant acknowledgement ("Understood. I have the snapshot. What would you like to know?"), then appends the user's transcript. It opens a `ReadableStream` of `text/event-stream` chunks. Each upstream SSE `data:` line is re-emitted as a client-friendly JSON chunk:
+`app/api/chat/route.ts`. Request body: `{ crew, aiOn, alerts, messages }`, limited to 64 KiB, 20 transcript messages, and 1,200 characters per message. The route rebuilds canonical crew identity/rule evidence, omits scorer data when offline, keeps only bounded structured alert references, and always prepends the resulting snapshot as a first user message and a fixed assistant acknowledgement ("Understood. I have the snapshot. What would you like to know?"), then appends the validated transcript. It opens a `ReadableStream` of `text/event-stream` chunks. Each upstream SSE `data:` line is re-emitted as a client-friendly JSON chunk:
 
 ```
 data: {"delta":"<text>","model":"<id>"}
 data: [DONE]
 ```
 
-The client (`sendChat` in `app/page.tsx`) reads the stream with a `ReadableStreamDefaultReader`, decodes chunks, parses each `data:` line, dispatches `ADD_CHAT_DELTA` to the reducer, and finalizes the model on `[DONE]`.
+The client (`sendChat` in `app/page.tsx`) reads the stream with a `ReadableStreamDefaultReader`, decodes chunks, parses each `data:` line, dispatches `ADD_CHAT_DELTA` to the reducer, and finalizes the model on `[DONE]`. Client disconnects cancel upstream generation. Routes return generic upstream errors rather than provider error text. These request bounds are not a substitute for persistent per-user rate limiting; add an appropriate backend rate-limit store before exposing paid model access publicly.
 
 Both routes are `runtime = "nodejs"` and `dynamic = "force-dynamic"` because they read the API key from the environment on every request.
 
@@ -233,11 +237,11 @@ Both routes are `runtime = "nodejs"` and `dynamic = "force-dynamic"` because the
 ## Data flow end-to-end
 
 1. **Boot** — `app/page.tsx` calls `mkCrew(0|1|2)` for three crew members and runs `stepSim` 60 times to warm the rolling histories, so the sparklines aren't empty on first paint.
-2. **Tick** — A `setInterval` (period = `1000 / speed`, where `speed ∈ {1, 2, 4}`) runs `stepSim(crew, opts)`. For each crew member it updates vitals, recomputes the AI score, evaluates the rules, and (if `emitAlerts`) emits new alerts via `onAlert`. New alerts are prepended into the page state. The reducer's `TICK` action also recomputes the `pipelineValues` shown in the top pipeline strip.
+2. **Tick** — A `setInterval` (period = `1000 / speed`, where `speed ∈ {1, 2, 4}`) dispatches `ADVANCE`. For each crew member `stepSim(crew, opts, seed)` returns updated vitals, the recomputed AI score, evaluated rules, generated alerts, and a new seed without mutating the prior snapshot. New alerts are prepended into the page state; alerts and timeline events have fixed retention caps.
 3. **Display** — Each card reads from `state.crew[state.selected]`. The `Pipeline` strip animates the colored top-border per step; clicking a step briefly highlights the corresponding panel on screen (via `stageClass(n)`).
-4. **Inject** — The user toggles a scenario flag (sleep, cardiac, storm, AI on/off). The reducer mutates either the global flag or the selected crew member's `f` object, and the next tick reflects the change.
+4. **Inject** — The user toggles a scenario flag (sleep, cardiac, storm, AI on/off). The reducer creates a new state snapshot with the global flag or selected crew member's `f` value; the next tick reflects the change.
 5. **Brief** — Clicking **Write brief** POSTs the selected crew member to `/api/brief`, which calls `callCascade` and returns the model id alongside the text. The brief renders with a minimal Markdown parser (`Md` in `BriefCard.tsx`) that handles headings and bullets.
-6. **Chat** — Sending a message POSTs the full transcript to `/api/chat` and consumes the SSE stream. Each delta is appended to the last assistant message in the reducer; on `[DONE]` the model label is finalized.
+6. **Chat** — Sending a message POSTs the latest bounded transcript to `/api/chat` and consumes the SSE stream. Each delta is appended to the last assistant message in the reducer; on `[DONE]` the model label is finalized.
 
 ---
 
@@ -262,6 +266,8 @@ nasa-space-app/
 │  ├─ RulesCard.tsx             # The 5 rules with current value, threshold, and "decides" tone.
 │  ├─ AlertsCard.tsx            # Active + cleared merged-alert rows, collapsible cleared list.
 │  ├─ TraceCard.tsx             # "Why did this alert fire?" 5-line decision trace.
+│  ├─ MissionTimeline.tsx      # Recent alert/scenario events with inspect and replay actions.
+│  ├─ CrewComparison.tsx        # Cross-crew synthetic-reading comparison.
 │  ├─ BriefCard.tsx             # Markdown-rendered brief + sticky chat thread + input.
 │  ├─ TabbedPanel.tsx           # Desktop/tablet container with Alerts / Why / Brief & ask tabs.
 │  ├─ BottomTabs.tsx            # Mobile bottom tab bar (Vitals / Alerts / AI & rules / Brief).
@@ -283,6 +289,7 @@ nasa-space-app/
 │  ├─ aiScore.ts                # aiScore(c) and band() — deterministic, browser-only.
 │  ├─ alertMerge.ts             # mergeAlerts(alerts, crew) → MergedAlert[].
 │  ├─ serialize.ts              # snapshotForLLM(c, alerts) — the prompt payload.
+│  ├─ llmInput.ts               # Bounded JSON parsing and server-side snapshot validation.
 │  ├─ openrouter.ts             # Cascade: getCascade, callCascade, streamCascade. Server-only.
 │  ├─ cn.ts                     # clsx + tailwind-merge helper.
 │  └─ colors.ts                 # Level → color and a constants table.

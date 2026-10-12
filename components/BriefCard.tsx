@@ -13,9 +13,11 @@ interface BriefCardProps {
   brief: string | null;
   briefModel: string | null;
   briefLoading: boolean;
+  briefError: string | null;
   chat: ChatMessage[];
   chatStreaming: boolean;
   chatModel: string | null;
+  chatError: string | null;
   onWriteBrief: () => void;
   onSendChat: (text: string) => void;
 }
@@ -89,9 +91,11 @@ export function BriefCard({
   brief,
   briefModel,
   briefLoading,
+  briefError,
   chat,
   chatStreaming,
   chatModel,
+  chatError,
   onWriteBrief,
   onSendChat,
 }: BriefCardProps) {
@@ -129,7 +133,7 @@ export function BriefCard({
   return (
     <Panel tone="accent" className="flex h-full min-h-0 flex-col">
       <PanelTitle
-        title="Flight surgeon brief"
+        title="Simulation brief"
         right={
           <Button
             variant="primary"
@@ -143,6 +147,11 @@ export function BriefCard({
       />
 
       <div className="min-h-0 flex-shrink-0 overflow-y-auto pb-2">
+        {briefError && (
+          <p className="mb-2 rounded-lg border border-bad/25 bg-bad/10 p-2 text-sm text-rose-100" role="alert">
+            {briefError}
+          </p>
+        )}
         {brief ? (
           <>
             <AnimatePresence mode="wait">
@@ -175,7 +184,7 @@ export function BriefCard({
           user has scrolled up to read history. */}
       <div className="mt-4 flex min-h-0 flex-1 flex-col border-t border-white/10 pt-3">
         <div className="mb-2 text-sm font-semibold text-white/70">
-          Ask the surgeon
+          Ask the simulation assistant
         </div>
 
         <div className="relative min-h-0 flex-1">
@@ -201,7 +210,7 @@ export function BriefCard({
                 }`}
               >
                 <span className="block text-sm uppercase tracking-wider text-white/55">
-                  {m.role === "user" ? "you" : "surgeon"}
+                  {m.role === "user" ? "you" : "assistant"}
                 </span>
                 <span className="whitespace-pre-wrap">{m.content}</span>
               </div>
@@ -209,7 +218,7 @@ export function BriefCard({
             {chatStreaming && (
               <div className="rounded-md bg-white/[0.04] p-2 text-sm text-white/65">
                 <span className="block text-sm uppercase tracking-wider text-white/55">
-                  surgeon
+                  assistant
                 </span>
                 <span className="inline-block h-3 w-1.5 animate-pulse bg-accent align-middle" />
               </div>
@@ -229,6 +238,12 @@ export function BriefCard({
           )}
         </div>
 
+        {chatError && (
+          <p className="mt-2 text-sm text-bad" role="alert">
+            {chatError}
+          </p>
+        )}
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -240,10 +255,13 @@ export function BriefCard({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about this crew member…"
+            maxLength={1200}
             className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-base text-ink placeholder:text-white/40 focus:outline-none"
             disabled={chatStreaming}
             inputMode="text"
             autoComplete="off"
+            aria-label="Ask a follow-up question about this crew member"
+            aria-describedby="brief-chat-message-limit"
             style={{ fontSize: "1rem" }}
           />
           <Button
@@ -254,6 +272,9 @@ export function BriefCard({
             Send
           </Button>
         </form>
+        <p id="brief-chat-message-limit" className="mt-1 text-xs text-white/55">
+          Messages are limited to 1,200 characters.
+        </p>
         {chatModel && (
           <p className="mt-1.5 text-sm text-white/65">
             chat model · <span className="font-mono">{chatModel}</span>

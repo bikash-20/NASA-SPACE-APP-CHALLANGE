@@ -8,7 +8,24 @@ const BH = [58, 64, 70];
 const D0 = [165, 158, 171];
 
 const cl = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
-const rn = (a: number, b: number) => a + Math.random() * (b - a);
+export const DEFAULT_SIMULATION_SEED = 112060;
+
+function randomFrom(seed: number): {
+  random: () => number;
+  seed: () => number;
+} {
+  let current = seed >>> 0;
+  return {
+    random: () => {
+      current = (1664525 * current + 1013904223) >>> 0;
+      return current / 0x100000000;
+    },
+    seed: () => current,
+  };
+}
+
+const between = (random: () => number, a: number, b: number) =>
+  a + random() * (b - a);
 
 export function mkCrew(i: 0 | 1 | 2): Crew {
   return {
@@ -52,15 +69,39 @@ export interface StepOpts {
   aiOn: boolean;
   emitAlerts: boolean;
   tick: number;
-  onAlert?: (a: Alert) => void;
 }
 
-/** Advance one tick for the whole crew. Mutates crew in place. */
-export function step(crew: Crew[], opts: StepOpts): void {
-  const { storm, aiOn, emitAlerts, tick, onAlert } = opts;
+export interface StepResult {
+  crew: Crew[];
+  alerts: Alert[];
+  seed: number;
+}
 
-  crew.forEach((c, i) => {
-    const f = c.f;
+/** Advance one tick for the whole crew without mutating the provided snapshot. */
+export function step(
+  crew: Crew[],
+  opts: StepOpts,
+  seed = DEFAULT_SIMULATION_SEED
+): StepResult {
+  const { storm, aiOn, emitAlerts, tick } = opts;
+  const rng = randomFrom(seed);
+  const alerts: Alert[] = [];
+
+  const nextCrew = crew.map((previous, i) => {
+    const f = previous.f;
+    const c: Crew = {
+      ...previous,
+      H: {
+        hr: [...previous.H.hr],
+        spo2: [...previous.H.spo2],
+        stress: [...previous.H.stress],
+        rate: [...previous.H.rate],
+      },
+      r: [...previous.r],
+      armed: [...previous.armed],
+      F: [...previous.F],
+      R: [...previous.R],
+    };
     c.stress = cl(
       c.stress +
         (28 +
@@ -69,38 +110,43 @@ export function step(crew: Crew[], opts: StepOpts): void {
           (storm ? 18 : 0) -
           c.stress) *
           0.12 +
-        rn(-2, 2),
+        between(rng.random, -2, 2),
       0,
       100
     );
     c.hr +=
       (c.bhr * (1 + 0.6 * f.card) + (c.stress - 30) * 0.12 - c.hr) * 0.25 +
-      rn(-1.2, 1.2);
+      between(rng.random, -1.2, 1.2);
     c.spo2 = Math.min(
       100,
-      c.spo2 + ((f.card ? 93.2 : 98) - c.spo2) * 0.2 + rn(-0.3, 0.3)
+      c.spo2 + ((f.card ? 93.2 : 98) - c.spo2) * 0.2 +
+        between(rng.random, -0.3, 0.3)
     );
-    c.sleep += ((f.sleep ? 3.8 : 7.2) - c.sleep) * 0.07 + rn(-0.03, 0.03);
-    c.rate = storm ? 3 + rn(-0.4, 0.6) : 0.04 + rn(0, 0.02);
+    c.sleep +=
+      ((f.sleep ? 3.8 : 7.2) - c.sleep) * 0.07 +
+      between(rng.random, -0.03, 0.03);
+    c.rate = storm
+      ? 3 + between(rng.random, -0.4, 0.6)
+      : 0.04 + between(rng.random, 0, 0.02);
     c.dose += c.rate * 0.5;
-
-    const H = c.H;
-    H.hr.push(c.hr);
-    H.spo2.push(c.spo2);
-    H.stress.push(c.stress);
-    H.rate.push(c.rate);
-    for (const k in H) if (H[k as keyof typeof H].length > 60) (H[k as keyof typeof H] as number[]).shift();
+    c.H.hr.push(c.hr);
+    c.H.spo2.push(c.spo2);
+    c.H.stress.push(c.stress);
+    c.H.rate.push(c.rate);
+    for (const values of Object.values(c.H)) {
+      if (values.length > 60) values.shift();
+    }
 
     aiScore(c);
-    const R = evalRules(c);
-    R.forEach((x, j) => {
+    const rules = evalRules(c);
+    rules.forEach((x, j) => {
       // Hysteresis: re-arm when the level drops back to 0 so the next
       // crossing can fire. While the level stays >0, suppress repeats.
       if (x.lv === 0) c.armed[j] = true;
       const risingOrSteppingUp = x.lv > c.r[j];
       const fresh = x.lv > 0 && c.armed[j];
       if (emitAlerts && (risingOrSteppingUp || fresh)) {
-        const a: Alert = {
+        alerts.push({
           id: `${tick}-${i}-${j}`,
           t: clock(tick),
           i: i as 0 | 1 | 2,
@@ -111,12 +157,14 @@ export function step(crew: Crew[], opts: StepOpts): void {
           why: x.why,
           ai: Math.round(c.ai),
           aiOn,
-        };
-        onAlert?.(a);
+        });
         c.armed[j] = false;
       }
       c.r[j] = x.lv;
     });
-    c.R = R;
+    c.R = rules;
+    return c;
   });
+
+  return { crew: nextCrew, alerts, seed: rng.seed() };
 }

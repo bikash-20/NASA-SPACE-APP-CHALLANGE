@@ -8,6 +8,7 @@ interface TopBarProps {
   running: boolean;
   speed: 1 | 2 | 4;
   onToggle: () => void;
+  onStep: () => void;
   onSpeed: (s: 1 | 2 | 4) => void;
   onDemo: () => void;
   onReset: () => void;
@@ -28,6 +29,7 @@ export function TopBar({
   running,
   speed,
   onToggle,
+  onStep,
   onSpeed,
   onDemo,
   onReset,
@@ -44,11 +46,19 @@ export function TopBar({
     >
       {/* Left: title */}
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-accent" />
-          <h1 className="truncate text-lg font-semibold tracking-tight text-ink sm:text-xl">
-            Crew Health Monitor
-          </h1>
+        <div className="flex min-w-0 flex-col">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-300" aria-hidden />
+            <h1 className="truncate text-lg font-semibold tracking-tight text-ink sm:text-xl">
+              Crew Health Monitor
+            </h1>
+            <span className="shrink-0 rounded border border-cyan-300/30 bg-cyan-300/10 px-1.5 py-0.5 text-[0.625rem] font-bold tracking-[0.12em] text-cyan-200">
+              SIM
+            </span>
+          </div>
+          <p className="hidden pl-4 text-xs text-white/55 sm:block">
+            Rule-based decision support · synthetic telemetry
+          </p>
         </div>
       </div>
 
@@ -91,6 +101,16 @@ export function TopBar({
             aria-label={running ? "Pause simulation" : "Play simulation"}
           >
             {running ? "Pause" : "Play"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onStep}
+            disabled={running}
+            aria-label="Advance simulation by one 30-minute tick"
+            title={running ? "Pause the simulation to step" : "Advance by 30 minutes"}
+          >
+            Step +30m
           </Button>
           <div
             className="flex items-center gap-0.5 rounded-md border border-white/10 bg-white/5 p-0.5"

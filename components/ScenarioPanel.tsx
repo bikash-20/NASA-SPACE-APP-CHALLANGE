@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Panel, PanelTitle } from "./ui/Panel";
 import { Button } from "./ui/Button";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import type { Crew } from "@/lib/types";
 
 type Flag = "storm" | "ai" | "sleep" | "card";
+type Preset = "cardiac" | "sleep" | "storm";
 
 interface ScenarioPanelProps {
   /** "inline" = permanent card in the right rail (>=lg). "sheet" = mobile/tablet bottom sheet. */
@@ -19,6 +20,8 @@ interface ScenarioPanelProps {
   selectedFlags: { sleep: 0 | 1; card: 0 | 1 };
   selected: Crew;
   onToggle: (k: Flag) => void;
+  activePreset: Preset | "guided-demo" | null;
+  onPreset: (scenario: Preset) => void;
   onDemo: () => void;
   onReset: () => void;
 }
@@ -32,13 +35,60 @@ export function ScenarioPanel({
   selectedFlags,
   selected,
   onToggle,
+  activePreset,
+  onPreset,
   onDemo,
   onReset,
 }: ScenarioPanelProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (variant !== "sheet" || !open) return;
+    const previousFocus = document.activeElement;
+    const dialog = dialogRef.current;
+    const focusable = dialog?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    focusable?.[0]?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current?.();
+        return;
+      }
+      if (event.key !== "Tab" || !focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+    };
+  }, [variant, open]);
+
   if (variant === "inline") {
     return (
       <Panel density="compact" tone="default">
         <PanelTitle title="Inject a problem" />
+        <PresetButtons
+          compact
+          activePreset={activePreset}
+          onPreset={onPreset}
+        />
         <div className="space-y-1.5">
           <ScenarioRow
             active={storm}
@@ -96,24 +146,27 @@ export function ScenarioPanel({
             aria-hidden
           />
           <motion.div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
-            aria-label="Inject a problem"
+            aria-labelledby="scenario-sheet-title"
+            tabIndex={-1}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 320, damping: 32 }}
-            className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border border-white/10 bg-bg-deep p-4 shadow-2xl pb-[env(safe-area-inset-bottom)]"
+            className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto rounded-t-3xl border border-white/10 bg-bg-deep p-4 pb-[env(safe-area-inset-bottom)] shadow-2xl"
             style={{ maxHeight: "80dvh" }}
           >
             <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-white/15" />
             <h2 className="mb-1 text-lg font-semibold text-ink">
-              Inject a problem
+              <span id="scenario-sheet-title">Inject a problem</span>
             </h2>
             <p className="mb-4 text-sm text-white/65">
               Selected crew member is {crewShortName(selected.n)}.
               Toggle a problem to apply it.
             </p>
+            <PresetButtons activePreset={activePreset} onPreset={onPreset} />
             <div className="space-y-1.5">
               <ScenarioRow
                 active={storm}
@@ -163,6 +216,52 @@ export function ScenarioPanel({
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+function PresetButtons({
+  compact = false,
+  activePreset,
+  onPreset,
+}: {
+  compact?: boolean;
+  activePreset: Preset | "guided-demo" | null;
+  onPreset: (scenario: Preset) => void;
+}) {
+  const presets: { id: Preset; label: string; description: string }[] = [
+    { id: "cardiac", label: "Cardiac strain", description: "One crew member" },
+    { id: "sleep", label: "Sleep debt", description: "One crew member" },
+    { id: "storm", label: "Solar storm", description: "Whole crew" },
+  ];
+
+  return (
+    <div
+      className={`mb-3 grid gap-1.5 ${
+        compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-3"
+      }`}
+    >
+      {presets.map((preset) => (
+        <button
+          key={preset.id}
+          type="button"
+          onClick={() => onPreset(preset.id)}
+          aria-pressed={activePreset === preset.id}
+          className={cn(
+            "tappable rounded-lg border px-2 py-1.5 text-left transition-colors",
+            activePreset === preset.id
+              ? "border-accent/60 bg-accent/10"
+              : "border-white/10 bg-white/[0.025] hover:bg-white/[0.06]"
+          )}
+        >
+          <span className="block text-sm font-semibold text-ink">
+            {preset.label}
+          </span>
+          <span className="block text-xs text-white/60">
+            {preset.description}
+          </span>
+        </button>
+      ))}
+    </div>
   );
 }
 

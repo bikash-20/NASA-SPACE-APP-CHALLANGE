@@ -11,6 +11,7 @@ interface AskCardProps {
   chat: ChatMessage[];
   chatStreaming: boolean;
   chatModel: string | null;
+  chatError: string | null;
   onSendChat: (text: string) => void;
 }
 
@@ -31,6 +32,7 @@ export function AskCard({
   chat,
   chatStreaming,
   chatModel,
+  chatError,
   onSendChat,
 }: AskCardProps) {
   const [input, setInput] = useState("");
@@ -65,7 +67,7 @@ export function AskCard({
 
   return (
     <Panel tone="accent" className="flex h-full min-h-0 flex-col">
-      <PanelTitle title="Ask the surgeon" hint={crew.n} />
+      <PanelTitle title="Ask the simulation assistant" hint={crew.n} />
 
       <div className="mb-2 text-sm text-white/65">
         Follow-up questions about the current snapshot. The model never raises
@@ -98,7 +100,7 @@ export function AskCard({
               }`}
             >
               <span className="block text-sm uppercase tracking-wider text-white/55">
-                {m.role === "user" ? "you" : "surgeon"}
+                {m.role === "user" ? "you" : "assistant"}
               </span>
               <span className="whitespace-pre-wrap">{m.content}</span>
             </div>
@@ -106,7 +108,7 @@ export function AskCard({
           {chatStreaming && (
             <div className="rounded-md bg-white/[0.04] p-2 text-sm text-white/65">
               <span className="block text-sm uppercase tracking-wider text-white/55">
-                surgeon
+                assistant
               </span>
               <span className="inline-block h-3 w-1.5 animate-pulse bg-accent align-middle" />
             </div>
@@ -127,6 +129,12 @@ export function AskCard({
         )}
       </div>
 
+      {chatError && (
+        <p className="mt-2 text-sm text-bad" role="alert">
+          {chatError}
+        </p>
+      )}
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -138,11 +146,13 @@ export function AskCard({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={`Ask about ${crew.n}…`}
+          maxLength={1200}
           className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-base text-ink placeholder:text-white/40 focus:outline-none"
           disabled={chatStreaming}
           inputMode="text"
           autoComplete="off"
-          aria-label={`Ask the surgeon about ${crew.n}`}
+          aria-label={`Ask the simulation assistant about ${crew.n}`}
+          aria-describedby="ask-card-message-limit"
           style={{ fontSize: "1rem" }}
         />
         <Button
@@ -153,6 +163,9 @@ export function AskCard({
           Send
         </Button>
       </form>
+      <p id="ask-card-message-limit" className="mt-1 text-xs text-white/55">
+        Messages are limited to 1,200 characters.
+      </p>
 
       <div className="mt-1.5 flex min-h-[1.25rem] items-center justify-between text-sm text-white/55">
         <span>

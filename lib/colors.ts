@@ -1,11 +1,11 @@
 import type { Level } from "./types";
 
 export const LEVEL_COLORS = {
-  ok: "#10b981",
-  watch: "#f59e0b",
-  bad: "#f43f5e",
-  accent: "#7c5cff",
-  ink: "#e6ecf5",
+  ok: "#22c55e",
+  watch: "#fbbf24",
+  bad: "#fb7185",
+  accent: "#22d3ee",
+  ink: "#e2e8f0",
 } as const;
 
 export function colorForLevel(lv: Level): string {

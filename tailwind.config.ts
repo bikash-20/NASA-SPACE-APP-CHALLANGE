@@ -9,20 +9,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#e6ecf5",
+        ink: "#e2e8f0",
         bg: {
-          DEFAULT: "#0a0e1a",
-          deep: "#060912",
+          DEFAULT: "#0b1220",
+          deep: "#070d17",
         },
         panel: "rgba(255,255,255,0.03)",
         line: "rgba(255,255,255,0.08)",
         accent: {
-          DEFAULT: "#7c5cff",
-          soft: "#9d83ff",
+          DEFAULT: "#22d3ee",
+          soft: "#67e8f9",
         },
-        ok: "#10b981",
-        watch: "#f59e0b",
-        bad: "#f43f5e",
+        ok: "#22c55e",
+        watch: "#fbbf24",
+        bad: "#fb7185",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],

@@ -5,7 +5,11 @@ import { LEVEL_NAMES } from "./types";
  * Compact, deterministic text snapshot of one crew member, suitable to feed
  * to an LLM. Numbers are rounded for readability.
  */
-export function snapshotForLLM(c: Crew, alerts: Alert[]): string {
+export function snapshotForLLM(
+  c: Crew,
+  alerts: Alert[],
+  aiEnabled = true
+): string {
   const max = Math.max(...c.r);
   const active = c.R.filter((r) => r.lv > 0)
     .map((r) => `- ${r.n}: ${r.why} [${LEVEL_NAMES[r.lv]}]`)
@@ -26,7 +30,9 @@ export function snapshotForLLM(c: Crew, alerts: Alert[]): string {
     `Stress index: ${Math.round(c.stress)} / 100`,
     `30-day radiation dose: ${c.dose.toFixed(0)} mSv (limit 250)`,
     `Current dose rate: ${c.rate.toFixed(2)} mSv/h`,
-    `Deterministic AI risk score: ${Math.round(c.ai)} / 100`,
+    `Deterministic AI risk score: ${
+      aiEnabled ? `${Math.round(c.ai)} / 100` : "not included (scorer offline)"
+    }`,
     `Worst rule level: ${LEVEL_NAMES[max]}`,
     `Active rule concerns:\n${active || "  (none)"}`,
     `Recent alerts (most recent first):\n${recentAlerts || "  (none)"}`,

@@ -22,10 +22,13 @@ import { TabbedPanel, type TabKey } from "@/components/TabbedPanel";
 import { BottomTabs, type TabId } from "@/components/BottomTabs";
 import { ScenarioPanel } from "@/components/ScenarioPanel";
 import { CrewWideBanner } from "@/components/CrewWideBanner";
+import { MissionTimeline } from "@/components/MissionTimeline";
+import { CrewComparison } from "@/components/CrewComparison";
 import {
   mkCrew,
   clock as tickClock,
   step as stepSim,
+  DEFAULT_SIMULATION_SEED,
 } from "@/lib/simulation";
 import { mergeAlerts } from "@/lib/alertMerge";
 import { findCrewWideEvents } from "@/lib/crewWide";
@@ -35,7 +38,20 @@ import type { Alert, ChatMessage, Crew } from "@/lib/types";
 const CAP0 =
   'Press "Run guided demo" to walk the whole flow, or inject problems yourself.';
 
-type DemoStep = { at: number; msg: string; fn: () => void };
+type ScenarioPreset = "cardiac" | "sleep" | "storm" | "guided-demo";
+
+interface MissionEvent {
+  id: string;
+  tick: number;
+  at: string;
+  kind: "alert" | "scenario" | "demo";
+  title: string;
+  detail: string;
+  crewIndex?: 0 | 1 | 2;
+  alertKey?: string;
+  level?: Alert["lv"];
+  scenario?: ScenarioPreset;
+}
 
 interface State {
   crew: Crew[];
@@ -45,167 +61,437 @@ interface State {
   running: boolean;
   speed: 1 | 2 | 4;
   tick: number;
+  seed: number;
   alerts: Alert[];
+  events: MissionEvent[];
   selectedAlert: string | null;
   brief: string | null;
   briefModel: string | null;
   briefLoading: boolean;
+  briefError: string | null;
   chat: ChatMessage[];
   chatStreaming: boolean;
   chatModel: string | null;
+  chatError: string | null;
   caption: string;
   pipelineValues: string[];
+  scenarioPreset: ScenarioPreset | null;
+  demoActive: boolean;
+  demoStep: number;
 }
 
 type Action =
-  | { type: "TICK" }
+  | { type: "ADVANCE" }
   | { type: "TOGGLE_RUN" }
   | { type: "SET_SPEED"; speed: 1 | 2 | 4 }
+  | { type: "START_DEMO" }
+  | {
+      type: "SET_SCENARIO";
+      scenario: Exclude<ScenarioPreset, "guided-demo">;
+      crewIndex: 0 | 1 | 2;
+    }
   | { type: "SELECT_CREW"; i: 0 | 1 | 2 }
   | { type: "TOG_FLAG"; k: "storm" | "ai" | "sleep" | "card" }
-  | { type: "ADD_ALERT"; a: Alert }
   | { type: "SELECT_ALERT"; id: string | null }
   | { type: "SET_BRIEF"; text: string; model: string }
+  | { type: "SET_BRIEF_ERROR"; message: string }
   | { type: "SET_BRIEF_LOADING"; v: boolean }
   | { type: "ADD_CHAT_USER"; content: string }
   | { type: "ADD_CHAT_DELTA"; content: string; model: string }
+  | { type: "SET_CHAT_ERROR"; message: string }
   | { type: "FINALIZE_CHAT"; model: string }
   | { type: "SET_CHAT_STREAMING"; v: boolean }
   | { type: "RESET" }
   | { type: "SET_CAPTION"; v: string };
 
-const initial: State = {
-  crew: [0, 1, 2].map((i) => mkCrew(i as 0 | 1 | 2)),
-  selected: 0,
-  storm: false,
-  aiOn: true,
-  running: true,
-  speed: 1,
-  tick: 0,
-  alerts: [],
-  selectedAlert: null,
-  brief: null,
-  briefModel: null,
-  briefLoading: false,
-  chat: [],
-  chatStreaming: false,
-  chatModel: null,
-  caption: CAP0,
-  pipelineValues: ["", "", "", "", "", ""],
-};
+const MAX_ALERTS = 250;
+const MAX_EVENTS = 40;
+
+function makeInitialState(): State {
+  let crew = [0, 1, 2].map((i) => mkCrew(i as 0 | 1 | 2));
+  let seed = DEFAULT_SIMULATION_SEED;
+  for (let i = 0; i < 60; i += 1) {
+    const result = stepSim(
+      crew,
+      { storm: false, aiOn: true, emitAlerts: false, tick: 0 },
+      seed
+    );
+    crew = result.crew;
+    seed = result.seed;
+  }
+
+  return {
+    crew,
+    selected: 0,
+    storm: false,
+    aiOn: true,
+    running: true,
+    speed: 1,
+    tick: 0,
+    seed,
+    alerts: [],
+    events: [],
+    selectedAlert: null,
+    brief: null,
+    briefModel: null,
+    briefLoading: false,
+    briefError: null,
+    chat: [],
+    chatStreaming: false,
+    chatModel: null,
+    chatError: null,
+    caption: CAP0,
+    pipelineValues: ["", "", "", "", "", ""],
+    scenarioPreset: null,
+    demoActive: false,
+    demoStep: 0,
+  };
+}
+
+function scenarioEvent(
+  title: string,
+  detail: string,
+  tick: number,
+  scenario: ScenarioPreset,
+  crewIndex?: 0 | 1 | 2
+): MissionEvent {
+  return {
+    id: `scenario-${tick}-${scenario}`,
+    tick,
+    at: tickClock(tick),
+    kind: "scenario" as const,
+    title,
+    detail,
+    scenario,
+    crewIndex,
+  };
+}
 
 function reducer(s: State, a: Action): State {
   switch (a.type) {
-    case "TICK": {
-      const next: State = { ...s, tick: s.tick + 1 };
-      const c = next.crew[next.selected];
-      const merged = mergeAlerts(next.alerts, next.crew);
+    case "ADVANCE": {
+      const tick = s.tick + 1;
+      const simulation = stepSim(
+        s.crew,
+        {
+          storm: s.storm,
+          aiOn: s.aiOn,
+          emitAlerts: true,
+          tick: s.tick,
+        },
+        s.seed
+      );
+      let crew = simulation.crew;
+      let selected = s.selected;
+      let storm = s.storm;
+      let demoStep = s.demoStep;
+      let demoActive = s.demoActive;
+      let caption = s.caption;
+      let selectedAlert = s.selectedAlert;
+      const firedEvents: MissionEvent[] = simulation.alerts.map((alert) => ({
+        id: alert.id,
+        tick,
+        at: alert.t,
+        kind: "alert",
+        title: `${alert.n} · ${alert.lv === 2 ? "Alert" : "Watch"}`,
+        detail: alert.why,
+        crewIndex: alert.i,
+        alertKey: `${alert.i}-${alert.j}`,
+        level: alert.lv,
+      }));
+      const alerts = [...simulation.alerts, ...s.alerts].slice(0, MAX_ALERTS);
+      const events = [...firedEvents, ...s.events].slice(0, MAX_EVENTS);
+
+      if (demoActive && demoStep === 0 && tick >= 4) {
+        selected = 2;
+        crew = crew.map((member, index) =>
+          index === selected
+            ? { ...member, f: { ...member.f, card: 1 } }
+            : member
+        );
+        demoStep = 1;
+        caption = "Step 1 of 4 — Rafi's heart rate climbs under cardiac strain.";
+        events.unshift(
+          scenarioEvent(
+            "Cardiac strain enabled",
+            "Rafi's heart-rate rule now evaluates each mission tick.",
+            tick,
+            "guided-demo",
+            2
+          )
+        );
+      } else if (demoActive && demoStep === 1 && tick >= 16) {
+        storm = true;
+        demoStep = 2;
+        caption = "Step 2 of 4 — a solar storm raises radiation for the whole crew.";
+        events.unshift(
+          scenarioEvent(
+            "Solar storm enabled",
+            "Radiation dose rate is elevated for the entire crew.",
+            tick,
+            "guided-demo"
+          )
+        );
+      } else if (demoActive && demoStep === 2 && tick >= 28) {
+        demoStep = 3;
+        caption = "Step 3 of 4 — rules raise the alerts. The AI score only advises.";
+      } else if (demoActive && demoStep === 3 && tick >= 38) {
+        const first = mergeAlerts(alerts, crew)[0];
+        selectedAlert = first?.key ?? null;
+        demoStep = 4;
+        demoActive = false;
+        caption =
+          "Step 4 of 4 — open an alert to see why it fired, then write the brief.";
+        events.unshift({
+          id: `demo-complete-${tick}`,
+          tick,
+          at: tickClock(tick),
+          kind: "demo",
+          title: "Guided demo complete",
+          detail: "Review the rule evidence, then generate a simulation brief.",
+          scenario: "guided-demo",
+        });
+      }
+
+      const c = crew[selected];
+      const merged = mergeAlerts(alerts, crew);
       const active = merged.filter((g) => g.active).length;
-      const mx = next.crew.reduce(
+      const mx = crew.reduce(
         (m, x) => Math.max(m, ...x.r),
         0
       );
-      next.pipelineValues = [
-        `t+${next.tick} · HR ${Math.round(c.hr)} / SpO₂ ${c.spo2.toFixed(0)}`,
+      return {
+        ...s,
+        crew,
+        selected,
+        storm,
+        tick,
+        seed: simulation.seed,
+        alerts,
+        events: events.slice(0, MAX_EVENTS),
+        selectedAlert,
+        demoStep,
+        demoActive,
+        caption,
+        pipelineValues: [
+        `t+${tick} · HR ${Math.round(c.hr)} / SpO₂ ${c.spo2.toFixed(0)}`,
         `HR ${c.bhr} · SpO₂ ≥94 · Sl ${c.sleep.toFixed(1)} h`,
-        next.aiOn ? `${Math.round(c.ai)} / 100` : "offline",
+        s.aiOn ? `${Math.round(c.ai)} / 100` : "offline",
         mx === 0 ? "all stable" : `${mx} firing`,
         active > 0 ? `${active} active` : "none",
         s.brief ? "ready" : "—",
-      ];
-      return next;
+        ],
+      };
     }
     case "TOGGLE_RUN":
       return { ...s, running: !s.running };
     case "SET_SPEED":
       return { ...s, speed: a.speed };
+    case "START_DEMO":
+      return {
+        ...makeInitialState(),
+        demoActive: true,
+        caption: "Demo starting…",
+        scenarioPreset: "guided-demo",
+      };
+    case "SET_SCENARIO": {
+      const fresh = makeInitialState();
+      const crew =
+        a.scenario === "cardiac" || a.scenario === "sleep"
+          ? fresh.crew.map((member, index) =>
+              index === a.crewIndex
+                ? {
+                    ...member,
+                    f: {
+                      ...member.f,
+                      [a.scenario === "cardiac" ? "card" : "sleep"]: 1 as const,
+                    },
+                  }
+                : member
+            )
+          : fresh.crew;
+      const title =
+        a.scenario === "cardiac"
+          ? "Cardiac strain enabled"
+          : a.scenario === "sleep"
+            ? "Sleep debt enabled"
+            : "Solar storm enabled";
+      const detail =
+        a.scenario === "storm"
+          ? "Radiation dose rate is elevated for the entire crew."
+          : `${a.scenario === "cardiac" ? "Heart-rate stress" : "Sleep disruption"} is enabled for ${crew[a.crewIndex].n}.`;
+      return {
+        ...fresh,
+        crew,
+        selected: a.crewIndex,
+        storm: a.scenario === "storm",
+        scenarioPreset: a.scenario,
+        caption: `${title}. Simulation ready.`,
+        events: [
+          scenarioEvent(
+            title,
+            detail,
+            0,
+            a.scenario,
+            a.scenario === "storm" ? undefined : a.crewIndex
+          ),
+        ],
+      };
+    }
     case "SELECT_CREW":
       return {
         ...s,
         selected: a.i,
         selectedAlert: null,
+        demoActive: false,
+        scenarioPreset: s.demoActive ? null : s.scenarioPreset,
+        caption: s.demoActive
+          ? "Guided demo stopped. Continue with manual controls."
+          : s.caption,
         brief: null,
         briefModel: null,
         briefLoading: false,
+        briefError: null,
         chat: [],
         chatStreaming: false,
         chatModel: null,
+        chatError: null,
       };
     case "TOG_FLAG":
-      if (a.k === "storm") return { ...s, storm: !s.storm };
-      if (a.k === "ai") return { ...s, aiOn: !s.aiOn };
+      if (a.k === "storm" || a.k === "ai") {
+        const enabled = a.k === "storm" ? !s.storm : !s.aiOn;
+        const label =
+          a.k === "storm"
+            ? `Solar storm ${enabled ? "enabled" : "cleared"}`
+            : `AI risk scorer ${enabled ? "online" : "offline"}`;
+        return {
+          ...s,
+          brief: null,
+          briefModel: null,
+          briefLoading: false,
+          briefError: null,
+          chat: [],
+          chatStreaming: false,
+          chatModel: null,
+          chatError: null,
+          storm: a.k === "storm" ? enabled : s.storm,
+          aiOn: a.k === "ai" ? enabled : s.aiOn,
+          scenarioPreset: a.k === "storm" ? null : s.scenarioPreset,
+          demoActive: a.k === "storm" ? false : s.demoActive,
+          caption:
+            a.k === "storm" && s.demoActive
+              ? "Guided demo stopped. Continue with manual controls."
+              : s.caption,
+          events: [
+            {
+              id: `manual-${s.tick}-${a.k}-${s.events.length}`,
+              tick: s.tick,
+              at: tickClock(s.tick),
+              kind: "scenario" as const,
+              title: label,
+              detail:
+                a.k === "storm"
+                  ? "This global condition affects every crew member."
+                  : "Rule-based alerts continue to run independently.",
+            },
+            ...s.events,
+          ].slice(0, MAX_EVENTS),
+        };
+      }
       const f = { ...s.crew[s.selected].f };
       f[a.k] = (f[a.k] ? 0 : 1) as 0 | 1;
       const crew = s.crew.map((c, i) =>
         i === s.selected ? { ...c, f } : c
       );
-      return { ...s, crew };
-    case "ADD_ALERT":
-      return { ...s, alerts: [a.a, ...s.alerts] };
+      return {
+        ...s,
+        brief: null,
+        briefModel: null,
+        briefLoading: false,
+        briefError: null,
+        chat: [],
+        chatStreaming: false,
+        chatModel: null,
+        chatError: null,
+        crew,
+        scenarioPreset: null,
+        demoActive: false,
+        caption: s.demoActive
+          ? "Guided demo stopped. Continue with manual controls."
+          : s.caption,
+        events: [
+          {
+            id: `manual-${s.tick}-${a.k}-${s.events.length}`,
+            tick: s.tick,
+            at: tickClock(s.tick),
+            kind: "scenario" as const,
+            title: `${a.k === "card" ? "Cardiac strain" : "Sleep debt"} ${
+              f[a.k] ? "enabled" : "cleared"
+            }`,
+            detail: `${s.crew[s.selected].n} · scenario flag changed.`,
+            crewIndex: s.selected,
+          },
+          ...s.events,
+        ].slice(0, MAX_EVENTS),
+      };
     case "SELECT_ALERT":
       return { ...s, selectedAlert: a.id };
     case "SET_BRIEF":
-      return { ...s, brief: a.text, briefModel: a.model, briefLoading: false };
+      return {
+        ...s,
+        brief: a.text,
+        briefModel: a.model,
+        briefLoading: false,
+        briefError: null,
+      };
+    case "SET_BRIEF_ERROR":
+      return { ...s, briefLoading: false, briefError: a.message };
     case "SET_BRIEF_LOADING":
-      return { ...s, briefLoading: a.v };
+      return { ...s, briefLoading: a.v, briefError: null };
     case "ADD_CHAT_USER":
-      return { ...s, chat: [...s.chat, { role: "user", content: a.content }] };
+      return {
+        ...s,
+        chat: [...s.chat, { role: "user" as const, content: a.content }].slice(-40),
+        chatError: null,
+      };
     case "ADD_CHAT_DELTA": {
       const last = s.chat[s.chat.length - 1];
       const chat: ChatMessage[] =
         last && last.role === "assistant"
           ? [
               ...s.chat.slice(0, -1),
-              { ...last, content: last.content + a.content },
+              {
+                ...last,
+                content: (last.content + a.content).slice(0, 12000),
+              },
             ]
-          : [...s.chat, { role: "assistant" as const, content: a.content }];
+          : [
+              ...s.chat,
+              { role: "assistant" as const, content: a.content.slice(0, 12000) },
+            ].slice(-40);
       return { ...s, chat, chatModel: a.model };
     }
+    case "SET_CHAT_ERROR":
+      return { ...s, chatError: a.message };
     case "FINALIZE_CHAT":
       return { ...s, chatModel: a.model, chatStreaming: false };
     case "SET_CHAT_STREAMING":
       return { ...s, chatStreaming: a.v };
     case "SET_CAPTION":
       return { ...s, caption: a.v };
-    case "RESET": {
-      const crew = [0, 1, 2].map((i) => mkCrew(i as 0 | 1 | 2));
-      for (let i = 0; i < 60; i++) {
-        stepSim(crew, {
-          storm: false,
-          aiOn: true,
-          emitAlerts: false,
-          tick: 0,
-        });
-      }
-      return {
-        ...initial,
-        crew,
-        caption: CAP0,
-        pipelineValues: ["", "", "", "", "", ""],
-      };
-    }
+    case "RESET":
+      return makeInitialState();
     default:
       return s;
   }
 }
 
 export default function Page() {
-  const [state, dispatch] = useReducer(reducer, initial, (s) => {
-    const crew = s.crew;
-    for (let i = 0; i < 60; i++) {
-      stepSim(crew, {
-        storm: false,
-        aiOn: true,
-        emitAlerts: false,
-        tick: 0,
-      });
-    }
-    return s;
-  });
-
-  const demoRef = useRef<DemoStep[] | null>(null);
-  const tickRef = useRef(state.tick);
-  tickRef.current = state.tick;
+  const [state, dispatch] = useReducer(reducer, null, makeInitialState);
+  const briefController = useRef<AbortController | null>(null);
+  const chatController = useRef<AbortController | null>(null);
+  const briefRequestId = useRef(0);
+  const chatRequestId = useRef(0);
 
   // Responsive flags
   const isMobile = useMediaQuery("(max-width: 639px)", false);
@@ -217,74 +503,88 @@ export default function Page() {
   const [mobileTab, setMobileTab] = useState<TabId>("vitals");
   const [tabKey, setTabKey] = useState<TabKey>("alerts");
   const [scenariosOpen, setScenariosOpen] = useState(false);
-  const [demoActive, setDemoActive] = useState(false);
+
+  const cancelPendingAi = useCallback(() => {
+    briefRequestId.current += 1;
+    chatRequestId.current += 1;
+    briefController.current?.abort();
+    chatController.current?.abort();
+    briefController.current = null;
+    chatController.current = null;
+  }, []);
+
+  useEffect(
+    () => () => {
+      briefController.current?.abort();
+      chatController.current?.abort();
+    },
+    []
+  );
 
   useEffect(() => {
     setMobileTab("vitals");
   }, [state.selected]);
 
   useEffect(() => {
+    if (state.demoStep !== 4) return;
+    setTabKey("why");
+    if (isMobile) setMobileTab("alerts");
+  }, [state.demoStep, isMobile]);
+
+  useEffect(() => {
     if (!state.running) return;
     const id = setInterval(() => {
-      const t = tickRef.current;
-      if (
-        demoRef.current &&
-        demoRef.current.length &&
-        t >= demoRef.current[0].at
-      ) {
-        const s = demoRef.current.shift()!;
-        s.fn();
-        dispatch({ type: "SET_CAPTION", v: s.msg });
-        if (demoRef.current.length === 0) {
-          // Demo is fully consumed; clear the "active" flag so the next
-          // "Run guided demo" is treated as a fresh run, and let the
-          // caption sit with its last message (it will be cleared on Reset).
-          setDemoActive(false);
-          demoRef.current = null;
-        }
+      if (document.visibilityState === "visible") {
+        dispatch({ type: "ADVANCE" });
       }
-      const newAlerts: Alert[] = [];
-      stepSim(state.crew, {
-        storm: state.storm,
-        aiOn: state.aiOn,
-        emitAlerts: true,
-        tick: t,
-        onAlert: (a) => newAlerts.push(a),
-      });
-      for (const a of newAlerts) dispatch({ type: "ADD_ALERT", a });
-      dispatch({ type: "TICK" });
     }, 1000 / state.speed);
     return () => clearInterval(id);
-  }, [state.running, state.speed, state.storm, state.aiOn, state.crew]);
+  }, [state.running, state.speed]);
 
   const writeBrief = useCallback(async () => {
     if (state.briefLoading) return;
+    const requestId = ++briefRequestId.current;
+    briefController.current?.abort();
+    const controller = new AbortController();
+    briefController.current = controller;
+    const timeout = setTimeout(() => controller.abort(), 30_000);
     dispatch({ type: "SET_BRIEF_LOADING", v: true });
     try {
       const c = state.crew[state.selected];
       const res = await fetch("/api/brief", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ crew: c }),
+        body: JSON.stringify({ crew: c, aiOn: state.aiOn }),
+        signal: controller.signal,
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j.error || `HTTP ${res.status}`);
+        throw new Error("The brief service is unavailable.");
       }
       const j = (await res.json()) as { text: string; model: string };
+      if (requestId !== briefRequestId.current) return;
       dispatch({ type: "SET_BRIEF", text: j.text, model: j.model });
       if (isMobile) setMobileTab("brief");
-    } catch (err) {
+    } catch {
+      if (requestId !== briefRequestId.current) return;
       dispatch({
-        type: "SET_BRIEF",
-        text: `**Brief failed:** ${err instanceof Error ? err.message : String(err)}`,
-        model: "—",
+        type: "SET_BRIEF_ERROR",
+        message: controller.signal.aborted
+          ? "The brief request timed out. Please try again."
+          : "The brief could not be generated. Please try again.",
       });
+    } finally {
+      clearTimeout(timeout);
+      if (requestId === briefRequestId.current) briefController.current = null;
     }
-  }, [state.briefLoading, state.crew, state.selected, isMobile]);
+  }, [state.aiOn, state.briefLoading, state.crew, state.selected, isMobile]);
 
   const sendChat = useCallback(
     async (text: string) => {
+      const requestId = ++chatRequestId.current;
+      chatController.current?.abort();
+      const controller = new AbortController();
+      chatController.current = controller;
+      const timeout = setTimeout(() => controller.abort(), 60_000);
       dispatch({ type: "ADD_CHAT_USER", content: text });
       dispatch({ type: "SET_CHAT_STREAMING", v: true });
       try {
@@ -292,14 +592,21 @@ export default function Page() {
         const messages = state.chat
           .filter((m) => m.role === "user" || m.role === "assistant")
           .concat([{ role: "user" as const, content: text }])
+          .slice(-20)
           .map((m) => ({ role: m.role, content: m.content }));
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ crew: c, alerts: state.alerts, messages }),
+          body: JSON.stringify({
+            crew: c,
+            aiOn: state.aiOn,
+            alerts: state.alerts.filter((alert) => alert.i === state.selected).slice(0, 20),
+            messages,
+          }),
+          signal: controller.signal,
         });
         if (!res.ok || !res.body) {
-          throw new Error(`HTTP ${res.status}`);
+          throw new Error("The chat service is unavailable.");
         }
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -322,88 +629,106 @@ export default function Page() {
                 error?: string;
               };
               if (parsed.error) {
-                dispatch({
-                  type: "ADD_CHAT_DELTA",
-                  content: `\n\n[error: ${parsed.error}]`,
-                  model: parsed.model ?? lastModel,
-                });
+                if (requestId === chatRequestId.current) {
+                  dispatch({
+                    type: "SET_CHAT_ERROR",
+                    message: "The chat service could not complete the reply.",
+                  });
+                }
               } else if (parsed.delta) {
                 if (parsed.model) lastModel = parsed.model;
-                dispatch({
-                  type: "ADD_CHAT_DELTA",
-                  content: parsed.delta,
-                  model: lastModel,
-                });
+                if (requestId === chatRequestId.current) {
+                  dispatch({
+                    type: "ADD_CHAT_DELTA",
+                    content: parsed.delta,
+                    model: lastModel,
+                  });
+                }
               }
             } catch {
-              // ignore
+              if (requestId === chatRequestId.current) {
+                dispatch({
+                  type: "SET_CHAT_ERROR",
+                  message: "The chat service sent an unreadable response.",
+                });
+              }
             }
           }
         }
-        dispatch({ type: "FINALIZE_CHAT", model: lastModel });
-      } catch (err) {
+        if (requestId === chatRequestId.current) {
+          dispatch({ type: "FINALIZE_CHAT", model: lastModel });
+        }
+      } catch {
+        if (requestId !== chatRequestId.current) return;
         dispatch({
-          type: "ADD_CHAT_DELTA",
-          content: `[error: ${err instanceof Error ? err.message : String(err)}]`,
-          model: "—",
+          type: "SET_CHAT_ERROR",
+          message: controller.signal.aborted
+            ? "The chat request timed out. Please try again."
+            : "The chat could not be completed. Please try again.",
         });
-        dispatch({ type: "FINALIZE_CHAT", model: "—" });
+        dispatch({ type: "FINALIZE_CHAT", model: state.chatModel ?? "—" });
+      } finally {
+        clearTimeout(timeout);
+        if (requestId === chatRequestId.current) chatController.current = null;
       }
     },
-    [state.crew, state.selected, state.alerts, state.chat, state.chatModel]
+    [state.aiOn, state.crew, state.selected, state.alerts, state.chat, state.chatModel]
   );
 
   const startDemo = useCallback(() => {
-    dispatch({ type: "RESET" });
-    setDemoActive(true);
-    demoRef.current = [
-      {
-        at: 4,
-        msg: "Step 1 of 4 — Rafi's heart rate climbs under cardiac strain.",
-        fn: () => {
-          dispatch({ type: "SELECT_CREW", i: 2 });
-          const next = state.crew.map((c, i) =>
-            i === 2 ? { ...c, f: { ...c.f, card: 1 as const } } : c
-          );
-          next.forEach((c, i) => {
-            if (i === 2) c.f.card = 1;
-          });
-        },
-      },
-      {
-        at: 16,
-        msg: "Step 2 of 4 — a solar storm raises radiation for the whole crew.",
-        fn: () => {
-          dispatch({ type: "TOG_FLAG", k: "storm" });
-        },
-      },
-      {
-        at: 28,
-        msg: "Step 3 of 4 — rules raise the alerts. The AI score only advises.",
-        fn: () => undefined,
-      },
-      {
-        at: 38,
-        msg: "Step 4 of 4 — open an alert to see why it fired, then write the brief.",
-        fn: () => {
-          const merged = mergeAlerts(state.alerts, state.crew);
-          const first = merged[0];
-          if (first) dispatch({ type: "SELECT_ALERT", id: first.key });
-          if (isMobile) setMobileTab("alerts");
-          else setTabKey("alerts");
-        },
-      },
-    ];
-    dispatch({ type: "SET_CAPTION", v: "Demo starting…" });
+    cancelPendingAi();
+    dispatch({ type: "START_DEMO" });
     setScenariosOpen(false);
-  }, [state.crew, state.alerts, isMobile]);
+    if (isMobile) setMobileTab("vitals");
+  }, [cancelPendingAi, isMobile]);
 
   const reset = useCallback(() => {
-    demoRef.current = null;
-    setDemoActive(false);
+    cancelPendingAi();
     dispatch({ type: "RESET" });
     setScenariosOpen(false);
-  }, []);
+  }, [cancelPendingAi]);
+
+  const setScenario = useCallback(
+    (scenario: Exclude<ScenarioPreset, "guided-demo">) => {
+      cancelPendingAi();
+      dispatch({ type: "SET_SCENARIO", scenario, crewIndex: state.selected });
+      setScenariosOpen(false);
+      if (isMobile) setMobileTab("vitals");
+    },
+    [cancelPendingAi, isMobile, state.selected]
+  );
+
+  const toggleFlag = useCallback(
+    (k: "storm" | "ai" | "sleep" | "card") => {
+      cancelPendingAi();
+      dispatch({ type: "TOG_FLAG", k });
+    },
+    [cancelPendingAi]
+  );
+
+  const replayScenario = useCallback(
+    (scenario: ScenarioPreset, crewIndex?: 0 | 1 | 2) => {
+      if (scenario === "guided-demo") {
+        startDemo();
+        return;
+      }
+      cancelPendingAi();
+      dispatch({
+        type: "SET_SCENARIO",
+        scenario,
+        crewIndex: crewIndex ?? state.selected,
+      });
+    },
+    [cancelPendingAi, startDemo, state.selected]
+  );
+
+  const selectCrew = useCallback(
+    (i: 0 | 1 | 2) => {
+      cancelPendingAi();
+      dispatch({ type: "SELECT_CREW", i });
+    },
+    [cancelPendingAi]
+  );
 
   const [stage, setStage] = useState<number | null>(null);
   useEffect(() => {
@@ -449,21 +774,35 @@ export default function Page() {
     [state.crew]
   );
 
-  // Only show the demo caption while a demo is running; otherwise clear.
-  const showCaption = demoActive && state.caption && state.caption !== CAP0;
-
   const stageClass = (n: number) => (stage === n ? "ring-accent" : "");
+
+  const inspectAlert = (id: string | null) => {
+    dispatch({ type: "SELECT_ALERT", id });
+    if (!id) return;
+    setTabKey("why");
+    if (isMobile) setMobileTab("alerts");
+  };
 
   // Reusable content blocks
   const alertsNode = (
-    <AlertsCard
-      alerts={state.alerts}
-      crew={state.crew}
-      selected={state.selectedAlert}
-      onSelect={(id) => dispatch({ type: "SELECT_ALERT", id })}
-    />
+    <div className="space-y-3">
+      <AlertsCard
+        alerts={state.alerts}
+        crew={state.crew}
+        selected={state.selectedAlert}
+        onSelect={inspectAlert}
+      />
+      <MissionTimeline
+        events={state.events}
+        onInspectAlert={inspectAlert}
+        onReplay={replayScenario}
+      />
+    </div>
   );
   const whyNode = <TraceCard alert={selAlert} crew={state.crew} />;
+  const crewNode = (
+    <CrewComparison crew={state.crew} selected={state.selected} onSelect={selectCrew} />
+  );
   const briefNode = (
     <BriefCard
       crew={sel}
@@ -471,9 +810,11 @@ export default function Page() {
       brief={state.brief}
       briefModel={state.briefModel}
       briefLoading={state.briefLoading}
+      briefError={state.briefError}
       chat={state.chat}
       chatStreaming={state.chatStreaming}
       chatModel={state.chatModel}
+      chatError={state.chatError}
       onWriteBrief={writeBrief}
       onSendChat={sendChat}
     />
@@ -488,6 +829,7 @@ export default function Page() {
       alertsBadge={activeAlertCount}
       alerts={alertsNode}
       why={whyNode}
+      crew={crewNode}
       brief={briefNode}
       ask={
         <AskCard
@@ -495,6 +837,7 @@ export default function Page() {
           chat={state.chat}
           chatStreaming={state.chatStreaming}
           chatModel={state.chatModel}
+          chatError={state.chatError}
           onSendChat={sendChat}
         />
       }
@@ -508,7 +851,9 @@ export default function Page() {
       aiOn={state.aiOn}
       selectedFlags={sel.f}
       selected={sel}
-      onToggle={(k) => dispatch({ type: "TOG_FLAG", k })}
+      activePreset={state.scenarioPreset}
+      onPreset={setScenario}
+      onToggle={toggleFlag}
       onDemo={startDemo}
       onReset={reset}
     />
@@ -521,6 +866,9 @@ export default function Page() {
         running={state.running}
         speed={state.speed}
         onToggle={() => dispatch({ type: "TOGGLE_RUN" })}
+        onStep={() => {
+          if (!state.running) dispatch({ type: "ADVANCE" });
+        }}
         onSpeed={(s) => dispatch({ type: "SET_SPEED", speed: s })}
         onDemo={startDemo}
         onReset={reset}
@@ -529,6 +877,15 @@ export default function Page() {
         compact={isMobile}
         hideScenarios={false}
       />
+
+      <div className="flex items-center justify-between gap-3 border-b border-white/5 px-3 py-1 text-xs sm:px-5">
+        <span className="font-semibold tracking-[0.12em] text-cyan-200">
+          SIMULATION
+        </span>
+        <span className="text-right text-white/60">
+          Synthetic telemetry · deterministic rules decide · AI only advises
+        </span>
+      </div>
 
       <Pipeline
         onStage={setStage}
@@ -539,7 +896,8 @@ export default function Page() {
         briefReady={!!state.brief}
       />
 
-      {showCaption && (
+      {(state.demoActive || state.scenarioPreset) &&
+        state.caption !== CAP0 && (
         <div
           className="border-b border-white/5 bg-accent/5 px-3 py-2 text-sm font-medium text-accent sm:px-5"
           role="status"
@@ -558,7 +916,12 @@ export default function Page() {
       >
         {isMobile ? (
           // Mobile: one panel at a time, switched by BottomTabs.
-          <div className="space-y-3">
+          <div
+            id="mobile-dashboard-panel"
+            role="tabpanel"
+            aria-labelledby={`mobile-tab-${mobileTab}`}
+            className="space-y-3"
+          >
             {mobileTab === "vitals" && (
               <div className={stageClass(1)}>{vitalsNode}</div>
             )}
@@ -570,6 +933,7 @@ export default function Page() {
             )}
             {mobileTab === "ai" && (
               <div className="space-y-3">
+                <div className={stageClass(2)}>{crewNode}</div>
                 <div className={stageClass(3)}>{aiNode}</div>
                 <div className={stageClass(4)}>{rulesNode}</div>
               </div>
@@ -586,7 +950,7 @@ export default function Page() {
                 crew={state.crew}
                 selected={state.selected}
                 aiOn={state.aiOn}
-                onPick={(i) => dispatch({ type: "SELECT_CREW", i })}
+                onPick={selectCrew}
                 variant="row"
                 causes={crewCauses}
               />
@@ -624,7 +988,7 @@ export default function Page() {
                 crew={state.crew}
                 selected={state.selected}
                 aiOn={state.aiOn}
-                onPick={(i) => dispatch({ type: "SELECT_CREW", i })}
+                onPick={selectCrew}
                 variant="rail"
                 causes={crewCauses}
               />
@@ -667,7 +1031,9 @@ export default function Page() {
         aiOn={state.aiOn}
         selectedFlags={sel.f}
         selected={sel}
-        onToggle={(k) => dispatch({ type: "TOG_FLAG", k })}
+        activePreset={state.scenarioPreset}
+        onPreset={setScenario}
+        onToggle={toggleFlag}
         onDemo={startDemo}
         onReset={reset}
       />
