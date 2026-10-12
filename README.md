@@ -308,17 +308,16 @@ nasa-space-app/
 
 ## UI: components and responsive layout
 
-The layout is a hand-rolled three-breakpoint responsive grid driven by `useMediaQuery`:
+The layout adapts between a compact, section-switched experience and a multi-panel dashboard:
 
 | Breakpoint | Class | Layout                                                                                                    |
 |------------|-------|-----------------------------------------------------------------------------------------------------------|
-| `< 640px`  | mobile    | One panel at a time, switched by **BottomTabs**. Top bar collapses to compact (sticky). Scenarios via **ScenarioSheet**. |
-| `640–1023px` | tablet | 2-col grid (vitals + AI/rules), tabbed panel below. Scenarios inline via **ScenarioBar**.                  |
-| `≥ 1024px`  | desktop  | True single-viewport 3-column grid: **rail (240/260/280 px)** \| **vitals + tabbed** \| **AI + rules (320/340/360 px)**. |
+| `< 1280px` | compact | One section at a time, switched by **BottomTabs**, opening on Chat. Short viewports scroll naturally; scenarios open in **ScenarioSheet**. |
+| `≥ 1280px` | dashboard | Four visible columns: **crew + scenarios** \| **vitals, crew comparison, AI score + rules** \| **alerts, alert explanation + brief** \| **chat**. The page scrolls on shorter viewports rather than clipping the dashboard. |
 
-The top **Pipeline** strip is always visible. Clicking a step briefly highlights the corresponding panel on screen with a `ring-accent` ring for ~2.2 s, so a presenter can walk a viewer through the six steps in order.
+The top **Pipeline** strip is always visible. Clicking a step briefly highlights the corresponding dashboard panel on screen with a `ring-accent` ring for ~2.2 s, so a presenter can walk a viewer through the six steps in order.
 
-`TabbedPanel` (desktop/tablet) hosts **Alerts / Why / Brief / Ask assistant** under one container and opens to Ask assistant. `BottomTabs` (mobile) provides **Vitals / Alerts / AI & rules / Brief / Chat** with an animated underline and an alerts badge, and opens directly to Chat.
+`BottomTabs` provides **Vitals / Alerts / AI & rules / Brief / Chat** on compact screens, with an animated underline and an alerts badge. On wide screens these dashboard surfaces stay visible together, including the conversation and its input.
 
 `ScenarioSheet` is a motion-spring bottom sheet that locks body scroll while open and renders a clear hierarchy of toggles with their scope ("Affects all crew" vs "Selected crew member").
 

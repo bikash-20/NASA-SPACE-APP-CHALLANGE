@@ -161,16 +161,6 @@ body {
 .h-dvh { height: 100dvh; }
 .min-h-dvh { min-height: 100dvh; }
 
-/* Short-window safety valve for the desktop layout.
-   The page wrapper uses .lg\:h-dvh and .lg\:overflow-hidden to lock the
-   dashboard to one viewport. If the window is too short to fit the
-   three-column grid, that lock would clip the AI chat and the scenario
-   card. Release the lock on short windows and let the page scroll. */
-@media (max-height: 819px) and (min-width: 1024px) {
-  .lg\:h-dvh { height: auto !important; }
-  .lg\:overflow-hidden { overflow: visible !important; }
-}
-
 /* Visually hidden but accessible to screen readers */
 .sr-only {
   position: absolute;

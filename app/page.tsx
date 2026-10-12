@@ -18,7 +18,6 @@ import { AlertsCard } from "@/components/AlertsCard";
 import { TraceCard } from "@/components/TraceCard";
 import { BriefCard } from "@/components/BriefCard";
 import { AskCard } from "@/components/AskCard";
-import { TabbedPanel, type TabKey } from "@/components/TabbedPanel";
 import { BottomTabs, type TabId } from "@/components/BottomTabs";
 import { ScenarioPanel } from "@/components/ScenarioPanel";
 import { CrewWideBanner } from "@/components/CrewWideBanner";
@@ -495,13 +494,12 @@ export default function Page() {
 
   // Responsive flags
   const isMobile = useMediaQuery("(max-width: 639px)", false);
-  const isTablet = useMediaQuery("(min-width: 640px) and (max-width: 1023px)", false);
+  const isCompact = useMediaQuery("(max-width: 1279px)", false);
   const isLg = useMediaQuery("(min-width: 1024px)", true);
   const isXl = useMediaQuery("(min-width: 1280px)", true);
   const isXxl = useMediaQuery("(min-width: 1600px)", true);
 
   const [mobileTab, setMobileTab] = useState<TabId>("chat");
-  const [tabKey, setTabKey] = useState<TabKey>("ask");
   const [scenariosOpen, setScenariosOpen] = useState(false);
   const previousSelectedCrew = useRef(state.selected);
 
@@ -531,9 +529,8 @@ export default function Page() {
 
   useEffect(() => {
     if (state.demoStep !== 4) return;
-    setTabKey("why");
-    if (isMobile) setMobileTab("alerts");
-  }, [state.demoStep, isMobile]);
+    if (isCompact) setMobileTab("alerts");
+  }, [state.demoStep, isCompact]);
 
   useEffect(() => {
     if (!state.running) return;
@@ -567,7 +564,7 @@ export default function Page() {
       const j = (await res.json()) as { text: string; model: string };
       if (requestId !== briefRequestId.current) return;
       dispatch({ type: "SET_BRIEF", text: j.text, model: j.model });
-      if (isMobile) setMobileTab("brief");
+      if (isCompact) setMobileTab("brief");
     } catch {
       if (requestId !== briefRequestId.current) return;
       dispatch({
@@ -580,7 +577,7 @@ export default function Page() {
       clearTimeout(timeout);
       if (requestId === briefRequestId.current) briefController.current = null;
     }
-  }, [state.aiOn, state.briefLoading, state.crew, state.selected, isMobile]);
+  }, [state.aiOn, state.briefLoading, state.crew, state.selected, isCompact]);
 
   const sendChat = useCallback(
     async (text: string) => {
@@ -683,8 +680,8 @@ export default function Page() {
     cancelPendingAi();
     dispatch({ type: "START_DEMO" });
     setScenariosOpen(false);
-    if (isMobile) setMobileTab("vitals");
-  }, [cancelPendingAi, isMobile]);
+    if (isCompact) setMobileTab("vitals");
+  }, [cancelPendingAi, isCompact]);
 
   const reset = useCallback(() => {
     cancelPendingAi();
@@ -697,9 +694,9 @@ export default function Page() {
       cancelPendingAi();
       dispatch({ type: "SET_SCENARIO", scenario, crewIndex: state.selected });
       setScenariosOpen(false);
-      if (isMobile) setMobileTab("vitals");
+      if (isCompact) setMobileTab("vitals");
     },
-    [cancelPendingAi, isMobile, state.selected]
+    [cancelPendingAi, isCompact, state.selected]
   );
 
   const toggleFlag = useCallback(
@@ -783,8 +780,7 @@ export default function Page() {
   const inspectAlert = (id: string | null) => {
     dispatch({ type: "SELECT_ALERT", id });
     if (!id) return;
-    setTabKey("why");
-    if (isMobile) setMobileTab("alerts");
+    if (isCompact) setMobileTab("alerts");
   };
 
   // Reusable content blocks
@@ -818,7 +814,7 @@ export default function Page() {
     />
   );
   const chatNode = (
-    <div className="h-[min(70dvh,680px)] min-h-[360px] lg:h-full lg:min-h-0">
+    <div className="h-[min(60dvh,680px)] min-h-[360px]">
       <AskCard
         crew={sel}
         chat={state.chat}
@@ -832,18 +828,6 @@ export default function Page() {
   const vitalsNode = <VitalsCard crew={sel} />;
   const aiNode = <AIScoreCard crew={sel} aiOn={state.aiOn} />;
   const rulesNode = <RulesCard crew={sel} />;
-  const tabbedNode = (
-    <TabbedPanel
-      active={tabKey}
-      onChange={setTabKey}
-      alertsBadge={activeAlertCount}
-      alerts={alertsNode}
-      why={whyNode}
-      crew={crewNode}
-      brief={briefNode}
-      ask={chatNode}
-    />
-  );
 
   const scenariosNode = (
     <ScenarioPanel
@@ -861,7 +845,7 @@ export default function Page() {
   );
 
   return (
-    <div className="relative z-10 flex min-h-dvh flex-col lg:h-dvh lg:min-h-0 lg:overflow-hidden">
+    <div className="relative z-10 flex min-h-dvh flex-col">
       <TopBar
         clock={tickClock(state.tick)}
         running={state.running}
@@ -875,7 +859,7 @@ export default function Page() {
         onReset={reset}
         onOpenScenarios={() => setScenariosOpen(true)}
         aiOn={state.aiOn}
-        compact={isMobile}
+        compact={isCompact}
         hideScenarios={false}
       />
 
@@ -911,12 +895,12 @@ export default function Page() {
       <CrewWideBanner event={crewWide} />
 
       <main
-        className={`flex min-h-0 flex-1 flex-col px-3 py-3 sm:px-5 sm:py-4 lg:min-h-0 lg:overflow-hidden ${
-          isMobile ? "pb-24" : ""
+        className={`flex flex-1 flex-col px-3 py-3 sm:px-5 sm:py-4 ${
+          isCompact ? "pb-24" : ""
         }`}
       >
-        {isMobile ? (
-          // Mobile: one panel at a time, switched by BottomTabs.
+        {isCompact ? (
+          // Compact screens: keep each dashboard section one tap away.
           <div
             id="mobile-dashboard-panel"
             role="tabpanel"
@@ -946,47 +930,20 @@ export default function Page() {
               <div className={stageClass(6)}>{chatNode}</div>
             )}
           </div>
-        ) : isTablet ? (
-          // Tablet: 2-col above, tabbed full-width below
-          <div className="space-y-3">
-            <div className={stageClass(2)}>
-              <CrewList
-                crew={state.crew}
-                selected={state.selected}
-                aiOn={state.aiOn}
-                onPick={selectCrew}
-                variant="row"
-                causes={crewCauses}
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <div className={stageClass(1)}>{vitalsNode}</div>
-              <div className="flex flex-col gap-3">
-                <div className={stageClass(3)}>{aiNode}</div>
-                <div className={stageClass(4)}>{rulesNode}</div>
-              </div>
-            </div>
-            <div className={stageClass(5)}>{tabbedNode}</div>
-          </div>
         ) : (
-          // Desktop lg+: 3-column grid that fits one viewport at 1470x956.
-          // The middle column has a fixed-height flex column where the tabbed
-          // panel fills any remaining vertical space and scrolls internally,
-          // so the rails match the centre column's height exactly.
+          // Wide screens keep the dashboard panels visible together. The page
+          // scrolls naturally on shorter displays instead of clipping panels.
           <div
-            className={`grid h-full min-h-0 gap-3 ${
+            className={`grid min-h-0 content-start items-start gap-3 ${
               isXxl
-                ? "grid-cols-[280px_minmax(0,1fr)_360px]"
+                ? "grid-cols-[minmax(220px,0.85fr)_minmax(300px,1.1fr)_minmax(300px,1.05fr)_minmax(360px,1.2fr)]"
                 : isXl
-                ? "grid-cols-[260px_minmax(0,1fr)_340px]"
-                : "grid-cols-[240px_minmax(0,1fr)_320px]"
+                ? "grid-cols-[minmax(200px,0.85fr)_minmax(270px,1.1fr)_minmax(300px,1.1fr)_minmax(320px,1.15fr)]"
+                : "grid-cols-1"
             }`}
           >
-            {/* Left rail: crew list + Inject a problem card. Both must fit
-                in the column without inner scroll so the toggle labels and
-                the Run guided demo button are visible at first paint. */}
             <aside
-              className={`${stageClass(2)} flex min-h-0 flex-col gap-2`}
+              className={`${stageClass(2)} flex min-w-0 flex-col gap-3`}
             >
               <CrewList
                 crew={state.crew}
@@ -999,27 +956,27 @@ export default function Page() {
               <div className={stageClass(7)}>{scenariosNode}</div>
             </aside>
 
-            {/* Middle: vitals on top, tabbed panel fills remaining height. */}
-            <div className="flex min-h-0 flex-col gap-3">
-              <div className={`${stageClass(1)} shrink-0`}>{vitalsNode}</div>
-              <div className={`${stageClass(5)} min-h-0 flex-1`}>
-                {tabbedNode}
-              </div>
-            </div>
-
-            {/* Right rail: AI score + Rules. No inner scroll so the entire
-                Rules card is visible at the MacBook Air 1470x956 size. */}
-            <aside
-              className={`flex min-h-0 flex-col gap-3`}
-            >
+            <div className="flex min-w-0 flex-col gap-3">
+              <div className={stageClass(1)}>{vitalsNode}</div>
+              <div className={stageClass(2)}>{crewNode}</div>
               <div className={stageClass(3)}>{aiNode}</div>
               <div className={stageClass(4)}>{rulesNode}</div>
+            </div>
+
+            <aside className="flex min-w-0 flex-col gap-3">
+              <div className={stageClass(5)}>{alertsNode}</div>
+              <div className={stageClass(5)}>{whyNode}</div>
+              <div className={stageClass(6)}>{briefNode}</div>
+            </aside>
+
+            <aside className="min-w-0">
+              <div className={stageClass(6)}>{chatNode}</div>
             </aside>
           </div>
         )}
       </main>
 
-      {isMobile && (
+      {isCompact && (
         <BottomTabs
           active={mobileTab}
           onChange={setMobileTab}
