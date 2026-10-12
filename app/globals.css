@@ -266,6 +266,14 @@ body {
   .desktop-dashboard-center > [data-tabbed] {
     flex: 1 1 0;
     overflow: hidden;
+    /* The AskCard needs ~400px of content (title + description + chat
+       scroll + form + footer). On 1366-1680px-tall viewports the
+       VitalsCard's compact layout still consumes enough of the center
+       column to leave the TabbedPanel with only ~280px, which collapses
+       the chat scroll to ~20px and hides user messages. Guarantee a
+       minimum height that comfortably fits the chat input + a few
+       message rows. The vitals card scrolls internally if it overflows. */
+    min-height: 440px;
   }
 
   .desktop-dashboard-right > .desktop-rules-wrap {
@@ -355,11 +363,23 @@ body {
 
   .desktop-vitals {
     padding: 14px;
+    /* The VitalsCard is a fixed-height flex item in the center column.
+       When the TabbedPanel below it is given a min-height to keep the
+       chat visible, the vitals card gets squeezed. Make it a flex
+       column with internal scroll so all 5 tiles remain accessible
+       even when the available height is small. */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .desktop-vitals > div:nth-child(2) {
     grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
     gap: 8px;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .desktop-vitals > div:first-child {
@@ -674,8 +694,8 @@ body {
 
   .desktop-dashboard-center > [data-tabbed] {
     flex: 0 0 auto;
-    min-height: 240px;
-    overflow: visible;
+    min-height: 400px;
+    overflow: hidden;
   }
 }
 
