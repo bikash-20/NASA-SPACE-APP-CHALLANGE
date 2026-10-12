@@ -49,13 +49,29 @@ function isChatCapable(m: OpenRouterModel): boolean {
   return modality.includes("text") || modality.includes("->text");
 }
 
+function isFree(m: OpenRouterModel): boolean {
+  const prompt = m.pricing?.prompt;
+  const completion = m.pricing?.completion;
+  if (
+    typeof prompt !== "string" ||
+    typeof completion !== "string" ||
+    prompt.trim() === "" ||
+    completion.trim() === ""
+  ) {
+    return false;
+  }
+  const promptPrice = Number(prompt);
+  const completionPrice = Number(completion);
+  return (
+    Number.isFinite(promptPrice) &&
+    Number.isFinite(completionPrice) &&
+    promptPrice === 0 &&
+    completionPrice === 0
+  );
+}
+
 function rank(m: OpenRouterModel): number {
-  const p = parseFloat(m.pricing?.prompt ?? "1") || 1;
-  const c = parseFloat(m.pricing?.completion ?? "1") || 1;
   let score = 0;
-  if (p === 0 && c === 0) score += 1000;
-  else if (p === 0) score += 500;
-  else score -= (p + c) * 1000;
   if ((m.context_length ?? 0) >= 32_000) score += 100;
   const id = m.id.toLowerCase();
   if (PREFERRED_FAMILIES.some((f) => id.includes(f))) score += 50;
@@ -74,10 +90,15 @@ async function loadCascade(): Promise<string[]> {
     throw new Error(`openrouter models list failed: ${res.status}`);
   }
   const data = (await res.json()) as { data?: OpenRouterModel[] };
-  const list = (data.data ?? []).filter(isChatCapable);
+  const list = (data.data ?? []).filter(
+    (model) => isChatCapable(model) && isFree(model)
+  );
   list.sort((a, b) => rank(b) - rank(a));
   const ids = list.slice(0, 5).map((m) => m.id);
-  if (ids.length === 0) throw new Error("openrouter returned no chat models");
+  if (ids.length === 0) {
+    console.error("[openrouter] model catalog has no free text models");
+    throw new Error("openrouter returned no free text models");
+  }
   return ids;
 }
 
@@ -94,7 +115,11 @@ export async function getCascade(): Promise<string[]> {
     })
     .catch((error: unknown) => {
       console.warn("[openrouter] model catalog failed", {
-        category: errorCategory(error),
+        category:
+          error instanceof Error &&
+          error.message === "openrouter returned no free text models"
+            ? "no_free_text_models"
+            : errorCategory(error),
       });
       throw error;
     })

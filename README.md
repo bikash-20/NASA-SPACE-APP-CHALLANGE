@@ -197,18 +197,16 @@ The net effect is that you see a **fresh row each time the level steps up**, but
 
 ## Server-side: LLM cascade and routes
 
-`lib/openrouter.ts` is the server-only module that talks to OpenRouter. It implements a **model cascade** so the app degrades gracefully when one provider is down, rate-limited, or empty.
+`lib/openrouter.ts` is the server-only module that talks to OpenRouter. It implements a **free-model cascade** so the app degrades gracefully when one provider is down, rate-limited, or empty without selecting paid models.
 
 ### The cascade
 
-On first use, `loadCascade()` fetches `https://openrouter.ai/api/v1/models` (no auth required). It filters to chat-capable models (`output_modalities` includes `text`, or `modality` contains `text` / `->text`) and ranks them by:
+On first use, `loadCascade()` fetches `https://openrouter.ai/api/v1/models` (no auth required). It filters to chat-capable models (`output_modalities` includes `text`, or `modality` contains `text` / `->text`) whose prompt **and** completion prices are both exactly zero, then keeps the top 5. Paid models and entries with missing or invalid prices are excluded; if no free text models are listed, the request fails rather than using a paid model. Remaining free models are ranked by:
 
-1. **Free first**: +1000 if both prompt and completion pricing are 0, +500 if prompt is 0 only.
-2. **Price**: otherwise `-1000 · (prompt + completion)`.
-3. **Context**: +100 if `context_length ≥ 32 000`.
-4. **Family preference** (in order): `llama`, `qwen`, `gemini`, `deepseek`, `glm`, `mistral`, `claude`, `gpt`, `command`. +50 if the id contains any of these.
+1. **Context**: +100 if `context_length ≥ 32 000`.
+2. **Family preference**: +50 if the id contains one of `llama`, `qwen`, `gemini`, `deepseek`, `glm`, `mistral`, `claude`, `gpt`, or `command`.
 
-The top **5** ids are cached in module-scope memory for 10 minutes, with an inflight de-dup so concurrent first-uses don't fire two requests. Every API route then iterates those 5 ids in order:
+The top **5 free** ids are cached in module-scope memory for 10 minutes, with an inflight de-dup so concurrent first-uses don't fire two requests. Every API route then iterates those ids in order:
 
 - **Non-streaming** (`callCascade`): 8 s per model, 600 max tokens default, `temperature ≈ 0.4`.
 - **Streaming** (`streamCascade`): 16 s per model, 800 max tokens default, `temperature ≈ 0.5`.
