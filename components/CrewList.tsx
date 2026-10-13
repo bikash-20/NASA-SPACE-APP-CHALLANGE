@@ -160,9 +160,63 @@ export function CrewList({ crew, selected, aiOn, onPick, variant, causes }: Crew
                 {Math.round(c.hr)} · SpO2 {c.spo2.toFixed(0)}
               </span>
             </div>
+            <EcgSparkline data={c.H.hr.slice(-30)} color={color} />
           </motion.button>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Tiny inline SVG line for the crew card. No axes, no labels — just a
+ * moving trace of the last 30 HR samples, colored by crew status. Renders
+ * at 28px tall, full card width.
+ */
+function EcgSparkline({ data, color }: { data: number[]; color: string }) {
+  const h = 28;
+  const w = 200;
+  if (data.length < 2) {
+    return (
+      <div
+        className="desktop-crew-ecg mt-2"
+        style={{ height: h, opacity: 0.4 }}
+        aria-hidden
+      />
+    );
+  }
+  const lo = Math.min(...data);
+  const hi = Math.max(...data);
+  const range = hi - lo || 1;
+  const step = w / (data.length - 1);
+  const path = data
+    .map((v, i) => {
+      const x = i * step;
+      const y = h - ((v - lo) / range) * (h - 4) - 2;
+      return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+  return (
+    <div
+      className="desktop-crew-ecg mt-2"
+      style={{ height: h }}
+      aria-hidden
+    >
+      <svg
+        viewBox={`0 0 ${w} ${h}`}
+        width="100%"
+        height={h}
+        preserveAspectRatio="none"
+      >
+        <path
+          d={path}
+          fill="none"
+          stroke={color}
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </div>
   );
 }

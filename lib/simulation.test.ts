@@ -81,6 +81,39 @@ describe("step", () => {
     expect(crew[0].H.hr.length).toBeLessThanOrEqual(60);
     expect(crew[0].H.spo2.length).toBeLessThanOrEqual(60);
   });
+
+  it("also caps the new dose, sleep, and AI history arrays at 60", () => {
+    let crew = [mkCrew(0)];
+    for (let i = 0; i < 200; i++) {
+      const r = step(crew, {
+        storm: false,
+        aiOn: true,
+        emitAlerts: false,
+        tick: i,
+      });
+      crew = r.crew;
+    }
+    expect(crew[0].H.dose.length).toBeLessThanOrEqual(60);
+    expect(crew[0].H.sleep.length).toBeLessThanOrEqual(60);
+    expect(crew[0].H.ai.length).toBeLessThanOrEqual(60);
+  });
+
+  it("dose history is monotonically non-decreasing", () => {
+    let crew = [mkCrew(0)];
+    for (let i = 0; i < 30; i++) {
+      const r = step(crew, {
+        storm: false,
+        aiOn: true,
+        emitAlerts: false,
+        tick: i,
+      });
+      crew = r.crew;
+    }
+    const d = crew[0].H.dose;
+    for (let i = 1; i < d.length; i += 1) {
+      expect(d[i]).toBeGreaterThanOrEqual(d[i - 1]);
+    }
+  });
 });
 
 describe("clock", () => {

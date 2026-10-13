@@ -39,7 +39,7 @@ export function mkCrew(i: 0 | 1 | 2): Crew {
     stress: 28,
     dose: D0[i],
     rate: 0.04,
-    H: { hr: [], spo2: [], stress: [], rate: [] },
+    H: { hr: [], spo2: [], stress: [], rate: [], dose: [], sleep: [], ai: [] },
     r: [0, 0, 0, 0, 0],
     armed: [true, true, true, true, true],
     ai: 0,
@@ -96,6 +96,9 @@ export function step(
         spo2: [...previous.H.spo2],
         stress: [...previous.H.stress],
         rate: [...previous.H.rate],
+        dose: [...previous.H.dose],
+        sleep: [...previous.H.sleep],
+        ai: [...previous.H.ai],
       },
       r: [...previous.r],
       armed: [...previous.armed],
@@ -133,11 +136,15 @@ export function step(
     c.H.spo2.push(c.spo2);
     c.H.stress.push(c.stress);
     c.H.rate.push(c.rate);
+    c.H.dose.push(c.dose);
+    c.H.sleep.push(c.sleep);
+
+    aiScore(c);
+    c.H.ai.push(c.ai);
     for (const values of Object.values(c.H)) {
       if (values.length > 60) values.shift();
     }
 
-    aiScore(c);
     const rules = evalRules(c);
     rules.forEach((x, j) => {
       // Hysteresis: re-arm when the level drops back to 0 so the next

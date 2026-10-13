@@ -137,6 +137,9 @@ export function parseCrewSnapshot(
     spo2: spo2History,
     stress: stressHistory,
     rate: rateHistory,
+    dose: Array.isArray(rawHistory.dose) ? rawHistory.dose.map(Number).filter((n) => Number.isFinite(n)) : [],
+    sleep: Array.isArray(rawHistory.sleep) ? rawHistory.sleep.map(Number).filter((n) => Number.isFinite(n)) : [],
+    ai: Array.isArray(rawHistory.ai) ? rawHistory.ai.map(Number).filter((n) => Number.isFinite(n)) : [],
   };
   member.ai = aiEnabled ? ai : 0;
   member.R = evalRules(member);

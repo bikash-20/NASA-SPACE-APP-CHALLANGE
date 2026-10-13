@@ -11,3 +11,10 @@ export const LEVEL_COLORS = {
 export function colorForLevel(lv: Level): string {
   return lv === 0 ? LEVEL_COLORS.ok : lv === 1 ? LEVEL_COLORS.watch : LEVEL_COLORS.bad;
 }
+
+/** Traffic-light color for an AI risk band ("Low" / "Watch" / "High"). */
+export function bandColor(band: "Low" | "Watch" | "High"): string {
+  if (band === "Low") return LEVEL_COLORS.ok;
+  if (band === "Watch") return LEVEL_COLORS.watch;
+  return LEVEL_COLORS.bad;
+}

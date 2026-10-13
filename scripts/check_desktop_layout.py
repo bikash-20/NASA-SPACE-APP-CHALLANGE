@@ -107,12 +107,37 @@ CHECK_LAYOUT = """() => {
     radiationRect.top >= 0 && radiationRect.bottom <= innerHeight &&
     window.scrollY === 0;
 
+  // New visualization primitives — verify they exist on the page.
+  const radarPresent = !!document.querySelector(
+    '[aria-label="AI risk factors radar"]'
+  );
+  const doseGaugePresent = !!document.querySelector(
+    '[aria-label^="Dose gauge"]'
+  );
+  const crewEcgCount = document.querySelectorAll(
+    ".desktop-crew-ecg svg"
+  ).length;
+  const aiBand = document.querySelector("[data-ai-band]")?.getAttribute(
+    "data-ai-band"
+  );
+  // The Gantt strip only exists once the user has caused at least one
+  // alert. We only check that the alert Gantt container is registered
+  // (it's hidden by SSR until events arrive).
+  const ganttContainerPresent = !!document.querySelector(
+    ".desktop-timeline-gantt"
+  );
+
   return {
     overlaps,
     clipped,
     textOutside,
     rules: { total: ruleRows.length, fullyVisible: fullyVisibleRules },
     radiationVisible,
+    radarPresent,
+    doseGaugePresent,
+    crewEcgCount,
+    aiBand,
+    ganttContainerPresent,
   };
 }"""
 
@@ -131,11 +156,25 @@ def check_viewport(page, width, height, tab):
     if height >= 700 and not result["radiationVisible"]:
         errors.append("Radiation tile is not fully visible at scrollTop 0")
 
+    # New viz primitives must be present.
+    if not result["radarPresent"]:
+        errors.append("AI risk radar chart missing")
+    if not result["doseGaugePresent"]:
+        errors.append("Dose radial gauge missing")
+    if result["crewEcgCount"] < 3:
+        errors.append(
+            f"Expected ECG sparkline per crew card (3), got {result['crewEcgCount']}"
+        )
+    if result["aiBand"] not in {"low", "watch", "high"}:
+        errors.append(f"AI score data-ai-band is {result['aiBand']!r}, not in low/watch/high")
+
     print(
         f"| {width}x{height} | {tab} | "
         f"{'FAIL' if errors else 'PASS'} | "
         f"{result['rules']['fullyVisible']}/{result['rules']['total']} | "
         f"{'yes' if result['radiationVisible'] else 'no'} | "
+        f"radar={result['radarPresent']} | gauge={result['doseGaugePresent']} | "
+        f"ecg={result['crewEcgCount']} | ai={result['aiBand']} | "
         f"{len(result['overlaps'])} | {len(result['clipped'])} |"
     )
     if errors:

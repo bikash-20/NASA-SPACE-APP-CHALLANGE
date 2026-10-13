@@ -2,7 +2,9 @@
 
 import { Panel, PanelTitle } from "./ui/Panel";
 import { Sparkline } from "./ui/Sparkline";
-import { ProgressBar } from "./ui/ProgressBar";
+import { DoseAreaChart } from "./ui/DoseAreaChart";
+import { RadialGauge } from "./ui/RadialGauge";
+import { SleepDebtBar } from "./SleepDebtBar";
 import { colorForLevel } from "@/lib/colors";
 import type { Crew, Level } from "@/lib/types";
 
@@ -15,13 +17,22 @@ const DOSE_LIMIT = 250;
 export function VitalsCard({ crew }: VitalsCardProps) {
   const r = crew.R;
   const col = (i: number): string => (r[i] ? colorForLevel(r[i].lv as Level) : "#10b981");
+  const levelOf = (i: number): "ok" | "watch" | "bad" => {
+    const lv = r[i]?.lv ?? 0;
+    return lv === 0 ? "ok" : lv === 1 ? "watch" : "bad";
+  };
 
   const dosePct = (crew.dose / DOSE_LIMIT) * 100;
   const doseOver = dosePct > 100;
-  const sleepPct = (crew.sleep / 9) * 100;
+  const doseWatch = dosePct >= 80;
 
   return (
-    <Panel className="desktop-vitals">
+    <Panel
+      className="desktop-vitals"
+      data-dose-level={
+        doseOver ? "bad" : doseWatch ? "watch" : "ok"
+      }
+    >
       <PanelTitle
         title={`${crew.n} — current vitals`}
         hint={crew.role}
@@ -36,8 +47,8 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             desktopLabel="Heart rate"
             big={Math.round(crew.hr)}
             unit="bpm"
-            sub={`Baseline ${crew.bhr} bpm. Dashed line = alert threshold (+30%).`}
-            desktopSub={`Base ${crew.bhr} · +30%`}
+            sub={`Baseline ${crew.bhr} bpm. Normal band 60 to +30%.`}
+            desktopSub={`Base ${crew.bhr} · 60–${Math.round(crew.bhr * 1.3)}`}
             tone={col(0)}
           >
             <Sparkline
@@ -46,6 +57,8 @@ export function VitalsCard({ crew }: VitalsCardProps) {
               color={col(0)}
               yMin={crew.bhr * 0.8}
               yMax={crew.bhr * 1.9}
+              normalBand={[60, crew.bhr * 1.3]}
+              levelColor={levelOf(0)}
             />
           </Tile>
           <Tile
@@ -53,8 +66,8 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             desktopLabel="Blood oxygen"
             big={crew.spo2.toFixed(1)}
             unit="%"
-            sub="Alert below 90% · Watch below 94%."
-            desktopSub="Watch <94%"
+            sub="Normal band 94% to 100%. Alert below 90%."
+            desktopSub="Normal 94–100%"
             tone={col(1)}
           >
             <Sparkline
@@ -63,6 +76,8 @@ export function VitalsCard({ crew }: VitalsCardProps) {
               color={col(1)}
               yMin={88}
               yMax={100}
+              normalBand={[94, 100]}
+              levelColor={levelOf(1)}
             />
           </Tile>
           <Tile
@@ -74,11 +89,12 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             desktopSub="Base 7.2 · <5.5 h"
             tone={col(2)}
           >
-            <ProgressBar
-              value={sleepPct}
-              color={col(2)}
-              marks={[61, 50]}
-              height={10}
+            <SleepDebtBar
+              data={crew.H.sleep}
+              height={56}
+              baseline={7.2}
+              watch={5.5}
+              alert={4.5}
             />
           </Tile>
           <Tile
@@ -86,8 +102,8 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             desktopLabel="Stress index"
             big={Math.round(crew.stress)}
             unit="/ 100"
-            sub="Alert above 90 · Watch above 75."
-            desktopSub="Watch >75"
+            sub="Normal band 0 to 75. Alert above 90."
+            desktopSub="Normal 0–75"
             tone={col(3)}
           >
             <Sparkline
@@ -96,6 +112,8 @@ export function VitalsCard({ crew }: VitalsCardProps) {
               color={col(3)}
               yMin={0}
               yMax={100}
+              normalBand={[0, 75]}
+              levelColor={levelOf(3)}
             />
           </Tile>
         </div>
@@ -112,15 +130,29 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             }
             desktopSub={`Rate ${crew.rate.toFixed(2)} mSv/h · marks 80/95%`}
             tone={col(4)}
-            badge={doseOver ? "Over" : null}
+            badge={doseOver ? "Over" : doseWatch ? "Watch" : null}
             dose
           >
-            <ProgressBar
-              value={dosePct}
-              color={col(4)}
-              marks={[80, 95]}
-              height={10}
-            />
+            <div className="flex items-center gap-3">
+              <RadialGauge
+                value={crew.dose}
+                max={DOSE_LIMIT}
+                watch={0.8 * DOSE_LIMIT}
+                alert={0.95 * DOSE_LIMIT}
+                danger={doseOver}
+                size={56}
+                strokeWidth={6}
+              />
+              <div className="flex-1">
+                <DoseAreaChart
+                  data={crew.H.dose}
+                  limit={DOSE_LIMIT}
+                  watch={0.8 * DOSE_LIMIT}
+                  alert={0.95 * DOSE_LIMIT}
+                  height={56}
+                />
+              </div>
+            </div>
             <div className="mt-2 desktop-dose-rate">
               <Sparkline
                 data={crew.H.rate}
@@ -128,7 +160,8 @@ export function VitalsCard({ crew }: VitalsCardProps) {
                 color={col(4)}
                 yMin={0}
                 yMax={4}
-                height={40}
+                height={32}
+                levelColor={levelOf(4)}
               />
             </div>
           </Tile>

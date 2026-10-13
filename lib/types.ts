@@ -13,6 +13,12 @@ export interface VitalsHistory {
   spo2: number[];
   stress: number[];
   rate: number[];
+  /** Cumulative 30-day dose (mSv), one sample per tick. */
+  dose: number[];
+  /** Sleep (3-night avg, hours), one sample per tick. */
+  sleep: number[];
+  /** AI risk score 0..100, one sample per tick. */
+  ai: number[];
 }
 
 export interface Crew {
