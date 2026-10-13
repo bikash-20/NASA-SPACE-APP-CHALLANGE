@@ -2,8 +2,7 @@
 
 import { Panel, PanelTitle } from "./ui/Panel";
 import { Sparkline } from "./ui/Sparkline";
-import { DoseAreaChart } from "./ui/DoseAreaChart";
-import { RadialGauge } from "./ui/RadialGauge";
+import { ProgressBar } from "./ui/ProgressBar";
 import { SleepDebtBar } from "./SleepDebtBar";
 import { colorForLevel } from "@/lib/colors";
 import type { Crew, Level } from "@/lib/types";
@@ -91,7 +90,7 @@ export function VitalsCard({ crew }: VitalsCardProps) {
           >
             <SleepDebtBar
               data={crew.H.sleep}
-              height={56}
+              height={72}
               baseline={7.2}
               watch={5.5}
               alert={4.5}
@@ -133,26 +132,12 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             badge={doseOver ? "Over" : doseWatch ? "Watch" : null}
             dose
           >
-            <div className="flex items-center gap-3">
-              <RadialGauge
-                value={crew.dose}
-                max={DOSE_LIMIT}
-                watch={0.8 * DOSE_LIMIT}
-                alert={0.95 * DOSE_LIMIT}
-                danger={doseOver}
-                size={56}
-                strokeWidth={6}
-              />
-              <div className="flex-1">
-                <DoseAreaChart
-                  data={crew.H.dose}
-                  limit={DOSE_LIMIT}
-                  watch={0.8 * DOSE_LIMIT}
-                  alert={0.95 * DOSE_LIMIT}
-                  height={56}
-                />
-              </div>
-            </div>
+            <ProgressBar
+              value={dosePct}
+              color={col(4)}
+              marks={[80, 95]}
+              height={10}
+            />
             <div className="mt-2 desktop-dose-rate">
               <Sparkline
                 data={crew.H.rate}
@@ -196,7 +181,7 @@ function Tile({
 }) {
   return (
     <div
-      className={`desktop-vital-tile rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:p-4 ${
+      className={`desktop-vital-tile rounded-xl border border-white/10 bg-white/[0.02] p-3.5 sm:p-4 ${
         dose ? "desktop-dose-tile" : ""
       }`}
     >
@@ -215,13 +200,13 @@ function Tile({
         )}
       </div>
       <div
-        className="desktop-vital-value mt-1 font-mono font-bold tabular-nums text-ink"
+        className="desktop-vital-value mt-1.5 font-mono font-bold tabular-nums text-ink"
         style={{ fontSize: "var(--fs-vital)", lineHeight: "var(--lh-display)" }}
       >
         {big}
         <span className="ml-1 text-sm font-normal text-white/55">{unit}</span>
       </div>
-      <div className="desktop-vital-chart mt-2">{children}</div>
+      <div className="desktop-vital-chart mt-3">{children}</div>
       <div className="desktop-vital-caption mt-2 text-sm text-white/65">
         <span className="lg:hidden">{sub}</span>
         <span className="hidden lg:inline">{desktopSub}</span>

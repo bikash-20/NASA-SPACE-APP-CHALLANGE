@@ -107,16 +107,16 @@ CHECK_LAYOUT = """() => {
     radiationRect.top >= 0 && radiationRect.bottom <= innerHeight &&
     window.scrollY === 0;
 
-  // New visualization primitives — verify they exist on the page.
-  const radarPresent = !!document.querySelector(
-    '[aria-label="AI risk factors radar"]'
-  );
-  const doseGaugePresent = !!document.querySelector(
-    '[aria-label^="Dose gauge"]'
-  );
-  const crewEcgCount = document.querySelectorAll(
-    ".desktop-crew-ecg svg"
+  // Visualization primitives — verify which ones exist on the page.
+  // The AI risk factors are rendered as a vertical list of bars
+  // (5 rows), the radiation tile uses a single ProgressBar, and the
+  // crew rail cards no longer carry a per-card ECG sparkline.
+  const aiFactorCount = document.querySelectorAll(
+    ".desktop-ai-factor"
   ).length;
+  const radiationBar = !!document.querySelector(
+    ".desktop-dose-tile .desktop-vital-chart > div[role='progressbar']"
+  );
   const aiBand = document.querySelector("[data-ai-band]")?.getAttribute(
     "data-ai-band"
   );
@@ -133,9 +133,8 @@ CHECK_LAYOUT = """() => {
     textOutside,
     rules: { total: ruleRows.length, fullyVisible: fullyVisibleRules },
     radiationVisible,
-    radarPresent,
-    doseGaugePresent,
-    crewEcgCount,
+    aiFactorCount,
+    radiationBar,
     aiBand,
     ganttContainerPresent,
   };
@@ -156,15 +155,14 @@ def check_viewport(page, width, height, tab):
     if height >= 700 and not result["radiationVisible"]:
         errors.append("Radiation tile is not fully visible at scrollTop 0")
 
-    # New viz primitives must be present.
-    if not result["radarPresent"]:
-        errors.append("AI risk radar chart missing")
-    if not result["doseGaugePresent"]:
-        errors.append("Dose radial gauge missing")
-    if result["crewEcgCount"] < 3:
+    # The AI card shows 5 factor rows (one per rule) plus the radiation
+    # tile shows a single progress bar.
+    if result["aiFactorCount"] < 5:
         errors.append(
-            f"Expected ECG sparkline per crew card (3), got {result['crewEcgCount']}"
+            f"Expected 5 AI factor rows, got {result['aiFactorCount']}"
         )
+    if not result["radiationBar"]:
+        errors.append("Radiation ProgressBar missing")
     if result["aiBand"] not in {"low", "watch", "high"}:
         errors.append(f"AI score data-ai-band is {result['aiBand']!r}, not in low/watch/high")
 
@@ -173,8 +171,8 @@ def check_viewport(page, width, height, tab):
         f"{'FAIL' if errors else 'PASS'} | "
         f"{result['rules']['fullyVisible']}/{result['rules']['total']} | "
         f"{'yes' if result['radiationVisible'] else 'no'} | "
-        f"radar={result['radarPresent']} | gauge={result['doseGaugePresent']} | "
-        f"ecg={result['crewEcgCount']} | ai={result['aiBand']} | "
+        f"factors={result['aiFactorCount']} | doseBar={result['radiationBar']} | "
+        f"ai={result['aiBand']} | "
         f"{len(result['overlaps'])} | {len(result['clipped'])} |"
     )
     if errors:

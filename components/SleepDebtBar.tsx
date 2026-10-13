@@ -21,7 +21,7 @@ interface SleepDebtBarProps {
  */
 export function SleepDebtBar({
   data,
-  height = 64,
+  height = 72,
   baseline = 7.2,
   watch = 5.5,
   alert = 4.5,
@@ -43,15 +43,15 @@ export function SleepDebtBar({
         ? "#fb7185"
         : hours < watch
           ? "#fbbf24"
-          : "rgba(34,197,94,0.55)";
+          : "rgba(34,197,94,0.65)";
     return (
       <g key={i}>
         <rect
-          x={i * w + w * 0.18}
+          x={i * w + w * 0.11}
           y={y}
-          width={w * 0.64}
-          height={Math.max(2, h)}
-          rx={2}
+          width={w * 0.78}
+          height={Math.max(3, h)}
+          rx={2.5}
           fill={color}
         />
       </g>

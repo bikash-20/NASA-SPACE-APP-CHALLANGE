@@ -39,7 +39,7 @@ export function Sparkline({
   color,
   yMin,
   yMax,
-  height = 64,
+  height = 48,
   strokeWidth = 2,
   normalBand,
   levelColor,

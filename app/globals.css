@@ -276,13 +276,15 @@ body {
     flex: 0 0 auto;
   }
 
-  /* Vitals grid: 4-across when the centre column is at least 640px wide,
-     2x2 below. Uses a container query against the centre column so the
-     rule fires regardless of viewport width. */
+  /* Vitals grid: 2x2 by default so each tile has enough room for
+     a value + chart + caption without crowding. 4-across only when
+     the centre column is wide enough (~920px+) for the tiles to
+     stay scannable. */
   .vitals-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
-  @container dashcol (min-width: 640px) {
+  @container dashcol (min-width: 920px) {
     .vitals-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
@@ -400,9 +402,9 @@ body {
 
   .desktop-vitals .vitals-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 10px;
   }
-  @container dashcol (min-width: 640px) {
+  @container dashcol (min-width: 920px) {
     .desktop-vitals .vitals-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
@@ -430,7 +432,7 @@ body {
 
   .desktop-vitals .desktop-vital-tile {
     min-width: 0;
-    padding: 8px 10px;
+    padding: 12px 14px;
   }
 
   .desktop-vitals .desktop-vital-title {
@@ -441,9 +443,9 @@ body {
   }
 
   .desktop-vitals .desktop-vital-value {
-    margin-top: 2px;
-    font-size: 1.5rem !important;
-    line-height: 1.05 !important;
+    margin-top: 4px;
+    font-size: 1.65rem !important;
+    line-height: 1.1 !important;
     white-space: nowrap;
   }
 
@@ -452,45 +454,28 @@ body {
   }
 
   .desktop-vitals .desktop-vital-chart {
-    margin-top: 4px;
+    margin-top: 8px;
   }
 
   .desktop-vitals .desktop-vital-chart > div[style*="width"] {
-    height: 36px !important;
+    height: 48px !important;
   }
 
   .desktop-vitals .desktop-vital-caption {
     display: -webkit-box;
     overflow: hidden;
-    margin-top: 4px;
+    margin-top: 8px;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
+    -webkit-line-clamp: 2;
     font-size: 12px;
-    line-height: 1.25;
+    line-height: 1.3;
   }
 
   .desktop-vitals .desktop-dose-tile {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(120px, 1.4fr);
-    grid-template-rows: auto auto;
-    align-items: center;
-    column-gap: 12px;
-    row-gap: 2px;
-  }
-
-  .desktop-vitals .desktop-dose-tile > div:first-child {
-    grid-column: 1 / -1;
-  }
-
-  .desktop-vitals .desktop-dose-tile > .desktop-vital-value {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .desktop-vitals .desktop-dose-tile > .desktop-vital-chart {
-    grid-column: 2;
-    grid-row: 2;
-    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
   }
 
   .desktop-vitals .desktop-dose-tile .desktop-dose-rate {
@@ -498,13 +483,11 @@ body {
   }
 
   .desktop-vitals .desktop-dose-tile .desktop-vital-caption {
-    grid-column: 1 / -1;
-    grid-row: 3;
-    margin: 0;
+    margin-top: 8px;
     display: block;
     overflow: visible;
     white-space: nowrap;
-    -webkit-line-clamp: 1;
+    -webkit-line-clamp: 2;
   }
 
   .desktop-vitals .desktop-dose-tile .desktop-vital-caption > span {
@@ -725,16 +708,16 @@ body {
 
 @media (min-width: 1024px) and (max-width: 1279px) {
   .desktop-vitals .desktop-vital-tile {
-    padding: 8px;
+    padding: 10px 12px;
   }
 
   .desktop-vitals .desktop-vital-chart {
-    margin-top: 4px;
+    margin-top: 6px;
   }
 
   .desktop-vitals .desktop-vital-caption {
-    margin-top: 4px;
-    line-height: 1.15;
+    margin-top: 6px;
+    line-height: 1.2;
   }
 }
 
@@ -881,12 +864,11 @@ body {
   .desktop-crew-list > button {
     box-sizing: border-box;
     display: flex;
-    flex: 0 0 72px;
     flex-direction: column;
     justify-content: center;
-    min-height: 72px;
+    min-height: 76px;
     overflow: visible;
-    padding: 8px 10px !important;
+    padding: 10px 12px !important;
   }
 
   .desktop-crew-list > button > div:first-child {
@@ -920,6 +902,12 @@ body {
     white-space: nowrap;
     font-size: 14px;
     line-height: 1.2;
+  }
+
+  /* Belt-and-braces: the per-card ECG strip was removed from CrewList.
+     If a copy of it ever reappears, hide it cleanly. */
+  .desktop-crew-ecg {
+    display: none !important;
   }
 
   .desktop-scenario-wrap {
@@ -1040,18 +1028,23 @@ body {
 
   .desktop-vitals .vitals-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px;
+  }
+  @container dashcol (min-width: 920px) {
+    .desktop-vitals .vitals-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
   }
 
   .desktop-vitals .desktop-vital-tile {
     box-sizing: border-box;
     display: flex;
     min-width: 0;
-    min-height: 120px;
+    min-height: 0;
     flex-direction: column;
     overflow: visible;
-    padding: 8px !important;
+    padding: 12px 14px !important;
   }
 
   .desktop-vitals .desktop-vital-title {
@@ -1062,10 +1055,10 @@ body {
   }
 
   .desktop-vitals .desktop-vital-value {
-    margin-top: 2px !important;
+    margin-top: 4px !important;
     overflow: visible;
     font-size: 28px !important;
-    line-height: 1 !important;
+    line-height: 1.1 !important;
     white-space: nowrap;
   }
 
@@ -1074,55 +1067,40 @@ body {
   }
 
   .desktop-vitals .desktop-vital-chart {
-    margin-top: 2px;
+    margin-top: 8px;
   }
 
   .desktop-vitals .desktop-vital-chart > div {
-    height: 28px !important;
+    height: 48px !important;
   }
 
   .desktop-vitals .desktop-vital-caption {
     display: block;
-    margin-top: 2px;
+    margin-top: 8px;
     overflow: visible;
-    white-space: nowrap;
+    white-space: normal;
     font-size: 14px;
-    line-height: 1.2;
+    line-height: 1.25;
+    -webkit-line-clamp: 2;
   }
 
   .desktop-vitals .radiation-row {
-    flex: 0 0 64px;
-    min-height: 64px;
+    flex: 0 0 auto;
+    min-height: 0;
   }
 
   .desktop-vitals .desktop-dose-tile {
     box-sizing: border-box;
-    display: grid;
-    height: 64px;
-    min-height: 64px;
-    grid-template-columns: minmax(100px, 0.7fr) minmax(130px, 1fr);
-    grid-template-rows: 18px 22px;
-    align-items: center;
-    column-gap: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
     overflow: visible;
-    padding: 6px 10px !important;
-  }
-
-  .desktop-vitals .desktop-dose-tile > div:first-child {
-    grid-column: 1;
-    grid-row: 1;
+    padding: 12px 14px !important;
   }
 
   .desktop-vitals .desktop-dose-tile > .desktop-vital-value {
-    grid-column: 1;
-    grid-row: 2;
-    font-size: 22px !important;
-  }
-
-  .desktop-vitals .desktop-dose-tile > .desktop-vital-chart {
-    grid-column: 2;
-    grid-row: 2;
-    margin: 0;
+    font-size: 28px !important;
   }
 
   .desktop-vitals .desktop-dose-tile > .desktop-vital-chart > div:first-child {
@@ -1134,10 +1112,8 @@ body {
   }
 
   .desktop-vitals .desktop-dose-tile .desktop-vital-caption {
-    grid-column: 2;
-    grid-row: 1;
-    margin: 0;
-    white-space: nowrap;
+    margin-top: 8px;
+    white-space: normal;
   }
 
   .desktop-dashboard-center > [data-tabbed] {
@@ -1225,53 +1201,35 @@ body {
   }
 
   .desktop-ai-score {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto;
-    grid-template-areas:
-      "title"
-      "number"
-      "factors"
-      "advice";
-    align-items: start;
-    column-gap: 0;
-    row-gap: 4px;
-    overflow: visible !important;
-    padding: 8px 10px !important;
-  }
-
-  .desktop-ai-score > div:nth-child(2) {
-    grid-area: title;
-    margin-bottom: 0 !important;
-  }
-
-  .desktop-ai-score > div:nth-child(3) {
-    grid-area: number;
-    align-self: center;
     display: flex;
-    align-items: baseline;
+    flex-direction: column;
+    align-items: stretch;
     gap: 6px;
+    overflow: visible !important;
+    padding: 12px 14px !important;
   }
 
   .desktop-ai-number {
-    font-size: 1.5rem !important;
+    font-size: 1.75rem !important;
     line-height: 1 !important;
   }
 
-  .desktop-ai-score > .desktop-ai-factors {
+  .desktop-ai-score .desktop-ai-factors {
     display: flex;
-    grid-area: factors;
     flex-direction: column;
-    gap: 2px !important;
-    margin-top: 0 !important;
+    gap: 6px !important;
+    margin-top: 4px !important;
     width: 100%;
   }
 
-  .desktop-ai-score > .desktop-ai-advice {
-    grid-area: advice;
-    margin-top: 0 !important;
+  .desktop-ai-score .desktop-ai-factor {
+    min-height: 32px;
+  }
+
+  .desktop-ai-score .desktop-ai-advice {
+    margin-top: 4px !important;
     font-size: 12px;
-    line-height: 1.2;
+    line-height: 1.3;
   }
 
   .desktop-rules {

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { animate, useMotionValue, useTransform } from "framer-motion";
 import { Panel, PanelTitle } from "./ui/Panel";
-import { RadarChart } from "./ui/RadarChart";
+import { ProgressBar } from "./ui/ProgressBar";
 import { band } from "@/lib/aiScore";
 import { bandColor, colorForLevel } from "@/lib/colors";
 import type { Crew, Level } from "@/lib/types";
@@ -36,22 +36,11 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
     };
   }, [score, mv, display]);
 
-  // The radar axes. Each axis is the factor's normalized contribution
-  // (0..1) where 1 means the factor is at the top of its allotted weight.
-  // We cap to 1.0 so a single bad reading can't make the polygon explode
-  // off the chart.
-  const radarData = aiOn
-    ? crew.F.map(([name, val, max]) => ({
-        axis: name,
-        value: Math.min(1, max > 0 ? val / max : 0),
-      }))
-    : [
-        { axis: "Heart rate", value: 0 },
-        { axis: "Oxygen", value: 0 },
-        { axis: "Sleep", value: 0 },
-        { axis: "Stress", value: 0 },
-        { axis: "Radiation", value: 0 },
-      ];
+  // Each factor row shows the factor's normalized contribution
+  // (0..1 of its max). When aiOn is false, render zeros (offline).
+  const factors = aiOn
+    ? crew.F
+    : (crew.F.map(([name]) => [name, 0, 1] as [string, number, number]));
 
   return (
     <Panel tone="accent" density="compact" className="desktop-ai-score">
@@ -85,10 +74,25 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
               </span>
             </span>
           </div>
-          <div className="desktop-ai-factors mt-2">
-            <RadarChart data={radarData} color={scoreColor} height={150} />
-          </div>
-          <p className="desktop-ai-advice mt-2 text-sm text-white/65">
+          <ul className="desktop-ai-factors mt-3 flex flex-col gap-1.5">
+            {factors.map(([name, val, max]) => {
+              const pct = max > 0 ? Math.min(100, (val / max) * 100) : 0;
+              const tone = aiOn ? scoreColor : colorForLevel(0);
+              return (
+                <li
+                  key={name}
+                  className="desktop-ai-factor grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)_auto] items-center gap-2"
+                >
+                  <span className="truncate text-sm text-white/75">{name}</span>
+                  <ProgressBar value={pct} color={tone} height={6} />
+                  <span className="font-mono text-xs tabular-nums text-white/65">
+                    {Math.round(pct)}%
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="desktop-ai-advice mt-3 text-sm text-white/65">
             <span className="lg:hidden">
               {mx === 0 && crew.ai >= 45
                 ? "The AI sees a combined pattern no single rule caught. It's flagged for review, not raised as an alert."
@@ -99,15 +103,21 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
         </>
       ) : (
         <>
-          <div className="desktop-ai-factors mt-2">
-            <RadarChart
-              data={radarData}
-              color={colorForLevel(0)}
-              height={150}
-              offline
-            />
-          </div>
-          <p className="mt-2 text-sm text-white/75">
+          <ul className="desktop-ai-factors mt-3 flex flex-col gap-1.5">
+            {factors.map(([name]) => (
+              <li
+                key={name}
+                className="desktop-ai-factor grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)_auto] items-center gap-2"
+              >
+                <span className="truncate text-sm text-white/55">{name}</span>
+                <ProgressBar value={0} color="rgba(255,255,255,0.18)" height={6} />
+                <span className="font-mono text-xs tabular-nums text-white/45">
+                  —
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-sm text-white/75">
             <b className="text-bad">Scorer offline.</b> Rules keep running, so
             alerts still fire.
           </p>
