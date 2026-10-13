@@ -256,28 +256,56 @@ body {
   .desktop-dashboard-center,
   .desktop-dashboard-right {
     min-height: 0;
+    container-type: inline-size;
+    container-name: dashcol;
   }
 
-  .desktop-dashboard-center > .desktop-vitals-wrap,
-  .desktop-dashboard-center > [data-tabbed] {
+  .desktop-dashboard-center {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .desktop-dashboard-center > .desktop-vitals-wrap {
+    flex: 0 1 auto;
     min-height: 0;
+    max-height: 40%;
   }
 
   .desktop-dashboard-center > [data-tabbed] {
     flex: 1 1 0;
+    min-height: 360px;
     overflow: hidden;
-    /* The AskCard needs ~400px of content (title + description + chat
-       scroll + form + footer). On 1366-1680px-tall viewports the
-       VitalsCard's compact layout still consumes enough of the center
-       column to leave the TabbedPanel with only ~280px, which collapses
-       the chat scroll to ~20px and hides user messages. Guarantee a
-       minimum height that comfortably fits the chat input + a few
-       message rows. The vitals card scrolls internally if it overflows. */
-    min-height: 440px;
+  }
+
+  /* Vitals grid: 4-across when the centre column is at least 640px wide,
+     2x2 below. Uses a container query against the centre column so the
+     rule fires regardless of viewport width. */
+  .vitals-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @container dashcol (min-width: 640px) {
+    .vitals-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .desktop-dashboard-right {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .desktop-dashboard-right > div {
+    min-height: 0;
+  }
+
+  /* AI score keeps its natural size; Rules takes the remaining space so
+     there is no large empty block at the bottom of the right rail. */
+  .desktop-dashboard-right > div:first-child {
+    flex: 0 0 auto;
   }
 
   .desktop-dashboard-right > .desktop-rules-wrap {
-    min-height: 0;
     flex: 1 1 0;
   }
 
@@ -374,12 +402,24 @@ body {
   }
 
   .desktop-vitals > div:nth-child(2) {
-    grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
-    gap: 8px;
     flex: 1 1 0;
     min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    gap: 8px;
+  }
+
+  .desktop-vitals .vitals-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  @container dashcol (min-width: 640px) {
+    .desktop-vitals .vitals-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .desktop-vitals .radiation-row {
+    flex: 0 0 auto;
+    min-height: 0;
   }
 
   .desktop-vitals > div:first-child {
@@ -388,29 +428,29 @@ body {
 
   .desktop-vitals .desktop-vital-tile {
     min-width: 0;
-    padding: 10px;
+    padding: 8px 10px;
   }
 
   .desktop-vitals .desktop-vital-title {
     min-width: 0;
     overflow: visible;
     white-space: nowrap;
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .desktop-vitals .desktop-vital-value {
-    margin-top: 4px;
-    font-size: 2rem !important;
-    line-height: 1 !important;
+    margin-top: 2px;
+    font-size: 1.5rem !important;
+    line-height: 1.05 !important;
     white-space: nowrap;
   }
 
   .desktop-vitals .desktop-vital-value > span {
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .desktop-vitals .desktop-vital-chart {
-    margin-top: 6px;
+    margin-top: 4px;
   }
 
   .desktop-vitals .desktop-vital-chart > div[style*="width"] {
@@ -420,16 +460,17 @@ body {
   .desktop-vitals .desktop-vital-caption {
     display: -webkit-box;
     overflow: hidden;
-    margin-top: 5px;
+    margin-top: 4px;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    font-size: 14px;
+    -webkit-line-clamp: 1;
+    font-size: 12px;
     line-height: 1.25;
   }
 
   .desktop-vitals .desktop-dose-tile {
     display: grid;
-    grid-template-columns: auto minmax(100px, 1fr) minmax(180px, 1.5fr);
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 1.4fr);
+    grid-template-rows: auto auto;
     align-items: center;
     column-gap: 12px;
     row-gap: 2px;
@@ -450,18 +491,18 @@ body {
     margin: 0;
   }
 
-  .desktop-vitals .desktop-dose-tile .desktop-dose-rate,
-  .desktop-vitals .desktop-dose-tile .desktop-vital-chart > div + div {
+  .desktop-vitals .desktop-dose-tile .desktop-dose-rate {
     display: none;
   }
 
   .desktop-vitals .desktop-dose-tile .desktop-vital-caption {
-    grid-column: 3;
-    grid-row: 2;
+    grid-column: 1 / -1;
+    grid-row: 3;
     margin: 0;
     display: block;
     overflow: visible;
     white-space: nowrap;
+    -webkit-line-clamp: 1;
   }
 
   .desktop-vitals .desktop-dose-tile .desktop-vital-caption > span {
@@ -593,7 +634,7 @@ body {
     grid-template-rows: auto auto;
     align-items: center;
     gap: 8px;
-    padding-block: 5px;
+    padding-block: 8px;
   }
 
   .desktop-rule-row > span {
@@ -663,39 +704,134 @@ body {
 
 @media (min-width: 1024px) and (max-height: 779px),
   (min-width: 1024px) and (max-width: 1280px) and (max-height: 850px) {
+  /* On short viewports (laptops, 1280x720 etc.) keep the dashboard inside
+     a single viewport so the chat tab can scroll INSIDE the message list.
+     Vitals get a small fixed cap; the tabbed panel takes the rest. */
   .dashboard-root {
-    height: auto;
-    min-height: 100dvh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .desktop-dashboard-main {
-    flex: 0 0 auto;
-    overflow: visible;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .desktop-dashboard-grid {
-    height: auto;
-    min-height: max-content;
-    grid-template-rows: auto;
+    height: 100%;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .desktop-dashboard-left,
   .desktop-dashboard-center,
-  .desktop-dashboard-right,
-  .desktop-dashboard-center > .desktop-vitals-wrap,
-  .desktop-dashboard-right > .desktop-rules-wrap {
-    min-height: max-content;
+  .desktop-dashboard-right {
+    min-height: 0;
   }
 
-  .desktop-dashboard-center > .desktop-vitals-wrap,
-  .desktop-dashboard-right > .desktop-rules-wrap {
+  .desktop-dashboard-center > .desktop-vitals-wrap {
     flex: 0 0 auto;
+    max-height: 18%;
+    min-height: 0;
+  }
+
+  .desktop-dashboard-right > .desktop-rules-wrap {
+    flex: 1 1 0;
+    min-height: 0;
   }
 
   .desktop-dashboard-center > [data-tabbed] {
-    flex: 0 0 auto;
-    min-height: 400px;
+    flex: 1 1 0;
+    min-height: 480px;
     overflow: hidden;
+  }
+
+  /* Force 4-across vitals even when the centre column is narrow. */
+  .desktop-vitals .vitals-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  /* Tighter vitals on short viewports. */
+  .desktop-vitals .desktop-vital-tile {
+    padding: 4px 8px;
+  }
+
+  .desktop-vitals .desktop-vital-title {
+    font-size: 11px;
+    margin-bottom: 0;
+  }
+
+  .desktop-vitals .desktop-vital-value {
+    font-size: 1.1rem !important;
+    line-height: 1.1 !important;
+    margin-top: 0 !important;
+  }
+
+  .desktop-vitals .desktop-vital-caption {
+    display: none !important;
+  }
+
+  .desktop-vitals .desktop-vital-chart {
+    display: none !important;
+    margin: 0 !important;
+  }
+
+  /* Tighter top + pipeline on short viewports. */
+  .dashboard-topbar {
+    min-height: 48px;
+    padding-block: 4px;
+    max-height: 56px;
+  }
+
+  .dashboard-topbar p {
+    display: none !important;
+  }
+
+  .desktop-pipeline {
+    padding-block: 1px;
+  }
+
+  .desktop-pipeline-card {
+    min-height: 36px;
+    padding: 2px 6px;
+  }
+
+  .desktop-pipeline-card > div > span:first-child,
+  .desktop-pipeline-card > div > span:last-child,
+  .desktop-pipeline-card > span {
+    font-size: 11px !important;
+    line-height: 1.2;
+  }
+
+  .desktop-dashboard-main {
+    padding: 2px 8px 2px 8px;
+  }
+
+  /* Tighter chat card on short viewports. */
+  [data-ask-card] {
+    padding: 8px !important;
+  }
+
+  [data-ask-card] .chat-message-region {
+    min-height: 240px;
+    margin-top: 6px !important;
+  }
+
+  [data-ask-card] [data-ask-footer] {
+    font-size: 11px;
+    line-height: 1.2;
+    margin-top: 2px !important;
+  }
+
+  [data-ask-card] form {
+    margin-top: 4px !important;
+  }
+
+  [data-ask-card] form input {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
   }
 }
 

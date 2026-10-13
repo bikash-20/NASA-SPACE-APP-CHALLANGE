@@ -26,75 +26,80 @@ export function VitalsCard({ crew }: VitalsCardProps) {
         title={`${crew.n} — current vitals`}
         hint={crew.role}
       />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(165px,1fr))]">
-        <Tile
-          label="Heart rate"
-          desktopLabel="Heart rate"
-          big={Math.round(crew.hr)}
-          unit="bpm"
-          sub={`Baseline ${crew.bhr} bpm. Dashed line = alert threshold (+30%).`}
-          desktopSub={`Baseline ${crew.bhr} · watch +30%`}
-          tone={col(0)}
+      <div className="flex flex-col gap-3">
+        <div
+          className="vitals-grid grid grid-cols-2 gap-3"
+          data-vitals-grid
         >
-          <Sparkline
-            data={crew.H.hr}
-            threshold={crew.bhr * 1.3}
-            color={col(0)}
-            yMin={crew.bhr * 0.8}
-            yMax={crew.bhr * 1.9}
-          />
-        </Tile>
-        <Tile
-          label="Blood oxygen"
-          desktopLabel="Blood oxygen"
-          big={crew.spo2.toFixed(1)}
-          unit="%"
-          sub="Alert below 90% · Watch below 94%."
-          desktopSub="Watch <94% · alert <90%"
-          tone={col(1)}
-        >
-          <Sparkline
-            data={crew.H.spo2}
-            threshold={94}
-            color={col(1)}
-            yMin={88}
-            yMax={100}
-          />
-        </Tile>
-        <Tile
-          label="Sleep, 3-night average"
-          desktopLabel="Sleep, 3-night avg"
-          big={crew.sleep.toFixed(1)}
-          unit="h"
-          sub="Alert below 4.5 h · Watch below 5.5 h."
-          desktopSub="Watch <5.5 h · alert <4.5 h"
-          tone={col(2)}
-        >
-          <ProgressBar
-            value={sleepPct}
-            color={col(2)}
-            marks={[61, 50]}
-            height={10}
-          />
-        </Tile>
-        <Tile
-          label="Stress index"
-          desktopLabel="Stress index"
-          big={Math.round(crew.stress)}
-          unit="/ 100"
-          sub="Alert above 90 · Watch above 75."
-          desktopSub="Watch >75 · alert >90"
-          tone={col(3)}
-        >
-          <Sparkline
-            data={crew.H.stress}
-            threshold={75}
-            color={col(3)}
-            yMin={0}
-            yMax={100}
-          />
-        </Tile>
-        <div className="sm:col-span-2 lg:col-span-full">
+          <Tile
+            label="Heart rate"
+            desktopLabel="Heart rate"
+            big={Math.round(crew.hr)}
+            unit="bpm"
+            sub={`Baseline ${crew.bhr} bpm. Dashed line = alert threshold (+30%).`}
+            desktopSub={`Baseline ${crew.bhr} · watch +30%`}
+            tone={col(0)}
+          >
+            <Sparkline
+              data={crew.H.hr}
+              threshold={crew.bhr * 1.3}
+              color={col(0)}
+              yMin={crew.bhr * 0.8}
+              yMax={crew.bhr * 1.9}
+            />
+          </Tile>
+          <Tile
+            label="Blood oxygen"
+            desktopLabel="Blood oxygen"
+            big={crew.spo2.toFixed(1)}
+            unit="%"
+            sub="Alert below 90% · Watch below 94%."
+            desktopSub="Watch <94% · alert <90%"
+            tone={col(1)}
+          >
+            <Sparkline
+              data={crew.H.spo2}
+              threshold={94}
+              color={col(1)}
+              yMin={88}
+              yMax={100}
+            />
+          </Tile>
+          <Tile
+            label="Sleep, 3-night average"
+            desktopLabel="Sleep, 3-night avg"
+            big={crew.sleep.toFixed(1)}
+            unit="h"
+            sub="Alert below 4.5 h · Watch below 5.5 h."
+            desktopSub={`Baseline 7.2 · watch <5.5`}
+            tone={col(2)}
+          >
+            <ProgressBar
+              value={sleepPct}
+              color={col(2)}
+              marks={[61, 50]}
+              height={10}
+            />
+          </Tile>
+          <Tile
+            label="Stress index"
+            desktopLabel="Stress index"
+            big={Math.round(crew.stress)}
+            unit="/ 100"
+            sub="Alert above 90 · Watch above 75."
+            desktopSub="Watch >75 · alert >90"
+            tone={col(3)}
+          >
+            <Sparkline
+              data={crew.H.stress}
+              threshold={75}
+              color={col(3)}
+              yMin={0}
+              yMax={100}
+            />
+          </Tile>
+        </div>
+        <div className="radiation-row">
           <Tile
             label="Radiation, 30-day dose"
             desktopLabel="Radiation"

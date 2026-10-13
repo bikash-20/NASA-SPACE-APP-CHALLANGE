@@ -84,7 +84,7 @@ export function ScenarioPanel({
     return (
       <Panel density="compact" tone="default" className="desktop-scenarios">
         <PanelTitle title="Inject a problem" />
-        <div className="space-y-1.5 desktop-scenario-rows">
+        <div className="desktop-scenario-rows">
           <ScenarioRow
             active={storm}
             onClick={() => onToggle("storm")}
@@ -109,7 +109,7 @@ export function ScenarioPanel({
           <ScenarioRow
             active={!aiOn}
             onClick={() => onToggle("ai")}
-            label="AI risk scorer"
+            label="AI scorer"
             target={!aiOn ? "offline" : "online"}
             pillTone="bad"
           />
@@ -257,7 +257,13 @@ function PresetButtons({
   );
 }
 
-/** Compact, two-line row. Top: label + active "On" pill. Bottom: target. */
+/**
+ * Compact scenario row.
+ *  Top line: label (truncate-after-one-line) + "On" pill (if active) + toggle.
+ *  Bottom line: target in smaller, dim text.
+ *  All rows have the same fixed min-height so the panel never produces
+ *  ragged heights and the label never wraps even at 260px column width.
+ */
 function ScenarioRow({
   active,
   onClick,
@@ -277,17 +283,17 @@ function ScenarioRow({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "tappable flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left transition-colors",
+        "scenario-row tappable flex w-full items-start justify-between gap-2 rounded-lg border px-3 py-1.5 text-left transition-colors",
         active
           ? "border-bad/45 bg-bad/10"
           : "border-white/10 bg-white/[0.025] hover:bg-white/[0.06]"
       )}
     >
-      <span className="min-w-0">
-        <span className="flex items-center gap-2">
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="flex min-w-0 items-center gap-1.5">
           <span
             className={cn(
-              "text-base font-semibold",
+              "truncate whitespace-nowrap text-sm font-semibold",
               active ? "text-bad" : "text-ink"
             )}
           >
@@ -295,26 +301,28 @@ function ScenarioRow({
           </span>
           {active && (
             <span
-              className="rounded-full bg-bad px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-white"
+              className="shrink-0 rounded-full bg-bad px-1.5 py-px text-[0.625rem] font-semibold uppercase text-white"
               style={{ letterSpacing: "0.04em" }}
             >
               On
             </span>
           )}
         </span>
-        <span className="mt-0.5 block text-sm text-white/65">{target}</span>
+        <span className="truncate whitespace-nowrap text-xs text-white/60">
+          {target}
+        </span>
       </span>
       <span
         aria-hidden
         className={cn(
-          "ml-2 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
+          "ml-2 mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
           active ? "bg-bad" : "bg-white/15"
         )}
       >
         <span
           className={cn(
-            "inline-block h-5 w-5 transform rounded-full bg-white transition-transform",
-            active ? "translate-x-5" : "translate-x-0.5"
+            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+            active ? "translate-x-[18px]" : "translate-x-0.5"
           )}
         />
       </span>

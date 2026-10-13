@@ -36,7 +36,7 @@ export function TabbedPanel({
   alertsBadge,
 }: TabbedPanelProps) {
   return (
-    <Panel className="flex min-h-0 flex-col" data-tabbed>
+    <Panel density="compact" className="flex min-h-0 flex-col" data-tabbed>
       {/* Tab strip */}
       <div
         role="tablist"
