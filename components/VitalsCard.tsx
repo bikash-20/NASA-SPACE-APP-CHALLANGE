@@ -3,7 +3,7 @@
 import { Panel, PanelTitle } from "./ui/Panel";
 import { Sparkline } from "./ui/Sparkline";
 import { ProgressBar } from "./ui/ProgressBar";
-import { SleepDebtBar } from "./SleepDebtBar";
+import { BarChart } from "./ui/BarChart";
 import { colorForLevel } from "@/lib/colors";
 import type { Crew, Level } from "@/lib/types";
 
@@ -36,9 +36,9 @@ export function VitalsCard({ crew }: VitalsCardProps) {
         title={`${crew.n} — current vitals`}
         hint={crew.role}
       />
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         <div
-          className="vitals-grid grid grid-cols-2 gap-3"
+          className="vitals-grid grid grid-cols-2 gap-4"
           data-vitals-grid
         >
           <Tile
@@ -58,6 +58,8 @@ export function VitalsCard({ crew }: VitalsCardProps) {
               yMax={crew.bhr * 1.9}
               normalBand={[60, crew.bhr * 1.3]}
               levelColor={levelOf(0)}
+              height={64}
+              strokeWidth={3}
             />
           </Tile>
           <Tile
@@ -77,6 +79,8 @@ export function VitalsCard({ crew }: VitalsCardProps) {
               yMax={100}
               normalBand={[94, 100]}
               levelColor={levelOf(1)}
+              height={64}
+              strokeWidth={3}
             />
           </Tile>
           <Tile
@@ -88,12 +92,13 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             desktopSub="Base 7.2 · <5.5 h"
             tone={col(2)}
           >
-            <SleepDebtBar
+            <BarChart
               data={crew.H.sleep}
-              height={72}
+              height={80}
               baseline={7.2}
               watch={5.5}
               alert={4.5}
+              ariaLabel="7-night sleep history, newest on the right"
             />
           </Tile>
           <Tile
@@ -113,6 +118,8 @@ export function VitalsCard({ crew }: VitalsCardProps) {
               yMax={100}
               normalBand={[0, 75]}
               levelColor={levelOf(3)}
+              height={64}
+              strokeWidth={3}
             />
           </Tile>
         </div>
@@ -125,7 +132,7 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             sub={
               doseOver
                 ? `Over limit — ${Math.round(dosePct)}% of ${DOSE_LIMIT} mSv. Rate ${crew.rate.toFixed(2)} mSv/h.`
-                : `${Math.round(dosePct)}% of ${DOSE_LIMIT} mSv · rate ${crew.rate.toFixed(2)} mSv/h. Marks at 80% and 95%.`
+                : `${Math.round(dosePct)}% of ${DOSE_LIMIT} mSv · rate ${crew.rate.toFixed(2)} mSv/h. Threshold marks at 80% and 95%.`
             }
             desktopSub={`Rate ${crew.rate.toFixed(2)} mSv/h · marks 80/95%`}
             tone={col(4)}
@@ -136,9 +143,10 @@ export function VitalsCard({ crew }: VitalsCardProps) {
               value={dosePct}
               color={col(4)}
               marks={[80, 95]}
-              height={10}
+              showLabels
+              height={16}
             />
-            <div className="mt-2 desktop-dose-rate">
+            <div className="mt-3 desktop-dose-rate">
               <Sparkline
                 data={crew.H.rate}
                 threshold={1}
@@ -146,6 +154,7 @@ export function VitalsCard({ crew }: VitalsCardProps) {
                 yMin={0}
                 yMax={4}
                 height={32}
+                strokeWidth={2}
                 levelColor={levelOf(4)}
               />
             </div>
@@ -181,7 +190,7 @@ function Tile({
 }) {
   return (
     <div
-      className={`desktop-vital-tile rounded-xl border border-white/10 bg-white/[0.02] p-3.5 sm:p-4 ${
+      className={`desktop-vital-tile flex flex-col gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-5 ${
         dose ? "desktop-dose-tile" : ""
       }`}
     >
@@ -192,7 +201,7 @@ function Tile({
         </div>
         {badge && (
           <span
-            className="rounded-full px-2.5 py-0.5 text-sm font-semibold text-white"
+            className="rounded-full px-3 py-1 text-sm font-semibold text-white"
             style={{ background: tone }}
           >
             {badge}
@@ -200,14 +209,14 @@ function Tile({
         )}
       </div>
       <div
-        className="desktop-vital-value mt-1.5 font-mono font-bold tabular-nums text-ink"
+        className="desktop-vital-value font-mono font-bold tabular-nums text-ink"
         style={{ fontSize: "var(--fs-vital)", lineHeight: "var(--lh-display)" }}
       >
         {big}
-        <span className="ml-1 text-sm font-normal text-white/55">{unit}</span>
+        <span className="ml-1 text-base font-normal text-white/55">{unit}</span>
       </div>
-      <div className="desktop-vital-chart mt-3">{children}</div>
-      <div className="desktop-vital-caption mt-2 text-sm text-white/65">
+      <div className="desktop-vital-chart">{children}</div>
+      <div className="desktop-vital-caption text-sm text-white/65">
         <span className="lg:hidden">{sub}</span>
         <span className="hidden lg:inline">{desktopSub}</span>
       </div>

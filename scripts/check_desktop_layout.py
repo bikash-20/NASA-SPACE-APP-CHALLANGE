@@ -108,9 +108,6 @@ CHECK_LAYOUT = """() => {
     window.scrollY === 0;
 
   // Visualization primitives — verify which ones exist on the page.
-  // The AI risk factors are rendered as a vertical list of bars
-  // (5 rows), the radiation tile uses a single ProgressBar, and the
-  // crew rail cards no longer carry a per-card ECG sparkline.
   const aiFactorCount = document.querySelectorAll(
     ".desktop-ai-factor"
   ).length;
@@ -121,11 +118,49 @@ CHECK_LAYOUT = """() => {
     "data-ai-band"
   );
   // The Gantt strip only exists once the user has caused at least one
-  // alert. We only check that the alert Gantt container is registered
-  // (it's hidden by SSR until events arrive).
+  // alert. We only check that the alert Gantt container is registered.
   const ganttContainerPresent = !!document.querySelector(
     ".desktop-timeline-gantt"
   );
+
+  // --- New spec-driven checks ---
+  // Each crew card has a sparkline at the bottom.
+  const crewSparklineHeights = [...document.querySelectorAll(
+    ".desktop-crew-sparkline"
+  )].map((el) => el.getBoundingClientRect().height);
+
+  // The vitals panel's computed padding should be at least 20px.
+  const vitalsPanel = document.querySelector(".desktop-vitals");
+  const vitalsStyle = vitalsPanel ? getComputedStyle(vitalsPanel) : null;
+  const vitalsPaddingTop = vitalsStyle
+    ? parseFloat(vitalsStyle.paddingTop)
+    : 0;
+
+  // The bottom panel ([data-tabbed]) should have a margin-top of at
+  // least 28px and a content area of at least 240px tall.
+  const tabbed = document.querySelector(".desktop-dashboard-center > [data-tabbed]");
+  const tabbedStyle = tabbed ? getComputedStyle(tabbed) : null;
+  const tabbedMarginTop = tabbedStyle ? parseFloat(tabbedStyle.marginTop) : 0;
+  const tabContent = document.querySelector(
+    ".desktop-dashboard-center [data-tabbed] .desktop-tab-content"
+  );
+  const tabContentHeight = tabContent
+    ? tabContent.getBoundingClientRect().height
+    : 0;
+
+  // The big AI number is at least 40px tall.
+  const aiNumber = document.querySelector(".desktop-ai-number");
+  const aiNumberHeight = aiNumber
+    ? aiNumber.getBoundingClientRect().height
+    : 0;
+
+  // The radiation bar (the inner progressbar div) is at least 14px tall.
+  const radiationBarEl = document.querySelector(
+    ".desktop-dose-tile .desktop-vital-chart > div[role='progressbar']"
+  );
+  const radiationBarHeight = radiationBarEl
+    ? radiationBarEl.getBoundingClientRect().height
+    : 0;
 
   return {
     overlaps,
@@ -137,6 +172,12 @@ CHECK_LAYOUT = """() => {
     radiationBar,
     aiBand,
     ganttContainerPresent,
+    crewSparklineHeights,
+    vitalsPaddingTop,
+    tabbedMarginTop,
+    tabContentHeight,
+    aiNumberHeight,
+    radiationBarHeight,
   };
 }"""
 
@@ -155,8 +196,7 @@ def check_viewport(page, width, height, tab):
     if height >= 700 and not result["radiationVisible"]:
         errors.append("Radiation tile is not fully visible at scrollTop 0")
 
-    # The AI card shows 5 factor rows (one per rule) plus the radiation
-    # tile shows a single progress bar.
+    # The AI card shows 5 factor rows.
     if result["aiFactorCount"] < 5:
         errors.append(
             f"Expected 5 AI factor rows, got {result['aiFactorCount']}"
@@ -166,6 +206,37 @@ def check_viewport(page, width, height, tab):
     if result["aiBand"] not in {"low", "watch", "high"}:
         errors.append(f"AI score data-ai-band is {result['aiBand']!r}, not in low/watch/high")
 
+    # Spec checks — only enforce at the larger viewports where the
+    # spacious layout is in effect. The short-laptop cases (700-779px
+    # tall) intentionally use the more compact media block.
+    spacious = height >= 800
+    if spacious:
+        heights = result["crewSparklineHeights"]
+        if len(heights) < 3 or any(h < 36 for h in heights):
+            errors.append(
+                f"Crew sparkline heights should be >= 36px (got {heights})"
+            )
+        if result["vitalsPaddingTop"] < 20:
+            errors.append(
+                f"Vitals panel padding should be >= 20px (got {result['vitalsPaddingTop']})"
+            )
+        if result["tabbedMarginTop"] < 28:
+            errors.append(
+                f"Bottom panel margin-top should be >= 28px (got {result['tabbedMarginTop']})"
+            )
+        if result["tabContentHeight"] < 240:
+            errors.append(
+                f"Tab content area should be >= 240px tall (got {result['tabContentHeight']})"
+            )
+        if result["aiNumberHeight"] < 40:
+            errors.append(
+                f"AI score number should be >= 40px tall (got {result['aiNumberHeight']})"
+            )
+        if result["radiationBarHeight"] < 14:
+            errors.append(
+                f"Radiation bar should be >= 14px tall (got {result['radiationBarHeight']})"
+            )
+
     print(
         f"| {width}x{height} | {tab} | "
         f"{'FAIL' if errors else 'PASS'} | "
@@ -173,6 +244,9 @@ def check_viewport(page, width, height, tab):
         f"{'yes' if result['radiationVisible'] else 'no'} | "
         f"factors={result['aiFactorCount']} | doseBar={result['radiationBar']} | "
         f"ai={result['aiBand']} | "
+        f"vPad={result['vitalsPaddingTop']:.0f} | bMar={result['tabbedMarginTop']:.0f} | "
+        f"tArea={result['tabContentHeight']:.0f} | "
+        f"aiH={result['aiNumberHeight']:.0f} | rH={result['radiationBarHeight']:.0f} | "
         f"{len(result['overlaps'])} | {len(result['clipped'])} |"
     )
     if errors:

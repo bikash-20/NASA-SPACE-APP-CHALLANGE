@@ -13,15 +13,15 @@ export function RulesCard({ crew }: { crew: Crew }) {
         {crew.R.map((r) => (
           <li
             key={r.n}
-            className="desktop-rule-row grid grid-cols-[1.5rem_1fr_auto] items-start gap-2 py-2 first:pt-0 last:pb-0"
+            className="desktop-rule-row grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-3 py-3 first:pt-0 last:pb-0"
           >
             <span
-              className="mt-1.5 inline-block h-3 w-3 shrink-0 rounded-full"
+              className="mt-2 inline-block h-3 w-3 shrink-0 rounded-full"
               style={{ background: colorForLevel(r.lv) }}
               aria-label={LEVEL_NAMES[r.lv]}
             />
             <div className="min-w-0">
-              <b className="desktop-rule-name block text-sm font-semibold text-ink">
+              <b className="desktop-rule-name block text-left text-base font-semibold text-ink">
                 {r.n}
               </b>
               <span className="desktop-rule-threshold block text-sm text-white/65">
@@ -29,15 +29,15 @@ export function RulesCard({ crew }: { crew: Crew }) {
               </span>
             </div>
             <div className="desktop-rule-result text-right">
-              <div className="font-mono text-sm tabular-nums text-ink">
+              <div className="font-mono text-base tabular-nums text-ink">
                 {r.val}
               </div>
-              <div
-                className="text-sm font-semibold"
-                style={{ color: colorForLevel(r.lv) }}
+              <span
+                className="mt-1 inline-block rounded-full px-3 py-1 text-sm font-semibold text-white"
+                style={{ background: colorForLevel(r.lv) }}
               >
                 {LEVEL_NAMES[r.lv]}
-              </div>
+              </span>
             </div>
           </li>
         ))}

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
 import { colorForLevel } from "@/lib/colors";
+import { Sparkline } from "./ui/Sparkline";
 import { LEVEL_NAMES } from "@/lib/types";
 import type { Crew, Level } from "@/lib/types";
 
@@ -115,11 +116,14 @@ export function CrewList({ crew, selected, aiOn, onPick, variant, causes }: Crew
 
   // rail (desktop)
   return (
-    <div className="desktop-crew-list flex flex-col gap-2">
+    <div className="desktop-crew-list flex flex-col gap-3">
       {crew.map((c, i) => {
         const { color, label } = statusDot(c, aiOn);
         const cause = causes?.[i] ?? null;
-        const text = pillText(label, cause);
+        // Per the design spec, the rail card's status pill shows the
+        // pure status label (no cause suffix). The cause is still
+        // available in the data for accessibility / sr-only text.
+        const pill = label;
         const isSel = i === selected;
         return (
           <motion.button
@@ -128,7 +132,7 @@ export function CrewList({ crew, selected, aiOn, onPick, variant, causes }: Crew
             whileHover={{ x: 2 }}
             whileTap={{ scale: 0.99 }}
             className={cn(
-              "tappable relative overflow-hidden rounded-xl border p-3 text-left",
+              "tappable relative flex w-full flex-col gap-2 overflow-hidden rounded-xl border p-4 text-left",
               isSel
                 ? "border-ink/40 bg-white/[0.05]"
                 : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
@@ -146,13 +150,13 @@ export function CrewList({ crew, selected, aiOn, onPick, variant, causes }: Crew
                 </b>
               </div>
               <span
-                className="shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-sm font-semibold text-white"
+                className="shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-sm font-semibold text-white"
                 style={{ background: color }}
               >
-                {text}
+                {pill}
               </span>
             </div>
-            <div className="desktop-crew-details mt-2 text-sm text-white/75">
+            <div className="desktop-crew-details text-sm text-white/75">
               <span>{c.role}</span>
               <span aria-hidden> · </span>
               <span className="font-mono tabular-nums">
@@ -160,6 +164,15 @@ export function CrewList({ crew, selected, aiOn, onPick, variant, causes }: Crew
                 {Math.round(c.hr)} · SpO2 {c.spo2.toFixed(0)}
               </span>
             </div>
+            <div className="desktop-crew-sparkline mt-auto w-full">
+              <Sparkline
+                data={c.H.hr.slice(-30)}
+                color={color}
+                height={40}
+                compact
+              />
+            </div>
+            {cause && <span className="sr-only">{cause}</span>}
           </motion.button>
         );
       })}

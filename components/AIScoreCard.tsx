@@ -6,6 +6,7 @@ import { Panel, PanelTitle } from "./ui/Panel";
 import { ProgressBar } from "./ui/ProgressBar";
 import { band } from "@/lib/aiScore";
 import { bandColor, colorForLevel } from "@/lib/colors";
+import { aiScoreDisplayColor } from "@/lib/aiScoreColor";
 import type { Crew, Level } from "@/lib/types";
 
 interface AIScoreCardProps {
@@ -17,7 +18,11 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
   const score = Math.round(crew.ai);
   const mx = crew.r.reduce((m, v) => (v > m ? v : m), 0) as Level;
   const b = band(score);
-  const scoreColor = bandColor(b);
+  // The label pill uses the LLM-facing band color (Low / Watch / High).
+  const labelColor = bandColor(b);
+  // The big number uses the user-specified display thresholds
+  // (Green < 40, Yellow 40-70, Red > 70).
+  const scoreColor = aiScoreDisplayColor(score);
 
   const mv = useMotionValue(0);
   const display = useTransform(mv, (v) => Math.round(v).toString());
@@ -47,7 +52,7 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
       <PanelTitle title="AI risk score" tone="accent" />
       {aiOn ? (
         <>
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline gap-3">
             <span
               ref={ref}
               data-ai-band={b.toLowerCase()}
@@ -63,10 +68,10 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
             <span className="desktop-ai-label text-sm text-white/65">
               of 100 ·{" "}
               <span
-                className="rounded-full border px-1.5 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-wider"
+                className="rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider"
                 style={{
-                  color: scoreColor,
-                  borderColor: scoreColor,
+                  color: labelColor,
+                  borderColor: labelColor,
                   letterSpacing: "0.04em",
                 }}
               >
@@ -74,25 +79,25 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
               </span>
             </span>
           </div>
-          <ul className="desktop-ai-factors mt-3 flex flex-col gap-1.5">
+          <ul className="desktop-ai-factors flex flex-col">
             {factors.map(([name, val, max]) => {
               const pct = max > 0 ? Math.min(100, (val / max) * 100) : 0;
               const tone = aiOn ? scoreColor : colorForLevel(0);
               return (
                 <li
                   key={name}
-                  className="desktop-ai-factor grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)_auto] items-center gap-2"
+                  className="desktop-ai-factor grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)_auto] items-center gap-3"
                 >
                   <span className="truncate text-sm text-white/75">{name}</span>
-                  <ProgressBar value={pct} color={tone} height={6} />
-                  <span className="font-mono text-xs tabular-nums text-white/65">
+                  <ProgressBar value={pct} color={tone} height={8} />
+                  <span className="font-mono text-sm tabular-nums text-white/65">
                     {Math.round(pct)}%
                   </span>
                 </li>
               );
             })}
           </ul>
-          <p className="desktop-ai-advice mt-3 text-sm text-white/65">
+          <p className="desktop-ai-advice text-sm text-white/65">
             <span className="lg:hidden">
               {mx === 0 && crew.ai >= 45
                 ? "The AI sees a combined pattern no single rule caught. It's flagged for review, not raised as an alert."
@@ -103,21 +108,21 @@ export function AIScoreCard({ crew, aiOn }: AIScoreCardProps) {
         </>
       ) : (
         <>
-          <ul className="desktop-ai-factors mt-3 flex flex-col gap-1.5">
+          <ul className="desktop-ai-factors flex flex-col">
             {factors.map(([name]) => (
               <li
                 key={name}
-                className="desktop-ai-factor grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)_auto] items-center gap-2"
+                className="desktop-ai-factor grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)_auto] items-center gap-3"
               >
                 <span className="truncate text-sm text-white/55">{name}</span>
-                <ProgressBar value={0} color="rgba(255,255,255,0.18)" height={6} />
-                <span className="font-mono text-xs tabular-nums text-white/45">
+                <ProgressBar value={0} color="rgba(255,255,255,0.18)" height={8} />
+                <span className="font-mono text-sm tabular-nums text-white/45">
                   —
                 </span>
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-sm text-white/75">
+          <p className="text-sm text-white/75">
             <b className="text-bad">Scorer offline.</b> Rules keep running, so
             alerts still fire.
           </p>

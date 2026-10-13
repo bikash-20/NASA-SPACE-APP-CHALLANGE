@@ -21,6 +21,9 @@ interface SparklineProps {
   normalBand?: [number, number];
   /** Marker colors are picked from this level when set. */
   levelColor?: "ok" | "watch" | "bad";
+  /** When true, renders a minimal ECG-style strip (no normal band).
+   *  Used in the crew rail cards. */
+  compact?: boolean;
 }
 
 const LEVEL_STROKE: Record<"ok" | "watch" | "bad", string> = {
@@ -31,7 +34,7 @@ const LEVEL_STROKE: Record<"ok" | "watch" | "bad", string> = {
 
 /**
  * Tiny chart with no axes, animated, threshold dashed, optional normal
- * range band. Used inside vitals tiles.
+ * range band. Used inside vitals tiles and the crew rail cards.
  */
 export function Sparkline({
   data,
@@ -39,10 +42,11 @@ export function Sparkline({
   color,
   yMin,
   yMax,
-  height = 48,
-  strokeWidth = 2,
+  height = 64,
+  strokeWidth = 3,
   normalBand,
   levelColor,
+  compact = false,
 }: SparklineProps) {
   const points = data.map((v, i) => ({ i, v }));
   if (points.length < 2) {
@@ -54,10 +58,10 @@ export function Sparkline({
       <ResponsiveContainer>
         <LineChart
           data={points}
-          margin={{ top: 4, right: 2, bottom: 4, left: 2 }}
+          margin={{ top: 6, right: 4, bottom: 6, left: 4 }}
         >
           <YAxis hide domain={[yMin ?? "auto", yMax ?? "auto"]} />
-          {normalBand && (
+          {!compact && normalBand && (
             <ReferenceArea
               y1={normalBand[0]}
               y2={normalBand[1]}
@@ -66,7 +70,7 @@ export function Sparkline({
               strokeDasharray="2 3"
             />
           )}
-          {threshold !== undefined && (
+          {!compact && threshold !== undefined && (
             <ReferenceLine
               y={threshold}
               stroke="#f59e0b"

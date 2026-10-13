@@ -11,7 +11,7 @@
   --fs-body: 1rem;
   --fs-secondary: 0.875rem;
   --fs-heading: 1.125rem;
-  --fs-vital: clamp(2rem, 1.5vw + 1.5rem, 2.25rem);
+  --fs-vital: clamp(2.5rem, 2vw + 1.5rem, 3rem);
   --fs-ai: clamp(2.75rem, 3vw + 1.5rem, 3.5rem);
   --fs-rail-num: clamp(1.25rem, 0.5vw + 1rem, 1.5rem);
   --lh-body: 1.5;
@@ -213,8 +213,8 @@ body {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     overflow: visible;
-    gap: 8px;
-    padding-block: 8px;
+    gap: 12px;
+    padding-block: 12px;
   }
 
   .desktop-pipeline > li {
@@ -223,9 +223,9 @@ body {
   }
 
   .desktop-pipeline-card {
-    min-height: 64px;
+    min-height: 72px;
     justify-content: space-between;
-    padding: 8px;
+    padding: 12px;
   }
 
   .desktop-pipeline-card > div {
@@ -245,14 +245,15 @@ body {
   }
 
   .desktop-dashboard-main {
-    padding: 12px 20px;
+    padding: 20px 32px;
   }
 
   .desktop-dashboard-grid {
     width: 100%;
     align-items: start;
-    grid-template-columns: clamp(260px, 19vw, 320px) minmax(0, 1fr) clamp(320px, 24vw, 400px);
-    gap: 12px;
+    grid-template-columns: minmax(260px, 25%) minmax(0, 1fr) minmax(280px, 25%);
+    column-gap: 32px;
+    row-gap: 24px;
   }
 
   .desktop-dashboard-left,
@@ -317,7 +318,15 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 9px 10px;
+    gap: 8px;
+    padding: 16px;
+    min-height: 120px;
+  }
+
+  .desktop-crew-sparkline {
+    margin-top: auto;
+    height: 40px;
+    width: 100%;
   }
 
   .desktop-crew-list b {
@@ -383,7 +392,7 @@ body {
   }
 
   .desktop-vitals {
-    padding: 14px;
+    padding: 24px;
     /* The VitalsCard is a fixed-height flex item in the center column.
        When the TabbedPanel below it is given a min-height to keep the
        chat visible, the vitals card gets squeezed. Make it a flex
@@ -391,18 +400,18 @@ body {
        even when the available height is small. */
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .desktop-vitals > div:nth-child(2) {
     flex: 1 1 0;
     min-height: 0;
-    gap: 8px;
+    gap: 16px;
   }
 
   .desktop-vitals .vitals-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: 16px;
   }
   @container dashcol (min-width: 920px) {
     .desktop-vitals .vitals-grid {
@@ -432,62 +441,60 @@ body {
 
   .desktop-vitals .desktop-vital-tile {
     min-width: 0;
-    padding: 12px 14px;
+    padding: 20px;
   }
 
   .desktop-vitals .desktop-vital-title {
     min-width: 0;
     overflow: visible;
     white-space: nowrap;
-    font-size: 13px;
+    font-size: 14px;
+    line-height: 1.3;
   }
 
   .desktop-vitals .desktop-vital-value {
-    margin-top: 4px;
-    font-size: 1.65rem !important;
-    line-height: 1.1 !important;
+    margin-top: 8px;
+    font-size: clamp(2.5rem, 2vw + 1.5rem, 3rem) !important;
+    line-height: 1.05 !important;
     white-space: nowrap;
   }
 
   .desktop-vitals .desktop-vital-value > span {
-    font-size: 12px;
+    font-size: 16px;
   }
 
   .desktop-vitals .desktop-vital-chart {
-    margin-top: 8px;
+    margin-top: 12px;
   }
 
   .desktop-vitals .desktop-vital-chart > div[style*="width"] {
-    height: 48px !important;
+    height: 64px !important;
   }
 
   .desktop-vitals .desktop-vital-caption {
-    display: -webkit-box;
-    overflow: hidden;
-    margin-top: 8px;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    font-size: 12px;
-    line-height: 1.3;
+    display: block;
+    overflow: visible;
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.4;
   }
 
   .desktop-vitals .desktop-dose-tile {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 0;
+    gap: 12px;
   }
 
   .desktop-vitals .desktop-dose-tile .desktop-dose-rate {
-    display: none;
+    display: block;
   }
 
   .desktop-vitals .desktop-dose-tile .desktop-vital-caption {
-    margin-top: 8px;
+    margin-top: 4px;
     display: block;
     overflow: visible;
     white-space: nowrap;
-    -webkit-line-clamp: 2;
   }
 
   .desktop-vitals .desktop-dose-tile .desktop-vital-caption > span {
@@ -504,25 +511,25 @@ body {
   }
 
   [data-tabbed] {
-    padding: 12px;
+    padding: 20px;
   }
 
   [data-tabbed] > div[role="tablist"] {
     flex: 0 0 auto;
-    gap: 2px;
-    margin-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 16px;
     overflow-x: auto;
   }
 
   [data-tabbed] [role="tab"] {
-    min-height: 44px;
-    padding-inline: 10px;
-    font-size: 14px;
+    min-height: 48px;
+    padding-inline: 16px;
+    font-size: 16px;
   }
 
   [data-tabbed] [role="tab"] > span.rounded-full {
-    min-width: 20px;
-    height: 20px;
+    min-width: 22px;
+    height: 22px;
     font-size: 14px;
   }
 
@@ -563,11 +570,11 @@ body {
   }
 
   .desktop-ai-score {
-    padding: 12px;
+    padding: 20px;
   }
 
   .desktop-ai-score > div:first-of-type {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
 
   .desktop-ai-number {
@@ -580,55 +587,58 @@ body {
   }
 
   .desktop-ai-factors {
-    margin-top: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 12px;
   }
 
   .desktop-ai-factor {
     grid-template-columns: minmax(100px, 7.5rem) minmax(0, 1fr);
-    gap: 8px;
-    min-height: 16px;
+    gap: 12px;
+    min-height: 36px;
     font-size: 14px;
   }
 
   .desktop-ai-advice {
-    margin-top: 8px;
+    margin-top: 12px;
     font-size: 14px;
+    line-height: 1.4;
   }
 
   .desktop-rules {
     height: 100%;
-    padding: 12px;
+    padding: 20px;
   }
 
   .desktop-rules > div:first-of-type {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
 
   .desktop-rules ul {
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
-    height: calc(100% - 32px);
+    gap: 4px;
   }
 
   .desktop-rule-row {
-    grid-template-columns: 10px minmax(0, 1fr) auto;
+    grid-template-columns: 12px minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
     align-items: center;
-    gap: 8px;
-    padding-block: 8px;
+    column-gap: 12px;
+    row-gap: 4px;
+    padding-block: 12px;
   }
 
   .desktop-rule-row > span {
     grid-column: 1;
     grid-row: 1 / span 2;
-    width: 9px;
-    height: 9px;
+    width: 10px;
+    height: 10px;
     align-self: start;
-    margin-top: 4px;
+    margin-top: 6px;
   }
 
   .desktop-rule-row > div:first-of-type {
@@ -652,24 +662,25 @@ body {
 
   .desktop-rule-name,
   .desktop-rule-result > div {
-    font-size: 14px;
-    line-height: 1.2;
+    font-size: 16px;
+    line-height: 1.25;
   }
 
   .desktop-rule-threshold {
     font-size: 14px;
-    line-height: 1.15;
+    line-height: 1.3;
   }
 
   .desktop-rule-result {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
     white-space: nowrap;
   }
 
   .desktop-rule-result > div:last-child {
-    min-width: 42px;
+    min-width: 0;
   }
 
   .desktop-rules .rounded-full {
@@ -703,21 +714,21 @@ body {
   .desktop-pipeline { padding-block: 4px; }
   .desktop-pipeline-card { min-height: 56px; padding: 6px 8px; }
 
-  .desktop-dashboard-main { padding: 6px 12px 8px; }
+  .desktop-dashboard-main { padding: 16px 20px 20px; }
 }
 
 @media (min-width: 1024px) and (max-width: 1279px) {
   .desktop-vitals .desktop-vital-tile {
-    padding: 10px 12px;
+    padding: 16px 18px;
   }
 
   .desktop-vitals .desktop-vital-chart {
-    margin-top: 6px;
+    margin-top: 10px;
   }
 
   .desktop-vitals .desktop-vital-caption {
-    margin-top: 6px;
-    line-height: 1.2;
+    margin-top: 8px;
+    line-height: 1.3;
   }
 }
 
@@ -730,7 +741,7 @@ body {
 
 @media (min-width: 1920px) {
   .desktop-dashboard-grid {
-    max-width: 2200px;
+    max-width: 2400px;
     margin-inline: auto;
   }
 }
@@ -774,11 +785,11 @@ body {
     box-sizing: border-box;
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 8px;
-    height: 64px;
-    min-height: 64px;
+    gap: 12px;
+    height: 72px;
+    min-height: 72px;
     overflow: visible;
-    padding: 0 20px;
+    padding: 0 32px;
   }
 
   .desktop-pipeline > li {
@@ -789,10 +800,10 @@ body {
   .desktop-pipeline-card {
     box-sizing: border-box;
     display: flex;
-    height: 64px;
+    height: 72px;
     min-height: 0;
     justify-content: space-between;
-    padding: 6px 8px;
+    padding: 10px 12px;
   }
 
   .desktop-pipeline-card > div {
@@ -829,10 +840,11 @@ body {
   .desktop-dashboard-grid {
     display: grid;
     grid-template-columns:
-      clamp(250px, 23vw, 350px)
+      minmax(260px, 25%)
       minmax(0, 1fr)
-      clamp(280px, 25vw, 400px) !important;
-    gap: 12px;
+      minmax(280px, 25%) !important;
+    column-gap: 32px !important;
+    row-gap: 24px !important;
     height: 100%;
     min-height: 0;
   }
@@ -865,10 +877,16 @@ body {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    min-height: 76px;
+    justify-content: space-between;
+    min-height: 120px;
     overflow: visible;
-    padding: 10px 12px !important;
+    padding: 16px !important;
+  }
+
+  .desktop-crew-list > button > .desktop-crew-sparkline {
+    margin-top: auto;
+    height: 40px;
+    width: 100%;
   }
 
   .desktop-crew-list > button > div:first-child {
@@ -1006,22 +1024,22 @@ body {
     flex-direction: column;
     gap: 0;
     overflow: visible !important;
-    padding: 8px !important;
+    padding: 24px !important;
   }
 
   .desktop-vitals > div:first-child {
-    margin-bottom: 6px !important;
+    margin-bottom: 12px !important;
   }
 
   .desktop-vitals > div:first-child h2 {
-    font-size: 16px;
+    font-size: 18px;
   }
 
   .desktop-vitals > div:nth-child(2) {
     display: flex;
     flex: 0 0 auto;
     flex-direction: column;
-    gap: 6px;
+    gap: 16px;
     min-height: 0;
     overflow: visible !important;
   }
@@ -1029,7 +1047,7 @@ body {
   .desktop-vitals .vitals-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 12px;
+    gap: 16px;
   }
   @container dashcol (min-width: 920px) {
     .desktop-vitals .vitals-grid {
@@ -1044,44 +1062,43 @@ body {
     min-height: 0;
     flex-direction: column;
     overflow: visible;
-    padding: 12px 14px !important;
+    padding: 20px !important;
   }
 
   .desktop-vitals .desktop-vital-title {
     overflow: visible;
     white-space: nowrap;
     font-size: 14px;
-    line-height: 1.2;
+    line-height: 1.3;
   }
 
   .desktop-vitals .desktop-vital-value {
-    margin-top: 4px !important;
+    margin-top: 8px !important;
     overflow: visible;
-    font-size: 28px !important;
-    line-height: 1.1 !important;
+    font-size: clamp(2.5rem, 2vw + 1.5rem, 3rem) !important;
+    line-height: 1.05 !important;
     white-space: nowrap;
   }
 
   .desktop-vitals .desktop-vital-value > span {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .desktop-vitals .desktop-vital-chart {
-    margin-top: 8px;
+    margin-top: 12px;
   }
 
   .desktop-vitals .desktop-vital-chart > div {
-    height: 48px !important;
+    height: 64px !important;
   }
 
   .desktop-vitals .desktop-vital-caption {
     display: block;
-    margin-top: 8px;
+    margin-top: 10px;
     overflow: visible;
     white-space: normal;
     font-size: 14px;
-    line-height: 1.25;
-    -webkit-line-clamp: 2;
+    line-height: 1.4;
   }
 
   .desktop-vitals .radiation-row {
@@ -1096,60 +1113,61 @@ body {
     align-items: stretch;
     min-height: 0;
     overflow: visible;
-    padding: 12px 14px !important;
+    padding: 20px !important;
   }
 
   .desktop-vitals .desktop-dose-tile > .desktop-vital-value {
-    font-size: 28px !important;
+    font-size: clamp(2.5rem, 2vw + 1.5rem, 3rem) !important;
   }
 
   .desktop-vitals .desktop-dose-tile > .desktop-vital-chart > div:first-child {
-    height: 10px !important;
+    height: 16px !important;
   }
 
   .desktop-vitals .desktop-dose-tile .desktop-dose-rate {
-    display: none;
+    display: block;
   }
 
   .desktop-vitals .desktop-dose-tile .desktop-vital-caption {
-    margin-top: 8px;
+    margin-top: 4px;
     white-space: normal;
   }
 
   .desktop-dashboard-center > [data-tabbed] {
     flex: 0 0 auto;
+    margin-top: 32px;
   }
 
   [data-tabbed] {
     display: flex;
-    min-height: 0;
+    min-height: 320px;
     flex-direction: column;
     overflow: visible !important;
-    padding: 8px !important;
+    padding: 20px !important;
   }
 
   [data-tabbed] > div[role="tablist"] {
-    flex: 0 0 44px;
-    gap: 2px;
-    margin-bottom: 4px;
+    flex: 0 0 48px;
+    gap: 8px;
+    margin-bottom: 16px;
     overflow-x: auto;
   }
 
   [data-tabbed] [role="tab"] {
-    min-height: 40px;
-    padding-inline: 10px;
-    font-size: 14px;
+    min-height: 48px;
+    padding-inline: 16px;
+    font-size: 16px;
   }
 
   [data-tabbed] [role="tab"] > span.rounded-full {
-    min-width: 20px;
-    height: 20px;
+    min-width: 22px;
+    height: 22px;
     font-size: 14px;
   }
 
   .desktop-tab-content {
     flex: 1 1 0;
-    min-height: 0;
+    min-height: 250px;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable;
@@ -1204,32 +1222,34 @@ body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 6px;
+    gap: 12px;
     overflow: visible !important;
-    padding: 12px 14px !important;
+    padding: 20px !important;
   }
 
   .desktop-ai-number {
-    font-size: 1.75rem !important;
+    font-size: 3rem !important;
     line-height: 1 !important;
   }
 
   .desktop-ai-score .desktop-ai-factors {
     display: flex;
     flex-direction: column;
-    gap: 6px !important;
-    margin-top: 4px !important;
+    gap: 12px !important;
+    margin-top: 16px !important;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     width: 100%;
   }
 
   .desktop-ai-score .desktop-ai-factor {
-    min-height: 32px;
+    min-height: 36px;
   }
 
   .desktop-ai-score .desktop-ai-advice {
-    margin-top: 4px !important;
-    font-size: 12px;
-    line-height: 1.3;
+    margin-top: 8px !important;
+    font-size: 14px;
+    line-height: 1.4;
   }
 
   .desktop-rules {
@@ -1238,12 +1258,12 @@ body {
     min-height: 0;
     flex-direction: column;
     overflow: visible !important;
-    padding: 8px 10px !important;
+    padding: 20px !important;
   }
 
   .desktop-rules > div:first-of-type {
-    flex: 0 0 28px;
-    margin-bottom: 4px !important;
+    flex: 0 0 32px;
+    margin-bottom: 12px !important;
   }
 
   .desktop-rules ul {
@@ -1254,23 +1274,23 @@ body {
 
   .desktop-rule-row {
     display: grid;
-    min-height: 48px;
-    grid-template-columns: 10px minmax(0, 1fr) auto;
+    min-height: 56px;
+    grid-template-columns: 12px minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
     align-items: center;
-    column-gap: 7px;
-    row-gap: 2px;
+    column-gap: 12px;
+    row-gap: 4px;
     overflow: visible;
-    padding-block: 4px !important;
+    padding-block: 12px !important;
   }
 
   .desktop-rule-row > span {
     grid-column: 1;
     grid-row: 1 / span 2;
-    width: 9px;
-    height: 9px;
+    width: 10px;
+    height: 10px;
     align-self: start;
-    margin-top: 4px;
+    margin-top: 6px;
   }
 
   .desktop-rule-row > div:first-of-type {
@@ -1288,22 +1308,23 @@ body {
     grid-row: 2;
     white-space: normal;
     font-size: 14px;
-    line-height: 1.2;
+    line-height: 1.3;
   }
 
   .desktop-rule-result {
     display: flex;
+    flex-direction: column;
     grid-column: 3;
     grid-row: 1;
-    align-items: center;
+    align-items: flex-end;
     gap: 6px;
     white-space: nowrap;
   }
 
   .desktop-rule-name,
   .desktop-rule-result > div {
-    font-size: 14px;
-    line-height: 1.2;
+    font-size: 16px;
+    line-height: 1.25;
   }
 
   .desktop-rules .rounded-full,
