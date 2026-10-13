@@ -83,7 +83,14 @@ export function ScenarioPanel({
   if (variant === "inline") {
     return (
       <Panel density="compact" tone="default" className="desktop-scenarios">
-        <PanelTitle title="Inject a problem" />
+        <PanelTitle
+          title="Inject a problem"
+          right={
+            <Button size="sm" variant="default" onClick={onReset}>
+              Reset
+            </Button>
+          }
+        />
         <div className="desktop-scenario-rows">
           <ScenarioRow
             active={storm}
@@ -113,11 +120,6 @@ export function ScenarioPanel({
             target={!aiOn ? "offline" : "online"}
             pillTone="bad"
           />
-        </div>
-        <div className="mt-2 flex justify-end">
-          <Button size="sm" variant="default" onClick={onReset}>
-            Reset
-          </Button>
         </div>
       </Panel>
     );

@@ -37,7 +37,7 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             big={Math.round(crew.hr)}
             unit="bpm"
             sub={`Baseline ${crew.bhr} bpm. Dashed line = alert threshold (+30%).`}
-            desktopSub={`Baseline ${crew.bhr} · watch +30%`}
+            desktopSub={`Base ${crew.bhr} · +30%`}
             tone={col(0)}
           >
             <Sparkline
@@ -54,7 +54,7 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             big={crew.spo2.toFixed(1)}
             unit="%"
             sub="Alert below 90% · Watch below 94%."
-            desktopSub="Watch <94% · alert <90%"
+            desktopSub="Watch <94%"
             tone={col(1)}
           >
             <Sparkline
@@ -71,7 +71,7 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             big={crew.sleep.toFixed(1)}
             unit="h"
             sub="Alert below 4.5 h · Watch below 5.5 h."
-            desktopSub={`Baseline 7.2 · watch <5.5`}
+            desktopSub="Base 7.2 · <5.5 h"
             tone={col(2)}
           >
             <ProgressBar
@@ -87,7 +87,7 @@ export function VitalsCard({ crew }: VitalsCardProps) {
             big={Math.round(crew.stress)}
             unit="/ 100"
             sub="Alert above 90 · Watch above 75."
-            desktopSub="Watch >75 · alert >90"
+            desktopSub="Watch >75"
             tone={col(3)}
           >
             <Sparkline
@@ -110,7 +110,7 @@ export function VitalsCard({ crew }: VitalsCardProps) {
                 ? `Over limit — ${Math.round(dosePct)}% of ${DOSE_LIMIT} mSv. Rate ${crew.rate.toFixed(2)} mSv/h.`
                 : `${Math.round(dosePct)}% of ${DOSE_LIMIT} mSv · rate ${crew.rate.toFixed(2)} mSv/h. Marks at 80% and 95%.`
             }
-            desktopSub={`${Math.round(dosePct)}% of ${DOSE_LIMIT} mSv · rate ${crew.rate.toFixed(2)} mSv/h`}
+            desktopSub={`Rate ${crew.rate.toFixed(2)} mSv/h · marks 80/95%`}
             tone={col(4)}
             badge={doseOver ? "Over" : null}
             dose

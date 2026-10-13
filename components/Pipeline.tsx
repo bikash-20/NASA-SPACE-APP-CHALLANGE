@@ -110,9 +110,10 @@ function compactPipelineValue(index: number, value: string): string {
   if (!value) return "—";
   if (index === 0) return value.split(" / ")[0] ?? value;
   if (index === 1) {
-    return value
-      .replace("SpO₂ ≥94", "SpO2 94+")
-      .replace("Sl ", "sleep ");
+    const match = value.match(/HR (\d+) · SpO₂ ≥94 · Sl ([\d.]+) h/);
+    return match
+      ? `HR ${match[1]} · O₂94+ · ${match[2]}h`
+      : value;
   }
   return value;
 }

@@ -144,7 +144,6 @@ export function CrewList({ crew, selected, aiOn, onPick, variant, causes }: Crew
                 <b className="block text-base font-semibold text-ink">
                   {c.n}
                 </b>
-                <span className="text-sm text-white/65">{c.role}</span>
               </div>
               <span
                 className="shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-sm font-semibold text-white"
@@ -153,9 +152,13 @@ export function CrewList({ crew, selected, aiOn, onPick, variant, causes }: Crew
                 {text}
               </span>
             </div>
-            <div className="mt-2 font-mono text-sm tabular-nums text-white/75">
-              {aiOn ? `AI ${Math.round(c.ai)}` : "AI off"} · HR{" "}
-              {Math.round(c.hr)} · SpO₂ {c.spo2.toFixed(0)}
+            <div className="desktop-crew-details mt-2 text-sm text-white/75">
+              <span>{c.role}</span>
+              <span aria-hidden> · </span>
+              <span className="font-mono tabular-nums">
+                {aiOn ? `AI ${Math.round(c.ai)}` : "AI off"} · HR{" "}
+                {Math.round(c.hr)} · SpO2 {c.spo2.toFixed(0)}
+              </span>
             </div>
           </motion.button>
         );

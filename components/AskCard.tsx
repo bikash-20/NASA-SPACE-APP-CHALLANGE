@@ -340,7 +340,7 @@ function ChatInputBar({
         e.preventDefault();
         onSubmit();
       }}
-      className="mt-2 flex shrink-0 gap-2"
+      className="mt-1 flex shrink-0 gap-2"
     >
       <input
         value={input}
@@ -352,8 +352,8 @@ function ChatInputBar({
         autoComplete="off"
         aria-label="Message the assistant"
         aria-describedby="ask-card-message-limit"
-        className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-base text-ink placeholder:text-white/40 focus:outline-none"
-        style={{ fontSize: "1rem" }}
+        className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 text-base text-ink placeholder:text-white/40 focus:outline-none"
+        style={{ fontSize: "1rem", height: "36px", padding: "0 12px" }}
       />
       <Button
         type="submit"
@@ -379,21 +379,26 @@ function FooterLine({
   messageCount: number;
   chatModel: string | null;
 }) {
+  // The model name is exposed only via the title attribute (tooltip on
+  // hover) and a one-time console log — never in the visible UI.
+  const ref = useRef<string | null>(null);
+  if (chatModel && ref.current !== chatModel) {
+    ref.current = chatModel;
+    if (typeof console !== "undefined") {
+      console.info("[chat] model:", chatModel);
+    }
+  }
   return (
     <p
       data-ask-footer
       className="mt-1 flex shrink-0 items-center justify-between gap-2 text-sm text-white/55"
+      title={chatModel ? `Model: ${chatModel}` : undefined}
     >
       <span>
         {messageCount === 0
           ? "No messages yet"
           : `${messageCount} message${messageCount === 1 ? "" : "s"} · 1,200 char limit`}
       </span>
-      {chatModel && (
-        <span className="font-mono" title={`Model: ${chatModel}`}>
-          {chatModel}
-        </span>
-      )}
     </p>
   );
 }
