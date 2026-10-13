@@ -6,7 +6,7 @@ import {
   sanitizeAlertHistory,
 } from "@/lib/llmInput";
 import { buildChatMessages } from "@/lib/chatPrompt";
-import { streamCascade } from "@/lib/openrouter";
+import { CascadeError, streamCascade } from "@/lib/openrouter";
 import { snapshotForLLM } from "@/lib/serialize";
 import type { Alert, ChatMessage, Crew } from "@/lib/types";
 
@@ -19,6 +19,48 @@ interface ChatRequestBody {
   aiOn: boolean;
   alerts: Alert[];
   messages: ChatMessage[];
+}
+
+/** Build a single SSE error frame matching the cascade failure kind. */
+function chatErrorFrame(error: unknown): string {
+  let code = "unknown";
+  let message = "The chat service could not complete the reply.";
+  if (error instanceof CascadeError) {
+    switch (error.kind) {
+      case "missing_api_key":
+        code = "not_configured";
+        message =
+          "Chat service is not configured on the server. " +
+          "Set OPENROUTER_API_KEY.";
+        break;
+      case "auth":
+        code = "upstream_auth";
+        message =
+          "Chat service rejected the server's API key. " +
+          "Check OPENROUTER_API_KEY.";
+        break;
+      case "no_models":
+        code = "no_models";
+        message =
+          "No free models are available right now. " +
+          "Set OPENROUTER_MAX_PRICE_PER_1K or pin a model with " +
+          "OPENROUTER_MODEL.";
+        break;
+      case "catalog_unavailable":
+        code = "catalog_unavailable";
+        message =
+          "Chat service cannot reach the model catalog. " +
+          "Try again in a few minutes.";
+        break;
+      case "all_failed":
+        code = "all_failed";
+        message =
+          "All available models failed to respond. " +
+          "Try again in a few minutes.";
+        break;
+    }
+  }
+  return JSON.stringify({ error: message, code });
 }
 
 export async function POST(req: NextRequest) {
@@ -92,9 +134,7 @@ export async function POST(req: NextRequest) {
         if (!upstreamSignal.aborted) {
           console.error("[/api/chat] upstream service failed", e);
           controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ error: "chat service temporarily unavailable" })}\n\n`
-            )
+            encoder.encode(`data: ${chatErrorFrame(e)}\n\n`)
           );
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();

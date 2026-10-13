@@ -277,6 +277,8 @@ test("the OpenRouter cascade selects multiple zero-cost text models only", async
 test("the OpenRouter cascade fails rather than selecting paid models when no free text models exist", async () => {
   const openrouter = loadOpenRouter();
   const originalFetch = global.fetch;
+  const originalCap = process.env.OPENROUTER_MAX_PRICE_PER_1K;
+  delete process.env.OPENROUTER_MAX_PRICE_PER_1K;
   global.fetch = async () =>
     new Response(
       JSON.stringify({
@@ -292,9 +294,79 @@ test("the OpenRouter cascade fails rather than selecting paid models when no fre
     );
 
   try {
-    await assert.rejects(openrouter.getCascade(), /no free text models/);
+    await assert.rejects(
+      openrouter.getCascade(),
+      (err) => err instanceof openrouter.CascadeError && err.kind === "no_models"
+    );
   } finally {
     global.fetch = originalFetch;
+    if (originalCap !== undefined) {
+      process.env.OPENROUTER_MAX_PRICE_PER_1K = originalCap;
+    }
+  }
+});
+
+test("OPENROUTER_MAX_PRICE_PER_1K widens the cascade to include near-free models", async () => {
+  const openrouter = loadOpenRouter();
+  const originalFetch = global.fetch;
+  const originalCap = process.env.OPENROUTER_MAX_PRICE_PER_1K;
+  process.env.OPENROUTER_MAX_PRICE_PER_1K = "0.0001";
+  global.fetch = async () =>
+    new Response(
+      JSON.stringify({
+        data: [
+          {
+            id: "near-free/model",
+            pricing: { prompt: "0.00005", completion: "0.00005" },
+            architecture: { output_modalities: ["text"] },
+          },
+          {
+            id: "paid/expensive",
+            pricing: { prompt: "0.01", completion: "0.01" },
+            architecture: { output_modalities: ["text"] },
+          },
+        ],
+      }),
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+  try {
+    const cascade = await openrouter.getCascade();
+    assert.deepEqual(cascade, ["near-free/model"]);
+  } finally {
+    global.fetch = originalFetch;
+    if (originalCap === undefined) {
+      delete process.env.OPENROUTER_MAX_PRICE_PER_1K;
+    } else {
+      process.env.OPENROUTER_MAX_PRICE_PER_1K = originalCap;
+    }
+  }
+});
+
+test("OPENROUTER_MODEL bypasses the catalog entirely and pins a single model", async () => {
+  const openrouter = loadOpenRouter();
+  const originalFetch = global.fetch;
+  const originalPinned = process.env.OPENROUTER_MODEL;
+  process.env.OPENROUTER_MODEL = "pinned/specific-model";
+  let catalogCalled = false;
+  global.fetch = async () => {
+    catalogCalled = true;
+    return new Response(JSON.stringify({ data: [] }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+
+  try {
+    const cascade = await openrouter.getCascade();
+    assert.deepEqual(cascade, ["pinned/specific-model"]);
+    assert.equal(catalogCalled, false);
+  } finally {
+    global.fetch = originalFetch;
+    if (originalPinned === undefined) {
+      delete process.env.OPENROUTER_MODEL;
+    } else {
+      process.env.OPENROUTER_MODEL = originalPinned;
+    }
   }
 });
 
@@ -381,7 +453,7 @@ test("callCascade surfaces a timeout rather than silently retrying forever", asy
         { role: "system", content: "You are a brief writer." },
         { role: "user", content: "Write a brief." },
       ]),
-      /all cascade models failed/
+      (err) => err instanceof openrouter.CascadeError && err.kind === "all_failed"
     );
     const elapsed = Date.now() - startedAt;
     // The cascade only has one slow model, so it should give up in roughly
@@ -488,7 +560,7 @@ test("chat streaming rejects when every provider returns an empty stream", async
           assert.fail("an empty provider stream must not yield a reply");
         }
       },
-      /all cascade models failed/
+      (err) => err instanceof openrouter.CascadeError && err.kind === "all_failed"
     );
     assert.deepEqual(attemptedModels, ["provider/first", "provider/second"]);
   } finally {
@@ -496,6 +568,74 @@ test("chat streaming rejects when every provider returns an empty stream", async
     if (originalApiKey === undefined) {
       delete process.env.OPENROUTER_API_KEY;
     } else {
+      process.env.OPENROUTER_API_KEY = originalApiKey;
+    }
+  }
+});
+
+test("callCascade raises a typed 'auth' CascadeError on 401/403 instead of falling through", async () => {
+  const openrouter = loadOpenRouter();
+  const originalFetch = global.fetch;
+  const originalApiKey = process.env.OPENROUTER_API_KEY;
+  process.env.OPENROUTER_API_KEY = "test-key";
+  global.fetch = async (input) => {
+    if (String(input).endsWith("/models")) {
+      return new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "free/auth-failing",
+              context_length: 8192,
+              pricing: { prompt: "0", completion: "0" },
+              architecture: { output_modalities: ["text"] },
+            },
+            {
+              id: "free/another",
+              context_length: 8192,
+              pricing: { prompt: "0", completion: "0" },
+              architecture: { output_modalities: ["text"] },
+            },
+          ],
+        }),
+        { headers: { "Content-Type": "application/json" } }
+      );
+    }
+    return new Response(JSON.stringify({ error: "bad key" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+
+  try {
+    await assert.rejects(
+      openrouter.callCascade([
+        { role: "user", content: "hi" },
+      ]),
+      (err) => err instanceof openrouter.CascadeError && err.kind === "auth"
+    );
+  } finally {
+    global.fetch = originalFetch;
+    if (originalApiKey === undefined) {
+      delete process.env.OPENROUTER_API_KEY;
+    } else {
+      process.env.OPENROUTER_API_KEY = originalApiKey;
+    }
+  }
+});
+
+test("callCascade raises 'missing_api_key' when OPENROUTER_API_KEY is unset", async () => {
+  const openrouter = loadOpenRouter();
+  const originalApiKey = process.env.OPENROUTER_API_KEY;
+  delete process.env.OPENROUTER_API_KEY;
+  try {
+    await assert.rejects(
+      openrouter.callCascade([{ role: "user", content: "hi" }]),
+      (err) =>
+        err instanceof openrouter.CascadeError &&
+        err.kind === "missing_api_key"
+    );
+  } finally {
+    if (originalApiKey !== undefined) {
       process.env.OPENROUTER_API_KEY = originalApiKey;
     }
   }

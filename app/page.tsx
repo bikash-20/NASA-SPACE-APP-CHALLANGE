@@ -38,6 +38,46 @@ import type { Alert, ChatMessage, Crew } from "@/lib/types";
 const CAP0 =
   'Press "Run guided demo" to walk the whole flow, or inject problems yourself.';
 
+type CascadeErrorCode =
+  | "not_configured"
+  | "upstream_auth"
+  | "no_models"
+  | "catalog_unavailable"
+  | "all_failed"
+  | "unknown";
+
+const GENERIC_BRIEF_ERROR =
+  "The brief could not be generated. Please try again.";
+const GENERIC_CHAT_ERROR =
+  "The chat service could not complete the reply.";
+
+const CASCADE_ERROR_MESSAGES: Record<CascadeErrorCode, string> = {
+  not_configured:
+    "Brief service is not configured on the server (missing OPENROUTER_API_KEY).",
+  upstream_auth:
+    "Brief service rejected the server's API key. Check OPENROUTER_API_KEY.",
+  no_models:
+    "No free models are available right now. Set OPENROUTER_MAX_PRICE_PER_1K to widen the cascade, or pin a model with OPENROUTER_MODEL.",
+  catalog_unavailable:
+    "Brief service cannot reach the model catalog. Try again in a few minutes.",
+  all_failed:
+    "All available models failed to respond. Try again in a few minutes.",
+  unknown: GENERIC_BRIEF_ERROR,
+};
+
+/** Pick a user-facing message from a cascade error code, falling back
+ *  to the generic message for unknown shapes. */
+function cascadeMessage(
+  code: string | undefined,
+  fallback: string
+): string {
+  if (typeof code !== "string") return fallback;
+  if (code in CASCADE_ERROR_MESSAGES) {
+    return CASCADE_ERROR_MESSAGES[code as CascadeErrorCode];
+  }
+  return fallback;
+}
+
 type ScenarioPreset = "cardiac" | "sleep" | "storm" | "guided-demo";
 
 interface MissionEvent {
@@ -558,21 +598,40 @@ export default function Page() {
         body: JSON.stringify({ crew: c, aiOn: state.aiOn }),
         signal: controller.signal,
       });
+      const body = (await res.json().catch(() => ({}))) as {
+        text?: string;
+        model?: string;
+        error?: string;
+        code?: string;
+      };
       if (!res.ok) {
-        throw new Error("The brief service is unavailable.");
+        const code = typeof body.code === "string" ? body.code : undefined;
+        const msg =
+          typeof body.error === "string" && body.error.trim()
+            ? cascadeMessage(code, body.error)
+            : cascadeMessage(code, GENERIC_BRIEF_ERROR);
+        throw Object.assign(new Error(msg), { code });
       }
-      const j = (await res.json()) as { text: string; model: string };
+      const j = body as { text: string; model: string };
       if (requestId !== briefRequestId.current) return;
       dispatch({ type: "SET_BRIEF", text: j.text, model: j.model });
       if (isCompact) setMobileTab("brief");
     } catch (err) {
       if (requestId !== briefRequestId.current) return;
       console.error("[brief] request failed", err);
+      const fallback =
+        err instanceof Error && err.message
+          ? err.message
+          : GENERIC_BRIEF_ERROR;
+      const code =
+        err && typeof err === "object" && "code" in err
+          ? (err as { code?: string }).code
+          : undefined;
       dispatch({
         type: "SET_BRIEF_ERROR",
         message: controller.signal.aborted
           ? "The brief request timed out. Please try again."
-          : "The brief could not be generated. Please try again.",
+          : cascadeMessage(code, fallback),
       });
     } finally {
       clearTimeout(timeout);
@@ -629,12 +688,13 @@ export default function Page() {
                 delta?: string;
                 model?: string;
                 error?: string;
+                code?: string;
               };
               if (parsed.error) {
                 if (requestId === chatRequestId.current) {
                   dispatch({
                     type: "SET_CHAT_ERROR",
-                    message: "The chat service could not complete the reply.",
+                    message: cascadeMessage(parsed.code, parsed.error),
                   });
                 }
               } else if (parsed.delta) {

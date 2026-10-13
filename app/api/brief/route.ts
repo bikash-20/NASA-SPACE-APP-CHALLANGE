@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callCascade } from "@/lib/openrouter";
+import { CascadeError, callCascade } from "@/lib/openrouter";
 import { parseCrewSnapshot, readBoundedJson } from "@/lib/llmInput";
 import { snapshotForLLM } from "@/lib/serialize";
 
@@ -18,6 +18,90 @@ Hard rules:
   2. **Active concerns** — bulleted list, omit section if none.
   3. **Suggested next step** — one or two non-clinical review steps, such as checking rule evidence or consulting an applicable protocol; if no rule concerns exist, say "no simulation follow-up indicated."
 - Do NOT diagnose, recommend treatment, raise new alerts, or contradict the rules engine. The values are synthetic and are not medical guidance.`;
+
+/**
+ * Map cascade failure kinds to a small, user-friendly surface. The
+ * discriminator (`code`) is consumed by the client to pick a specific
+ * message instead of a generic "could not be generated".
+ */
+function briefErrorResponse(
+  error: unknown
+): NextResponse {
+  if (error instanceof CascadeError) {
+    switch (error.kind) {
+      case "missing_api_key":
+        console.error("[/api/brief] OPENROUTER_API_KEY is not set");
+        return NextResponse.json(
+          {
+            code: "not_configured",
+            error:
+              "Brief service is not configured on the server. " +
+              "Set OPENROUTER_API_KEY.",
+          },
+          { status: 503 }
+        );
+      case "auth":
+        console.error("[/api/brief] upstream auth failed", {
+          message: error.message,
+        });
+        return NextResponse.json(
+          {
+            code: "upstream_auth",
+            error:
+              "Brief service rejected the server's API key. " +
+              "Check OPENROUTER_API_KEY.",
+          },
+          { status: 502 }
+        );
+      case "no_models":
+        console.warn("[/api/brief] no models in cascade", {
+          message: error.message,
+        });
+        return NextResponse.json(
+          {
+            code: "no_models",
+            error:
+              "No free models are available right now. " +
+              "Set OPENROUTER_MAX_PRICE_PER_1K to widen the filter, or " +
+              "pin a specific model with OPENROUTER_MODEL.",
+          },
+          { status: 503 }
+        );
+      case "catalog_unavailable":
+        console.error("[/api/brief] model catalog unreachable", {
+          message: error.message,
+        });
+        return NextResponse.json(
+          {
+            code: "catalog_unavailable",
+            error:
+              "Brief service cannot reach the model catalog. " +
+              "Try again in a few minutes.",
+          },
+          { status: 503 }
+        );
+      case "all_failed":
+        console.warn("[/api/brief] all cascade models failed");
+        return NextResponse.json(
+          {
+            code: "all_failed",
+            error:
+              "All available models failed to respond. " +
+              "Try again in a few minutes.",
+          },
+          { status: 503 }
+        );
+    }
+  }
+  console.error("[/api/brief] upstream service failed", error);
+  return NextResponse.json(
+    {
+      code: "unknown",
+      error: "The brief could not be generated. Please try again.",
+    },
+    { status: 503 }
+  );
+}
 
 export async function POST(req: NextRequest) {
   const parsed = await readBoundedJson(req, MAX_REQUEST_BYTES);
@@ -54,10 +138,6 @@ export async function POST(req: NextRequest) {
     ]);
     return NextResponse.json({ text, model });
   } catch (e) {
-    console.error("[/api/brief] upstream service failed", e);
-    return NextResponse.json(
-      { error: "brief service temporarily unavailable" },
-      { status: 503 }
-    );
+    return briefErrorResponse(e);
   }
 }

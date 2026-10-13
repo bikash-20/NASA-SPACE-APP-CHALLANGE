@@ -3,9 +3,21 @@
  *
  * On first use we fetch https://openrouter.ai/api/v1/models (no auth required
  * for the listing), score each chat-capable model, and cache the top 5 for
- * 10 minutes. Each request tries them in order with an 8s timeout, falling
- * through to the next on failure. 401/403 aborts the whole cascade because
- * the key is bad — retrying with the same key won't help.
+ * 10 minutes. Each request tries them in order with a per-request timeout,
+ * falling through to the next on failure. 401/403 aborts the whole cascade
+ * because the key is bad — retrying with the same key won't help.
+ *
+ * Filters (applied at catalog load time):
+ *   - Architecture must accept text input and emit text output.
+ *   - Pricing is filtered by `maxPricePer1K()` (see below). By default only
+ *     models whose prompt AND completion prices are listed as "0" qualify.
+ *     Setting `OPENROUTER_MAX_PRICE_PER_1K` to a positive USD value relaxes
+ *     this to allow models whose prompt and completion prices are at or
+ *     below the cap.
+ *   - `OPENROUTER_MODEL` short-circuits the catalog and pins a single model.
+ *
+ * All failures raise `CascadeError` with a `kind` discriminator so route
+ * handlers can map them to specific HTTP status codes and UI messages.
  *
  * SERVER ONLY. Imported only by app/api/* route handlers.
  */
@@ -43,8 +55,30 @@ interface OpenRouterModel {
   };
 }
 
-let cascadeCache: { at: number; ids: string[] } | null = null;
+interface CascadeCache {
+  at: number;
+  ids: string[];
+}
+
+let cascadeCache: CascadeCache | null = null;
 let cascadeInflight: Promise<string[]> | null = null;
+
+/** Kinds of failure the cascade can surface. Routes branch on these. */
+export type CascadeErrorKind =
+  | "missing_api_key"
+  | "catalog_unavailable"
+  | "no_models"
+  | "auth"
+  | "all_failed";
+
+export class CascadeError extends Error {
+  readonly kind: CascadeErrorKind;
+  constructor(kind: CascadeErrorKind, message: string) {
+    super(message);
+    this.name = "CascadeError";
+    this.kind = kind;
+  }
+}
 
 function isChatCapable(m: OpenRouterModel): boolean {
   const out = m.architecture?.output_modalities ?? [];
@@ -53,25 +87,39 @@ function isChatCapable(m: OpenRouterModel): boolean {
   return modality.includes("text") || modality.includes("->text");
 }
 
-function isFree(m: OpenRouterModel): boolean {
-  const prompt = m.pricing?.prompt;
-  const completion = m.pricing?.completion;
-  if (
-    typeof prompt !== "string" ||
-    typeof completion !== "string" ||
-    prompt.trim() === "" ||
-    completion.trim() === ""
-  ) {
+/**
+ * Resolve the price cap (USD per 1K tokens). 0 = strict free-only.
+ * A non-numeric or negative value is treated as 0.
+ */
+function maxPricePer1K(): number {
+  const raw = process.env.OPENROUTER_MAX_PRICE_PER_1K;
+  if (typeof raw !== "string" || raw.trim() === "") return 0;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  return parsed;
+}
+
+function readPrice(value: string | undefined): number {
+  if (typeof value !== "string" || value.trim() === "") return Number.NaN;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+}
+
+function isAllowedPrice(m: OpenRouterModel, cap: number): boolean {
+  const promptPrice = readPrice(m.pricing?.prompt);
+  const completionPrice = readPrice(m.pricing?.completion);
+  // Missing or unparseable price = unknown cost. Reject so we never burn
+  // a paid model on accident. Anyone using non-free tiers should set
+  // OPENROUTER_MODEL explicitly.
+  if (!Number.isFinite(promptPrice) || !Number.isFinite(completionPrice)) {
     return false;
   }
-  const promptPrice = Number(prompt);
-  const completionPrice = Number(completion);
-  return (
-    Number.isFinite(promptPrice) &&
-    Number.isFinite(completionPrice) &&
-    promptPrice === 0 &&
-    completionPrice === 0
-  );
+  if (cap === 0) return promptPrice === 0 && completionPrice === 0;
+  return promptPrice <= cap && completionPrice <= cap;
+}
+
+function isFree(m: OpenRouterModel): boolean {
+  return isAllowedPrice(m, 0);
 }
 
 function rank(m: OpenRouterModel): number {
@@ -93,6 +141,13 @@ function rank(m: OpenRouterModel): number {
 }
 
 async function loadCascade(): Promise<string[]> {
+  const cap = maxPricePer1K();
+  const pinned = process.env.OPENROUTER_MODEL?.trim();
+  if (pinned) {
+    // Caller is opting into a specific model. Trust the override and skip
+    // the catalog entirely — useful when the free tier is empty.
+    return [pinned];
+  }
   const res = await fetch(ENDPOINT, {
     headers: { Accept: "application/json" },
   });
@@ -101,17 +156,25 @@ async function loadCascade(): Promise<string[]> {
       category: "http_error",
       status: res.status,
     });
-    throw new Error(`openrouter models list failed: ${res.status}`);
+    throw new CascadeError(
+      "catalog_unavailable",
+      `openrouter models list failed: ${res.status}`
+    );
   }
   const data = (await res.json()) as { data?: OpenRouterModel[] };
   const list = (data.data ?? []).filter(
-    (model) => isChatCapable(model) && isFree(model)
+    (model) => isChatCapable(model) && isAllowedPrice(model, cap)
   );
   list.sort((a, b) => rank(b) - rank(a));
   const ids = list.slice(0, 5).map((m) => m.id);
   if (ids.length === 0) {
-    console.error("[openrouter] model catalog has no free text models");
-    throw new Error("openrouter returned no free text models");
+    console.error("[openrouter] no allowed models in catalog", { cap });
+    throw new CascadeError(
+      "no_models",
+      cap === 0
+        ? "no free text models are available in the OpenRouter catalog"
+        : `no models priced at or below $${cap}/1K tokens are available`
+    );
   }
   return ids;
 }
@@ -127,20 +190,16 @@ export async function getCascade(): Promise<string[]> {
       cascadeCache = { at: Date.now(), ids };
       return ids;
     })
-    .catch((error: unknown) => {
-      console.warn("[openrouter] model catalog failed", {
-        category:
-          error instanceof Error &&
-          error.message === "openrouter returned no free text models"
-            ? "no_free_text_models"
-            : errorCategory(error),
-      });
-      throw error;
-    })
     .finally(() => {
       cascadeInflight = null;
     });
   return cascadeInflight;
+}
+
+/** Test-only: reset the cache so changes to env vars take effect. */
+export function _resetCascadeCache(): void {
+  cascadeCache = null;
+  cascadeInflight = null;
 }
 
 export interface CascadeMessage {
@@ -187,9 +246,18 @@ export async function callCascade(
     console.error("[openrouter] request configuration failed", {
       category: "missing_api_key",
     });
-    throw new Error("OPENROUTER_API_KEY is not set on the server");
+    throw new CascadeError(
+      "missing_api_key",
+      "OPENROUTER_API_KEY is not set on the server"
+    );
   }
-  const ids = await getCascade();
+  let ids: string[];
+  try {
+    ids = await getCascade();
+  } catch (error) {
+    if (error instanceof CascadeError) throw error;
+    throw new CascadeError("catalog_unavailable", String(error));
+  }
 
   for (const model of ids) {
     const controller = new AbortController();
@@ -220,7 +288,8 @@ export async function callCascade(
       });
 
       if (res.status === 401 || res.status === 403) {
-        throw new Error(
+        throw new CascadeError(
+          "auth",
           `openrouter auth failed (${res.status}) — check OPENROUTER_API_KEY`
         );
       }
@@ -239,15 +308,16 @@ export async function callCascade(
       return { text, model };
     } catch (err) {
       if (opts.signal?.aborted) throw err;
-      if (err instanceof Error && err.message.startsWith("openrouter auth")) {
-        throw err;
+      if (err instanceof CascadeError) {
+        // Auth and config errors are terminal — don't fall through.
+        if (err.kind === "auth" || err.kind === "missing_api_key") throw err;
       }
       continue;
     } finally {
       clearTimeout(timer);
     }
   }
-  throw new Error("all cascade models failed");
+  throw new CascadeError("all_failed", "all cascade models failed");
 }
 
 /**
@@ -264,9 +334,18 @@ export async function* streamCascade(
     console.error("[openrouter] chat configuration failed", {
       category: "missing_api_key",
     });
-    throw new Error("OPENROUTER_API_KEY is not set on the server");
+    throw new CascadeError(
+      "missing_api_key",
+      "OPENROUTER_API_KEY is not set on the server"
+    );
   }
-  const ids = await getCascade();
+  let ids: string[];
+  try {
+    ids = await getCascade();
+  } catch (error) {
+    if (error instanceof CascadeError) throw error;
+    throw new CascadeError("catalog_unavailable", String(error));
+  }
 
   for (const model of ids) {
     const controller = new AbortController();
@@ -303,7 +382,10 @@ export async function* streamCascade(
           category: "authentication",
           status: res.status,
         });
-        throw new Error(`openrouter auth failed (${res.status})`);
+        throw new CascadeError(
+          "auth",
+          `openrouter auth failed (${res.status})`
+        );
       }
       if (!res.ok || !res.body) {
         logStreamFailure(
@@ -385,8 +467,8 @@ export async function* streamCascade(
       return;
     } catch (err) {
       if (opts.signal?.aborted) throw err;
-      if (err instanceof Error && err.message.startsWith("openrouter auth")) {
-        throw err;
+      if (err instanceof CascadeError) {
+        if (err.kind === "auth" || err.kind === "missing_api_key") throw err;
       }
       if (err instanceof PartialStreamError) {
         throw err;
@@ -402,5 +484,5 @@ export async function* streamCascade(
       clearTimeout(timer);
     }
   }
-  throw new Error("all cascade models failed");
+  throw new CascadeError("all_failed", "all cascade models failed");
 }
