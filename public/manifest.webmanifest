@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "Crew Health Monitor",
+  "short_name": "Crew Monitor",
+  "description": "Offline-capable synthetic crew telemetry and deterministic alert simulation.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070d17",
+  "theme_color": "#070d17",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

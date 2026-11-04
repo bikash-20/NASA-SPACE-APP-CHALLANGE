@@ -13,6 +13,7 @@ interface TopBarProps {
   onDemo: () => void;
   onReset: () => void;
   onOpenScenarios?: () => void;
+  onOpenSettings?: () => void;
   aiOn?: boolean;
   /** Mobile only — shows the compact title row with the open-scenarios button. */
   compact?: boolean;
@@ -34,6 +35,7 @@ export function TopBar({
   onDemo,
   onReset,
   onOpenScenarios,
+  onOpenSettings,
   compact,
   hideScenarios,
 }: TopBarProps) {
@@ -85,6 +87,31 @@ export function TopBar({
         )}
 
         <div className="flex items-center gap-1.5">
+          {onOpenSettings && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onOpenSettings}
+              aria-label="Open settings"
+              title="Preferences and local AI settings"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="h-4 w-4"
+              >
+                <path
+                  d="M8.2 2.8h3.6l.5 2a5.6 5.6 0 0 1 1.4.8l1.9-.7 1.8 3.1-1.5 1.3a5 5 0 0 1 0 1.6l1.5 1.3-1.8 3.1-1.9-.7a5.6 5.6 0 0 1-1.4.8l-.5 2H8.2l-.5-2a5.6 5.6 0 0 1-1.4-.8l-1.9.7-1.8-3.1 1.5-1.3a5 5 0 0 1 0-1.6L2.6 8l1.8-3.1 1.9.7a5.6 5.6 0 0 1 1.4-.8l.5-2Z"
+                  strokeLinejoin="round"
+                />
+                <circle cx="10" cy="10" r="2.4" />
+              </svg>
+              <span className="hidden sm:inline">Settings</span>
+            </Button>
+          )}
           {onOpenScenarios && (
             <Button
               variant="ghost"

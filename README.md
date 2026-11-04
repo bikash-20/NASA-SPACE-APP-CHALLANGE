@@ -4,11 +4,11 @@ live link: https://crew-health-monitoring.vercel.app/
 <img width="1280" height="761" alt="image" src="https://github.com/user-attachments/assets/6848eeca-9077-484d-bcc5-0fa425451a9c" />
 
 
-A mission-control-style dashboard that simulates live crew telemetry, runs a **deterministic, rule-based** alert engine in the browser, and uses an LLM (via [OpenRouter](https://openrouter.ai)) to **write prose only** — never to raise alerts. Built for the NASA Space Apps Challenge.
+A mission-control-style dashboard that simulates crew telemetry, runs a **deterministic, rule-based** alert engine in the browser, and uses an LLM to **write prose only** — never to raise alerts. Choose the existing [OpenRouter](https://openrouter.ai) service or connect directly from the browser to a local Ollama server.
 
 > **The contract:** *rules decide, AI advises.*
 
-The simulation, the AI risk score, and every alert are computed locally in the browser. The LLM is invoked server-side to author a simulation status brief and chat about the synthetic snapshot or general topics. It is not a real flight surgeon and does not provide medical guidance. The API key never leaves the server.
+The simulation, AI risk score, and every alert are computed locally in the browser. OpenRouter requests run through the server and keep the API key server-side; local Ollama requests go directly from the browser to the host configured in Preferences. An optional installable app shell keeps the dashboard and deterministic simulation available offline after installation and an initial load. Models and voice services must be installed and running locally. This is not a real flight surgeon and does not provide medical guidance.
 
 ---
 
@@ -47,8 +47,11 @@ Crew Health Monitor is a single-page dashboard that demonstrates a realistic spl
 - **Computes a deterministic AI risk score** (0–100) in the browser. The score blends each rule's contribution, with an additive bonus when three or more factors are simultaneously elevated. The score is purely advisory and is never used to raise an alert.
 - **Raises alerts** when a rule's level *increases* or when a previously-cleared rule re-enters alarm (with hysteresis). Each alert records the reading, the rule that fired, the threshold, the current AI score, and the timestamp.
 - **Merges consecutive firings** of the same `(crew, rule)` into a single row, distinguishing **active** (the rule is still in alarm right now) from **cleared** (the rule returned to stable).
-- **Generates a simulation brief** by calling the server, which in turn calls an LLM through OpenRouter. The brief is structured as **Status / Active concerns / Suggested next step** and is explicitly not medical guidance.
-- **Streams a visible chat** in its own Chat section so the user can discuss the crew snapshot or have casual conversations. Crew-health answers are grounded in a validated, server-rebuilt snapshot.
+- **Generates a simulation brief** through the selected OpenRouter or local Ollama provider. The brief is structured as **Status / Active concerns / Suggested next step** and is explicitly not medical guidance.
+- **Supports local inference** through a configurable Ollama URL and installed model. Briefs and chat stream directly from the browser to the local model; custom operator prompts cannot override the fixed alert and safety instructions.
+- **Supports optional voice I/O** through configurable local Whisper STT and Piper or Qwen3 TTS endpoints.
+- **Streams a visible chat** in its own Chat section so the user can discuss the crew snapshot or have casual conversations. OpenRouter health answers use a validated, server-rebuilt snapshot; local inference receives the app's deterministic snapshot directly.
+- **Runs as an installable PWA** with a cached app shell. The simulation remains available offline; cloud inference requires connectivity, while local inference requires Ollama and its model to be running.
 - **Compares crew readings** and records scenario changes and alert events in an inspectable mission timeline with replay actions.
 - **Supports repeatable simulation runs** with immutable seeded ticks, cardiac/sleep/storm presets, pause, and one-tick stepping.
 - **Stays responsive** across mobile, tablet, and desktop breakpoints with three distinct layouts, a 5-tab bottom nav on mobile that opens to Chat, and a single-viewport 3-column grid on desktop that opens to Ask assistant.
@@ -63,7 +66,7 @@ The point of this project is to show that an LLM should never be the authoritati
 
 1. **Alerts are emitted by `evalRules()` only.** The AI score is computed in `aiScore()` and stored on the crew, but no function in `lib/simulation.ts` consults it to decide whether to fire an alert.
 2. **The AI score can be disabled.** Toggling *AI offline* updates the dashboard, removes the score from the brief, and shows "Scorer offline" in the AI card — but the rules keep running and alerts keep firing. This is the safety property we want to demonstrate.
-3. **The LLM system prompts forbid raising alerts.** Both `/api/brief` and `/api/chat` ship system prompts that explicitly tell the model to use only the snapshot data and to never invent alerts or contradict the rules engine. The brief format is constrained to a fixed 3-section markdown shape.
+3. **Provider prompts forbid raising alerts.** The OpenRouter routes and local Ollama client provide instructions to use only the snapshot data and never invent alerts or contradict the rules engine. The brief format is constrained to a fixed 3-section markdown shape.
 
 This is the pattern: *deterministic logic for any state that could page someone, generative prose for the parts humans need to read.*
 
@@ -82,7 +85,27 @@ Open <http://localhost:3000>.
 
 Run the dependency-free simulation and request-validation regression tests with `npm test`.
 
-Without a key the dashboard still runs end-to-end — the simulation, rules, AI score, and UI all work — but the **Write brief** and **Send** actions show a generic service-unavailable error. Provider configuration and upstream error details are not returned to the browser.
+Without an OpenRouter key, the simulation, rules, AI score, and UI still work. Select and configure Local Ollama in Settings to use a model on your machine instead. OpenRouter provider configuration and upstream error details are not returned to the browser.
+
+### Local Ollama and offline use
+
+1. Install Ollama on the machine that will run inference and pull a model, for example `ollama pull <model-id>`.
+2. Open **Settings → Local Ollama**, enter the Ollama URL (default `http://localhost:11434`), select **Test connection**, choose one of the returned models, and save.
+3. Configure Ollama CORS for the exact origin hosting the page with `OLLAMA_ORIGINS`, then restart Ollama. For another device on a trusted LAN, Ollama must also bind to a LAN-reachable interface (for example `OLLAMA_HOST=0.0.0.0`) and the host firewall must allow the port. Do not expose unauthenticated Ollama to the public internet.
+4. For dashboard-only use without internet, install the PWA while online and load it once before disconnecting. The cached app shell supports the local simulation and rule engine; it does not cache or install model weights.
+
+Browser-to-Ollama inference intentionally requires no app proxy or database. Cross-origin requests must be permitted by Ollama. Browsers can block insecure HTTP requests to a LAN IP from an HTTPS-hosted dashboard; use localhost, serve the app on the local machine, or use a properly configured HTTPS endpoint. A browser cannot reach a model running on a different disconnected device unless that device remains reachable on the local network.
+
+Preferences are stored in this browser's `localStorage`; conversation history and mission state are not persisted. Local settings are not sent to OpenRouter.
+
+### Voice service contract
+
+Voice services run separately from the Next.js app. Preferences default to the endpoints shown in the settings screenshot:
+
+- STT: `POST http://localhost:5005/transcribe` with multipart `file` and optional `model`; return JSON `{ "text": "..." }` or plain text.
+- TTS: `POST http://localhost:5006/speak` with JSON fields `text`, `input`, `model`, `voice`, and `response_format`; return raw audio bytes with an `audio/*` or `application/octet-stream` content type.
+
+The STT endpoint is intended for a local Whisper service; the TTS engine, model, voice, and endpoint can be configured for Piper or Qwen3 TTS. The configured service must allow browser CORS. This repository does not include those model runtimes or a `voice_server.py`; the endpoint processes must be installed and started separately. Microphone permission is requested only when the user presses **Mic**, and recordings are capped at 60 seconds.
 
 ---
 
@@ -90,8 +113,9 @@ Without a key the dashboard still runs end-to-end — the simulation, rules, AI 
 
 1. Push this folder to a new GitHub repo.
 2. Import the repo at <https://vercel.com/new>.
-3. In the project, go to **Settings → Environment Variables** and add:
+3. If you want OpenRouter, go to **Settings → Environment Variables** and add:
    - `OPENROUTER_API_KEY` = your key from <https://openrouter.ai/keys>
+   Local Ollama mode does not require this key.
 4. Deploy.
 
 `vercel.json` pins the deploy region to `iad1`, sets the framework to `nextjs`, and disables Next telemetry. The key is only read inside `app/api/*/route.ts` and is never shipped to the browser.
@@ -238,8 +262,8 @@ Both routes are `runtime = "nodejs"` and `dynamic = "force-dynamic"` because the
 2. **Tick** — A `setInterval` (period = `1000 / speed`, where `speed ∈ {1, 2, 4}`) dispatches `ADVANCE`. For each crew member `stepSim(crew, opts, seed)` returns updated vitals, the recomputed AI score, evaluated rules, generated alerts, and a new seed without mutating the prior snapshot. New alerts are prepended into the page state; alerts and timeline events have fixed retention caps.
 3. **Display** — Each card reads from `state.crew[state.selected]`. The `Pipeline` strip animates the colored top-border per step; clicking a step briefly highlights the corresponding panel on screen (via `stageClass(n)`).
 4. **Inject** — The user toggles a scenario flag (sleep, cardiac, storm, AI on/off). The reducer creates a new state snapshot with the global flag or selected crew member's `f` value; the next tick reflects the change.
-5. **Brief** — Clicking **Write brief** POSTs the selected crew member to `/api/brief`, which calls `callCascade` and returns the model id alongside the text. The brief renders with a minimal Markdown parser (`Md` in `BriefCard.tsx`) that handles headings and bullets.
-6. **Chat** — Sending a message POSTs the latest bounded transcript to `/api/chat` and consumes the SSE stream. Each delta is appended to the last assistant message in the reducer; on `[DONE]` the model label is finalized.
+5. **Brief** — Clicking **Write brief** uses either the `/api/brief` OpenRouter route or streams directly from the configured Ollama host. The brief renders with a minimal Markdown parser (`Md` in `BriefCard.tsx`) that handles headings and bullets.
+6. **Chat** — OpenRouter chat POSTs the latest bounded transcript to `/api/chat` and consumes its SSE stream; local chat consumes Ollama NDJSON directly from the browser. Each delta is appended to the last assistant message in the reducer.
 
 ---
 
@@ -251,6 +275,7 @@ nasa-space-app/
 │  ├─ layout.tsx                # Root layout. Loads Inter + JetBrains Mono, wraps in MotionConfig.
 │  ├─ globals.css               # Responsive root font, body gradient, focus ring, scrollbar.
 │  ├─ page.tsx                  # The dashboard. useReducer + tick loop. The whole app's brain.
+│  ├─ public/manifest.webmanifest / sw.js # Installable shell and offline caching.
 │  └─ api/
 │     ├─ brief/route.ts         # Non-streaming LLM brief.
 │     └─ chat/route.ts          # Streaming LLM chat over SSE.
@@ -268,6 +293,7 @@ nasa-space-app/
 │  ├─ CrewComparison.tsx        # Cross-crew synthetic-reading comparison.
 │  ├─ BriefCard.tsx             # Markdown-rendered simulation brief.
 │  ├─ AskCard.tsx               # Visible assistant conversation and message input.
+│  ├─ SettingsPanel.tsx         # Ollama, Whisper, Piper, and Qwen3 endpoint preferences.
 │  ├─ TabbedPanel.tsx           # Desktop/tablet container with Alerts / Why / Brief / Ask assistant tabs.
 │  ├─ BottomTabs.tsx            # Mobile bottom tab bar (Vitals / Alerts / AI & rules / Brief / Chat).
 │  ├─ ScenarioBar.tsx           # Inline scenario inject row (used on tablet).
@@ -373,7 +399,7 @@ Rules:
 - **Charts**: recharts `2.13` (Sparkline only — no full dashboard charts)
 - **Class composition**: `clsx` + `tailwind-merge` via `lib/cn.ts`
 - **Fonts**: `next/font/google` (Inter, JetBrains Mono)
-- **LLM**: OpenRouter chat completions API (any model that returns `output_modalities: ["text"]`)
+- **LLM**: OpenRouter server-side cascade or browser-direct Ollama `/api/chat`
 - **Hosting**: Vercel (region `iad1`)
 
 `next.config.mjs` enables `experimental.optimizePackageImports` for `recharts` and `framer-motion` to keep cold-start and bundle size down.
@@ -397,8 +423,9 @@ npm run lint    # next lint (eslint-config-next)
 
 - **First request latency**: the first LLM call after deploy fetches the model list (cold, ~1 request) and then tries the top model. You may see one or two `[openrouter] model failed` warnings on a cold start; the cascade handles them. Subsequent calls within 10 minutes reuse the cache.
 - **Where the model name comes from**: every successful cascade call logs `[openrouter] served by: <model>`. That log line is how you confirm which model the brief or chat was actually written by. The model id is also surfaced in the UI as `model · <id>` under each brief and chat thread.
+- **Local mode**: the browser calls the configured Ollama `/api/tags` and `/api/chat` endpoints directly. It does not go through Vercel. Ollama must allow the page origin, and the model must already be downloaded.
 - **Resetting**: `Reset` clears scenario flags, alerts, the brief, the chat, and rebuilds the crew. The mission clock goes back to `Day 112, 06:00`.
-- **No persistence**: nothing is written to storage. Refresh the page and you get a fresh mission.
+- **Persistence**: provider and voice preferences are kept in browser `localStorage`; conversation history and mission state are not persisted. Refreshing starts a fresh mission.
 
 ---
 
@@ -407,7 +434,8 @@ npm run lint    # next lint (eslint-config-next)
 - **Simulation is a model, not data.** The crew are stylized agents, not real astronauts. Vitals are tuned so the demo can show off every rule in under a minute. Thresholds (HR +30%/+50%, SpO₂ 94/90, sleep 5.5/4.5, stress 75/90, dose 80/95) match the rule file verbatim.
 - **The AI score is intentionally trivial.** A weighted blend of normalized factors plus a 3-factor bonus. It exists to demonstrate the *separation* of scoring and alerting, not to be a clinical model.
 - **No authentication.** The dashboard is a demo. There is no user account, no per-crew persistence, no historical data export.
-- **OpenRouter is the only LLM provider.** Swapping to OpenAI, Anthropic, or a local server means replacing `lib/openrouter.ts`; the rest of the system speaks the generic `{ text, model }` / SSE shape.
+- **Local inference depends on the browser and local services.** It is not routed through the server, settings are per-browser, and Ollama/voice endpoints need compatible CORS configuration. A deployed HTTPS page may not be able to call an insecure HTTP LAN address.
+- **Voice runtimes are external.** This app calls configurable endpoints but does not install Whisper, Piper, Qwen3 TTS, or ship a voice server.
 - **Cascade is rank-based, not round-robin.** If a paid model is highly ranked it will keep winning; if a free model is highly ranked it will keep being tried first. This is the intended behavior for a NASA-style demo on a small budget.
 - **The "Why" trace is shown, not generated.** `TraceCard` reads the rule that fired and lays out a fixed 5-line decision record. The LLM never writes this — it is always derived from the rule result and the AI score at firing time.
 

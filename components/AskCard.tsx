@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Panel } from "./ui/Panel";
@@ -8,6 +9,11 @@ import { Button } from "./ui/Button";
 import { useStickyScroll } from "@/hooks/useStickyScroll";
 import { cn } from "@/lib/cn";
 import type { ChatMessage, Crew } from "@/lib/types";
+import {
+  synthesizeSpeech,
+  transcribeAudio,
+  type LocalAiSettings,
+} from "@/lib/localAi";
 
 interface AskCardProps {
   crew: Crew;
@@ -16,6 +22,7 @@ interface AskCardProps {
   chatModel: string | null;
   chatError: string | null;
   onSendChat: (text: string) => void;
+  voiceSettings: LocalAiSettings;
 }
 
 /**
@@ -31,18 +38,32 @@ export function AskCard({
   chatModel,
   chatError,
   onSendChat,
+  voiceSettings,
 }: AskCardProps) {
   const [input, setInput] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const voiceInput = useVoiceInput(
+    voiceSettings.sttEndpoint,
+    voiceSettings.sttModel,
+    setInput
+  );
   const messageCount = chat.filter((m) => m.role === "user").length;
   const showIntro = chat.length === 0 && !chatStreaming;
 
   const submit = useCallback(() => {
     const v = input.trim();
-    if (!v || chatStreaming) return;
+    if (
+      !v ||
+      chatStreaming ||
+      voiceInput.starting ||
+      voiceInput.recording ||
+      voiceInput.transcribing
+    ) {
+      return;
+    }
     setInput("");
     onSendChat(v);
-  }, [input, chatStreaming, onSendChat]);
+  }, [input, chatStreaming, onSendChat, voiceInput]);
 
   return (
     <>
@@ -56,6 +77,7 @@ export function AskCard({
           crew={crew}
           showIntro={showIntro}
           expanded={expanded}
+          provider={voiceSettings.provider}
           onExpand={() => setExpanded(true)}
         />
 
@@ -63,6 +85,7 @@ export function AskCard({
           chat={chat}
           chatStreaming={chatStreaming}
           crewName={crew.n}
+          voiceSettings={voiceSettings}
         />
 
         <ChatInputBar
@@ -70,6 +93,8 @@ export function AskCard({
           setInput={setInput}
           chatStreaming={chatStreaming}
           onSubmit={submit}
+          voiceSettings={voiceSettings}
+          voiceInput={voiceInput}
         />
 
         <FooterLine messageCount={messageCount} chatModel={chatModel} />
@@ -93,6 +118,8 @@ export function AskCard({
             setInput={setInput}
             messageCount={messageCount}
             onSendChat={onSendChat}
+            voiceSettings={voiceSettings}
+            voiceInput={voiceInput}
             onClose={() => setExpanded(false)}
           />
         )}
@@ -107,11 +134,13 @@ function ChatHeader({
   crew,
   showIntro,
   expanded,
+  provider,
   onExpand,
 }: {
   crew: Crew;
   showIntro: boolean;
   expanded: boolean;
+  provider: LocalAiSettings["provider"];
   onExpand: () => void;
 }) {
   return (
@@ -123,6 +152,9 @@ function ChatHeader({
           </h2>
           <span className="shrink-0 rounded-full border border-accent/50 px-2 py-px text-[0.6875rem] font-semibold uppercase tracking-wider text-accent">
             {crew.n}
+          </span>
+          <span className="shrink-0 rounded border border-white/10 bg-white/5 px-1.5 py-px text-[0.625rem] font-semibold uppercase tracking-wider text-white/65">
+            {provider === "ollama" ? "Local Ollama" : "OpenRouter"}
           </span>
         </div>
         {showIntro && (
@@ -163,10 +195,12 @@ function MessageList({
   chat,
   chatStreaming,
   crewName,
+  voiceSettings,
 }: {
   chat: ChatMessage[];
   chatStreaming: boolean;
   crewName: string;
+  voiceSettings: LocalAiSettings;
 }) {
   const { ref: scrollRef, isAtBottom, onScroll, scrollToBottom } =
     useStickyScroll<HTMLDivElement>([chat, chatStreaming]);
@@ -192,7 +226,7 @@ function MessageList({
         ) : (
           <div className="flex flex-col gap-3">
             {chat.map((m, i) => (
-              <MessageBubble key={i} message={m} />
+              <MessageBubble key={i} message={m} voiceSettings={voiceSettings} />
             ))}
             {chatStreaming && <TypingBubble />}
           </div>
@@ -229,7 +263,13 @@ function MessageList({
   );
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function MessageBubble({
+  message,
+  voiceSettings,
+}: {
+  message: ChatMessage;
+  voiceSettings: LocalAiSettings;
+}) {
   const isUser = message.role === "user";
   return (
     <div
@@ -247,7 +287,16 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         )}
         style={{ overflowWrap: "anywhere", wordBreak: "normal" }}
       >
-        {isUser ? message.content : <AssistantMarkdown text={message.content} />}
+        {isUser ? (
+          message.content
+        ) : (
+          <>
+            <AssistantMarkdown text={message.content} />
+            {voiceSettings.ttsEndpoint.trim() && (
+              <SpeechButton text={message.content} settings={voiceSettings} />
+            )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -328,11 +377,15 @@ function ChatInputBar({
   setInput,
   chatStreaming,
   onSubmit,
+  voiceSettings,
+  voiceInput,
 }: {
   input: string;
-  setInput: (v: string) => void;
+  setInput: Dispatch<SetStateAction<string>>;
   chatStreaming: boolean;
   onSubmit: () => void;
+  voiceSettings: LocalAiSettings;
+  voiceInput: VoiceInputController;
 }) {
   return (
     <form
@@ -355,10 +408,24 @@ function ChatInputBar({
         className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 text-base text-ink placeholder:text-white/40 focus:outline-none"
         style={{ fontSize: "1rem", height: "36px", padding: "0 12px" }}
       />
+      {voiceSettings.sttEndpoint.trim() && (
+        <div className="relative">
+          <VoiceRecordButton
+            voiceInput={voiceInput}
+            disabled={chatStreaming}
+          />
+        </div>
+      )}
       <Button
         type="submit"
         variant="primary"
-        disabled={chatStreaming || !input.trim()}
+        disabled={
+          chatStreaming ||
+          voiceInput.starting ||
+          voiceInput.recording ||
+          voiceInput.transcribing ||
+          !input.trim()
+        }
       >
         Send
       </Button>
@@ -372,6 +439,337 @@ function ChatInputBar({
   );
 }
 
+interface VoiceInputController {
+  starting: boolean;
+  recording: boolean;
+  transcribing: boolean;
+  error: string;
+  start: () => Promise<void>;
+  stop: () => void;
+}
+
+function useVoiceInput(
+  endpoint: string,
+  model: string,
+  setInput: Dispatch<SetStateAction<string>>
+): VoiceInputController {
+  const [starting, setStarting] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const [error, setError] = useState("");
+  const startingRef = useRef(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const stopTimerRef = useRef<number | null>(null);
+  const transcriptionTimerRef = useRef<number | null>(null);
+  const transcriptionControllerRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(
+    () => {
+      mountedRef.current = true;
+      return () => {
+        mountedRef.current = false;
+        if (stopTimerRef.current !== null) window.clearTimeout(stopTimerRef.current);
+        if (transcriptionTimerRef.current !== null) {
+          window.clearTimeout(transcriptionTimerRef.current);
+        }
+        transcriptionControllerRef.current?.abort();
+        if (recorderRef.current?.state === "recording") {
+          recorderRef.current.onstop = null;
+          recorderRef.current.stop();
+        }
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+      };
+    },
+    []
+  );
+
+  const stop = useCallback(() => {
+    if (recorderRef.current?.state === "recording") recorderRef.current.stop();
+  }, []);
+
+  useEffect(() => {
+    transcriptionControllerRef.current?.abort();
+    if (recorderRef.current?.state === "recording") {
+      recorderRef.current.onstop = null;
+      recorderRef.current.stop();
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      setRecording(false);
+    }
+    if (stopTimerRef.current !== null) {
+      window.clearTimeout(stopTimerRef.current);
+      stopTimerRef.current = null;
+    }
+  }, [endpoint, model]);
+
+  const start = useCallback(async () => {
+    if (startingRef.current || recording || transcribing) return;
+    startingRef.current = true;
+    setStarting(true);
+    setError("");
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setError("This browser does not support microphone recording.");
+      startingRef.current = false;
+      setStarting(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!mountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      streamRef.current = stream;
+      chunksRef.current = [];
+      const supportedTypes = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+      ];
+      const mimeType = supportedTypes.find((type) =>
+        MediaRecorder.isTypeSupported(type)
+      );
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+      recorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data.size) chunksRef.current.push(event.data);
+      };
+      recorder.onerror = () => {
+        if (mountedRef.current) {
+          setError("The browser could not record microphone audio.");
+        }
+      };
+      recorder.onstop = async () => {
+        if (stopTimerRef.current !== null) {
+          window.clearTimeout(stopTimerRef.current);
+          stopTimerRef.current = null;
+        }
+        stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        if (mountedRef.current) setRecording(false);
+        const audio = new Blob(chunksRef.current, {
+          type: recorder.mimeType || "audio/webm",
+        });
+        if (!audio.size) {
+          if (mountedRef.current) setError("No audio was recorded. Try again.");
+          return;
+        }
+        if (mountedRef.current) setTranscribing(true);
+        const controller = new AbortController();
+        transcriptionControllerRef.current = controller;
+        let timedOut = false;
+        transcriptionTimerRef.current = window.setTimeout(
+          () => {
+            timedOut = true;
+            controller.abort();
+          },
+          90_000
+        );
+        try {
+          const transcript = await transcribeAudio(
+            endpoint,
+            model,
+            audio,
+            controller.signal
+          );
+          if (mountedRef.current) {
+            setInput((current) =>
+              current.trim() ? `${current.trim()} ${transcript}` : transcript
+            );
+          }
+        } catch (transcriptionError) {
+          if (mountedRef.current) {
+            setError(
+              timedOut
+                ? "Speech transcription timed out."
+                : controller.signal.aborted
+                  ? "Speech transcription was canceled because voice settings changed."
+                : transcriptionError instanceof Error
+                  ? transcriptionError.message
+                  : "Could not transcribe the recording."
+            );
+          }
+        } finally {
+          if (transcriptionTimerRef.current !== null) {
+            window.clearTimeout(transcriptionTimerRef.current);
+            transcriptionTimerRef.current = null;
+          }
+          if (transcriptionControllerRef.current === controller) {
+            transcriptionControllerRef.current = null;
+          }
+          if (mountedRef.current) setTranscribing(false);
+        }
+      };
+      recorder.start(250);
+      setRecording(true);
+      startingRef.current = false;
+      setStarting(false);
+      stopTimerRef.current = window.setTimeout(() => {
+        if (recorder.state === "recording") recorder.stop();
+      }, 60_000);
+    } catch (recordingError) {
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      if (mountedRef.current) {
+        setError(
+          recordingError instanceof Error && recordingError.name === "NotAllowedError"
+            ? "Microphone access was denied. Allow microphone access and try again."
+            : "Could not start microphone recording."
+        );
+      }
+    } finally {
+      startingRef.current = false;
+      if (mountedRef.current) setStarting(false);
+    }
+  }, [endpoint, model, recording, setInput, transcribing]);
+
+  return { starting, recording, transcribing, error, start, stop };
+}
+
+function VoiceRecordButton({
+  voiceInput,
+  disabled,
+}: {
+  voiceInput: VoiceInputController;
+  disabled: boolean;
+}) {
+  const { starting, recording, transcribing, error, start, stop } = voiceInput;
+  return (
+    <>
+      <Button
+        type="button"
+        size="sm"
+        variant={recording ? "danger" : "default"}
+        disabled={disabled || starting || transcribing}
+        onClick={recording ? stop : start}
+        aria-label={recording ? "Stop recording" : "Record a voice message"}
+        title="Voice input is recorded in this browser and sent to the configured STT endpoint."
+      >
+        {starting
+          ? "Starting…"
+          : transcribing
+            ? "Transcribing…"
+            : recording
+              ? "Stop"
+              : "Mic"}
+      </Button>
+      {(error || recording) && (
+        <p
+          className={`absolute bottom-full left-0 mb-1 text-xs ${
+            error ? "text-rose-200" : "text-white/60"
+          }`}
+          role={error ? "alert" : "status"}
+        >
+          {error || "Recording… stops automatically after 60 seconds."}
+        </p>
+      )}
+    </>
+  );
+}
+
+function SpeechButton({
+  text,
+  settings,
+}: {
+  text: string;
+  settings: LocalAiSettings;
+}) {
+  const [speaking, setSpeaking] = useState(false);
+  const [error, setError] = useState("");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  const clearAudio = () => {
+    audioRef.current?.pause();
+    audioRef.current = null;
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    objectUrlRef.current = null;
+  };
+
+  useEffect(
+    () => () => {
+      controllerRef.current?.abort();
+      clearAudio();
+    },
+    []
+  );
+
+  const toggle = async () => {
+    if (speaking) {
+      controllerRef.current?.abort();
+      clearAudio();
+      setSpeaking(false);
+      return;
+    }
+    setError("");
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    let timedOut = false;
+    const timeout = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 60_000);
+    setSpeaking(true);
+    try {
+      const audioBlob = await synthesizeSpeech(
+        settings.ttsEndpoint,
+        settings.ttsModel,
+        settings.ttsVoice,
+        text.slice(0, 4000),
+        controller.signal
+      );
+      window.clearTimeout(timeout);
+      const url = URL.createObjectURL(audioBlob);
+      objectUrlRef.current = url;
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => {
+        clearAudio();
+        setSpeaking(false);
+      };
+      audio.onerror = () => {
+        clearAudio();
+        setSpeaking(false);
+        setError("The browser could not play the returned audio.");
+      };
+      await audio.play();
+    } catch (speechError) {
+      window.clearTimeout(timeout);
+      if (timedOut) {
+        setError("Speech synthesis timed out.");
+      } else if (!controller.signal.aborted) {
+        setError(
+          speechError instanceof Error
+            ? speechError.message
+            : "Could not play the assistant response."
+        );
+      }
+      clearAudio();
+      setSpeaking(false);
+    }
+  };
+
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={toggle}
+        className="tappable rounded-md border border-white/10 bg-white/5 px-2 py-1 text-sm text-white/75 hover:bg-white/10"
+        aria-label={speaking ? "Stop reading message aloud" : "Read message aloud"}
+      >
+        {speaking ? "Stop voice" : "Read aloud"}
+      </button>
+      {error && <p className="mt-1 text-xs text-rose-200" role="alert">{error}</p>}
+    </div>
+  );
+}
+
 function FooterLine({
   messageCount,
   chatModel,
@@ -379,8 +777,6 @@ function FooterLine({
   messageCount: number;
   chatModel: string | null;
 }) {
-  // The model name is exposed only via the title attribute (tooltip on
-  // hover) and a one-time console log — never in the visible UI.
   const ref = useRef<string | null>(null);
   if (chatModel && ref.current !== chatModel) {
     ref.current = chatModel;
@@ -399,6 +795,11 @@ function FooterLine({
           ? "No messages yet"
           : `${messageCount} message${messageCount === 1 ? "" : "s"} · 1,200 char limit`}
       </span>
+      {chatModel && (
+        <span className="max-w-[45%] truncate font-mono" title={chatModel}>
+          {chatModel}
+        </span>
+      )}
     </p>
   );
 }
@@ -415,6 +816,8 @@ function ExpandedChatOverlay({
   setInput,
   messageCount,
   onSendChat,
+  voiceSettings,
+  voiceInput,
   onClose,
 }: {
   crew: Crew;
@@ -423,9 +826,11 @@ function ExpandedChatOverlay({
   chatModel: string | null;
   chatError: string | null;
   input: string;
-  setInput: (v: string) => void;
+  setInput: Dispatch<SetStateAction<string>>;
   messageCount: number;
   onSendChat: (text: string) => void;
+  voiceSettings: LocalAiSettings;
+  voiceInput: VoiceInputController;
   onClose: () => void;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -507,6 +912,7 @@ function ExpandedChatOverlay({
             crew={crew}
             showIntro={chat.length === 0 && !chatStreaming}
             expanded
+            provider={voiceSettings.provider}
             onExpand={() => {
               /* already expanded */
             }}
@@ -533,6 +939,7 @@ function ExpandedChatOverlay({
             chat={chat}
             chatStreaming={chatStreaming}
             crewName={crew.n}
+            voiceSettings={voiceSettings}
           />
 
           <ChatInputBar
@@ -541,10 +948,20 @@ function ExpandedChatOverlay({
             chatStreaming={chatStreaming}
             onSubmit={() => {
               const v = input.trim();
-              if (!v || chatStreaming) return;
+              if (
+                !v ||
+                chatStreaming ||
+                voiceInput.starting ||
+                voiceInput.recording ||
+                voiceInput.transcribing
+              ) {
+                return;
+              }
               setInput("");
               onSendChat(v);
             }}
+            voiceSettings={voiceSettings}
+            voiceInput={voiceInput}
           />
 
           <FooterLine messageCount={messageCount} chatModel={chatModel} />

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { MotionConfig } from "framer-motion";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,12 +20,14 @@ export const metadata: Metadata = {
   title: "Crew Health Monitor",
   description:
     "Mission-control dashboard for crew telemetry, rule-based alerts, and an LLM flight surgeon brief.",
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#070d17",
 };
 
 export default function RootLayout({
@@ -39,6 +42,7 @@ export default function RootLayout({
         style={{ lineHeight: "var(--lh-body)" }}
       >
         <MotionConfig reducedMotion="user">
+          <ServiceWorkerRegistration />
           {children}
         </MotionConfig>
       </body>

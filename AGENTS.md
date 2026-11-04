@@ -46,7 +46,13 @@ app/
   api/brief/route.ts   # non-streaming LLM brief, max 24 KiB
   api/chat/route.ts    # streaming LLM chat over SSE, max 64 KiB
 
+public/
+  manifest.webmanifest # Installable PWA metadata
+  sw.js                # PWA shell and static-asset cache; never API/model data
+
 components/            # one file per panel/control
+  SettingsPanel.tsx    # browser-local Ollama and voice endpoint preferences
+  ServiceWorkerRegistration.tsx
   ui/                  # tiny design system: Panel, Button, Sparkline,
                        #   ProgressBar, BarChart (smooth sleep line)
 
@@ -62,6 +68,7 @@ lib/
   llmInput.ts          # bounded JSON + server-side snapshot validation
   chatPrompt.ts        # chat behavior rules
   openrouter.ts        # CascadeError + callCascade + streamCascade
+  localAi.ts           # browser-to-Ollama stream, settings, and voice HTTP contracts
   colors.ts            # level → color
   cn.ts                # clsx + tailwind-merge
 
@@ -181,6 +188,18 @@ The categories you'll see for stream failures: `timeout`,
    means "both prompt and completion prices must be 0". Anything
    with unparseable pricing is also rejected. Setting a positive
    cap widens this; setting `OPENROUTER_MODEL` overrides entirely.
+6. **Local inference is a separate, browser-direct path.** Preferences are
+   stored in `localStorage`; the browser calls the configured Ollama host
+   directly. It does not go through the app server. Local system instructions
+   preserve "rules decide, AI advises." Never use model output to change
+   `evalRules()`, alert state, or the AI score. Treat model output as untrusted
+   prose.
+7. **Offline support is an app-shell cache, not a model runtime.** The service
+   worker caches same-origin navigation and static assets only. Never cache
+   `/api/*`, Ollama responses, voice payloads, or model data. The deterministic
+   simulation can run offline after the app has loaded and been installed;
+   Ollama, Whisper, Piper, and Qwen3 services must be installed and running on
+   reachable local hosts.
 
 **Do not add a code path that lets the LLM raise alerts, or that
 trusts client-supplied identity, alert prose, or prior assistant

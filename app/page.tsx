@@ -24,6 +24,7 @@ import { CrewWideBanner } from "@/components/CrewWideBanner";
 import { MissionTimeline } from "@/components/MissionTimeline";
 import { CrewComparison } from "@/components/CrewComparison";
 import { TabbedPanel, type TabKey } from "@/components/TabbedPanel";
+import { SettingsPanel } from "@/components/SettingsPanel";
 import {
   mkCrew,
   clock as tickClock,
@@ -34,6 +35,16 @@ import { mergeAlerts } from "@/lib/alertMerge";
 import { findCrewWideEvents } from "@/lib/crewWide";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Alert, ChatMessage, Crew } from "@/lib/types";
+import {
+  DEFAULT_LOCAL_AI_SETTINGS,
+  LOCAL_AI_SETTINGS_KEY,
+  buildLocalBriefMessages,
+  buildLocalChatMessages,
+  normalizeHttpUrl,
+  parseLocalAiSettings,
+  streamOllamaChat,
+  type LocalAiSettings,
+} from "@/lib/localAi";
 
 const CAP0 =
   'Press "Run guided demo" to walk the whole flow, or inject problems yourself.';
@@ -141,6 +152,7 @@ type Action =
   | { type: "SET_CHAT_ERROR"; message: string }
   | { type: "FINALIZE_CHAT"; model: string }
   | { type: "SET_CHAT_STREAMING"; v: boolean }
+  | { type: "CLEAR_AI_CONTENT" }
   | { type: "RESET" }
   | { type: "SET_CAPTION"; v: string };
 
@@ -517,6 +529,18 @@ function reducer(s: State, a: Action): State {
       return { ...s, chatModel: a.model, chatStreaming: false };
     case "SET_CHAT_STREAMING":
       return { ...s, chatStreaming: a.v };
+    case "CLEAR_AI_CONTENT":
+      return {
+        ...s,
+        brief: null,
+        briefModel: null,
+        briefLoading: false,
+        briefError: null,
+        chat: [],
+        chatStreaming: false,
+        chatModel: null,
+        chatError: null,
+      };
     case "SET_CAPTION":
       return { ...s, caption: a.v };
     case "RESET":
@@ -528,6 +552,10 @@ function reducer(s: State, a: Action): State {
 
 export default function Page() {
   const [state, dispatch] = useReducer(reducer, null, makeInitialState);
+  const [settings, setSettings] = useState(DEFAULT_LOCAL_AI_SETTINGS);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsLoadError, setSettingsLoadError] = useState("");
   const briefController = useRef<AbortController | null>(null);
   const chatController = useRef<AbortController | null>(null);
   const briefRequestId = useRef(0);
@@ -543,6 +571,20 @@ export default function Page() {
   const [scenariosOpen, setScenariosOpen] = useState(false);
   const previousSelectedCrew = useRef(state.selected);
 
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(LOCAL_AI_SETTINGS_KEY);
+      if (saved) setSettings(parseLocalAiSettings(JSON.parse(saved)));
+    } catch (error) {
+      console.error("[settings] could not load browser preferences", error);
+      setSettingsLoadError(
+        "Saved settings could not be read from browser storage. Changes may not persist."
+      );
+    } finally {
+      setSettingsLoaded(true);
+    }
+  }, []);
+
   const cancelPendingAi = useCallback(() => {
     briefRequestId.current += 1;
     chatRequestId.current += 1;
@@ -551,6 +593,42 @@ export default function Page() {
     briefController.current = null;
     chatController.current = null;
   }, []);
+
+  const saveSettings = useCallback(
+    (draft: LocalAiSettings): string | null => {
+      const next = parseLocalAiSettings(draft);
+      try {
+        next.ollamaUrl = normalizeHttpUrl(next.ollamaUrl, "Ollama server URL");
+        if (next.sttEndpoint.trim()) {
+          next.sttEndpoint = normalizeHttpUrl(
+            next.sttEndpoint,
+            "Speech-to-text endpoint"
+          );
+        }
+        if (next.ttsEndpoint.trim()) {
+          next.ttsEndpoint = normalizeHttpUrl(
+            next.ttsEndpoint,
+            "Text-to-speech endpoint"
+          );
+        }
+      } catch (error) {
+        return error instanceof Error ? error.message : "A configured URL is invalid.";
+      }
+
+      try {
+        window.localStorage.setItem(LOCAL_AI_SETTINGS_KEY, JSON.stringify(next));
+      } catch (error) {
+        console.error("[settings] could not save browser preferences", error);
+        return "Settings could not be saved in this browser. Check storage permissions and available space.";
+      }
+      cancelPendingAi();
+      setSettings(next);
+      dispatch({ type: "CLEAR_AI_CONTENT" });
+      setSettingsLoadError("");
+      return null;
+    },
+    [cancelPendingAi]
+  );
 
   useEffect(
     () => () => {
@@ -592,29 +670,51 @@ export default function Page() {
     dispatch({ type: "SET_BRIEF_LOADING", v: true });
     try {
       const c = state.crew[state.selected];
-      const res = await fetch("/api/brief", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ crew: c, aiOn: state.aiOn }),
-        signal: controller.signal,
-      });
-      const body = (await res.json().catch(() => ({}))) as {
-        text?: string;
-        model?: string;
-        error?: string;
-        code?: string;
-      };
-      if (!res.ok) {
-        const code = typeof body.code === "string" ? body.code : undefined;
-        const msg =
-          typeof body.error === "string" && body.error.trim()
-            ? cascadeMessage(code, body.error)
-            : cascadeMessage(code, GENERIC_BRIEF_ERROR);
-        throw Object.assign(new Error(msg), { code });
+      let text: string;
+      let model: string;
+      if (settings.provider === "ollama") {
+        const chunks: string[] = [];
+        const resolvedModel = await streamOllamaChat(
+          settings.ollamaUrl,
+          settings.model,
+          buildLocalBriefMessages(
+            c,
+            state.alerts.filter((alert) => alert.i === state.selected).slice(0, 20),
+            state.aiOn,
+            settings.systemPrompt
+          ),
+          controller.signal,
+          (token) => chunks.push(token)
+        );
+        text = chunks.join("").trim();
+        model = `Ollama · ${resolvedModel}`;
+        if (!text) throw new Error("Ollama returned an empty simulation brief.");
+      } else {
+        const res = await fetch("/api/brief", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ crew: c, aiOn: state.aiOn }),
+          signal: controller.signal,
+        });
+        const body = (await res.json().catch(() => ({}))) as {
+          text?: string;
+          model?: string;
+          error?: string;
+          code?: string;
+        };
+        if (!res.ok) {
+          const code = typeof body.code === "string" ? body.code : undefined;
+          const msg =
+            typeof body.error === "string" && body.error.trim()
+              ? cascadeMessage(code, body.error)
+              : cascadeMessage(code, GENERIC_BRIEF_ERROR);
+          throw Object.assign(new Error(msg), { code });
+        }
+        text = body.text ?? "";
+        model = body.model ?? "OpenRouter";
       }
-      const j = body as { text: string; model: string };
       if (requestId !== briefRequestId.current) return;
-      dispatch({ type: "SET_BRIEF", text: j.text, model: j.model });
+      dispatch({ type: "SET_BRIEF", text, model });
       if (isCompact) setMobileTab("brief");
     } catch (err) {
       if (requestId !== briefRequestId.current) return;
@@ -637,7 +737,15 @@ export default function Page() {
       clearTimeout(timeout);
       if (requestId === briefRequestId.current) briefController.current = null;
     }
-  }, [state.aiOn, state.briefLoading, state.crew, state.selected, isCompact]);
+  }, [
+    settings,
+    state.aiOn,
+    state.alerts,
+    state.briefLoading,
+    state.crew,
+    state.selected,
+    isCompact,
+  ]);
 
   const sendChat = useCallback(
     async (text: string) => {
@@ -655,6 +763,34 @@ export default function Page() {
           .concat([{ role: "user" as const, content: text }])
           .slice(-20)
           .map((m) => ({ role: m.role, content: m.content }));
+        let lastModel = state.chatModel ?? "";
+        if (settings.provider === "ollama") {
+          const label = `Ollama · ${settings.model}`;
+          lastModel = label;
+          const resolvedModel = await streamOllamaChat(
+            settings.ollamaUrl,
+            settings.model,
+            buildLocalChatMessages(
+              c,
+              state.alerts.filter((alert) => alert.i === state.selected).slice(0, 20),
+              state.aiOn,
+              state.chat,
+              text,
+              settings.systemPrompt
+            ),
+            controller.signal,
+            (token) => {
+              if (requestId === chatRequestId.current) {
+                dispatch({
+                  type: "ADD_CHAT_DELTA",
+                  content: token,
+                  model: label,
+                });
+              }
+            }
+          );
+          lastModel = `Ollama · ${resolvedModel}`;
+        } else {
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -672,7 +808,6 @@ export default function Page() {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-        let lastModel = state.chatModel ?? "";
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
@@ -717,16 +852,19 @@ export default function Page() {
             }
           }
         }
+        }
         if (requestId === chatRequestId.current) {
           dispatch({ type: "FINALIZE_CHAT", model: lastModel });
         }
-      } catch {
+      } catch (error) {
         if (requestId !== chatRequestId.current) return;
         dispatch({
           type: "SET_CHAT_ERROR",
           message: controller.signal.aborted
             ? "The chat request timed out. Please try again."
-            : "The chat could not be completed. Please try again.",
+            : error instanceof Error && error.message
+              ? error.message
+              : "The chat could not be completed. Please try again.",
         });
         dispatch({ type: "FINALIZE_CHAT", model: state.chatModel ?? "—" });
       } finally {
@@ -734,7 +872,15 @@ export default function Page() {
         if (requestId === chatRequestId.current) chatController.current = null;
       }
     },
-    [state.aiOn, state.crew, state.selected, state.alerts, state.chat, state.chatModel]
+    [
+      settings,
+      state.aiOn,
+      state.crew,
+      state.selected,
+      state.alerts,
+      state.chat,
+      state.chatModel,
+    ]
   );
 
   const startDemo = useCallback(() => {
@@ -902,6 +1048,7 @@ export default function Page() {
         chatModel={state.chatModel}
         chatError={state.chatError}
         onSendChat={sendChat}
+        voiceSettings={settings}
       />
     </div>
   );
@@ -938,6 +1085,7 @@ export default function Page() {
         onDemo={startDemo}
         onReset={reset}
         onOpenScenarios={() => setScenariosOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
         aiOn={state.aiOn}
         compact={isCompact}
         hideScenarios={false}
@@ -1076,6 +1224,14 @@ export default function Page() {
         onToggle={toggleFlag}
         onDemo={startDemo}
         onReset={reset}
+      />
+
+      <SettingsPanel
+        open={settingsOpen && settingsLoaded}
+        settings={settings}
+        storageWarning={settingsLoadError}
+        onClose={() => setSettingsOpen(false)}
+        onSave={saveSettings}
       />
 
       {!isMobile && !isLg && (
