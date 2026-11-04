@@ -15,25 +15,26 @@ The simulation, AI risk score, and every alert are computed locally in the brows
 ## Table of Contents
 
 1. [What this project does](#what-this-project-does)
-2. [Core design principle: rules decide, AI advises](#core-design-principle-rules-decide-ai-advises)
-3. [Quick start](#quick-start)
-4. [Deployment to Vercel](#deployment-to-vercel)
-5. [The crew and the simulation model](#the-crew-and-the-simulation-model)
-6. [Alert rules engine](#alert-rules-engine)
-7. [Deterministic AI risk score](#deterministic-ai-risk-score)
-8. [Alert lifecycle, hysteresis, and merging](#alert-lifecycle-hysteresis-and-merging)
-9. [Server-side: LLM cascade and routes](#server-side-llm-cascade-and-routes)
-10. [Data flow end-to-end](#data-flow-end-to-end)
-11. [Architecture and folder layout](#architecture-and-folder-layout)
-12. [UI: components and responsive layout](#ui-components-and-responsive-layout)
-13. [State management](#state-management)
-14. [Theming, animation, and accessibility](#theming-animation-and-accessibility)
-15. [Environment variables and secrets](#environment-variables-and-secrets)
-16. [Tech stack](#tech-stack)
-17. [Local development scripts](#local-development-scripts)
-18. [Operational notes](#operational-notes)
-19. [Limitations and design choices](#limitations-and-design-choices)
-20. [License](#license)
+2. [System vision and prototype scope](docs/system-vision.md)
+3. [Core design principle: rules decide, AI advises](#core-design-principle-rules-decide-ai-advises)
+4. [Quick start](#quick-start)
+5. [Deployment to Vercel](#deployment-to-vercel)
+6. [The crew and the simulation model](#the-crew-and-the-simulation-model)
+7. [Alert rules engine](#alert-rules-engine)
+8. [Deterministic AI risk score](#deterministic-ai-risk-score)
+9. [Alert lifecycle, hysteresis, and merging](#alert-lifecycle-hysteresis-and-merging)
+10. [Server-side: LLM cascade and routes](#server-side-llm-cascade-and-routes)
+11. [Data flow end-to-end](#data-flow-end-to-end)
+12. [Architecture and folder layout](#architecture-and-folder-layout)
+13. [UI: components and responsive layout](#ui-components-and-responsive-layout)
+14. [State management](#state-management)
+15. [Theming, animation, and accessibility](#theming-animation-and-accessibility)
+16. [Environment variables and secrets](#environment-variables-and-secrets)
+17. [Tech stack](#tech-stack)
+18. [Local development scripts](#local-development-scripts)
+19. [Operational notes](#operational-notes)
+20. [Limitations and design choices](#limitations-and-design-choices)
+21. [License](#license)
 
 ---
 
@@ -57,6 +58,21 @@ Crew Health Monitor is a single-page dashboard that demonstrates a realistic spl
 - **Stays responsive** across mobile, tablet, and desktop breakpoints with three distinct layouts, a 5-tab bottom nav on mobile that opens to Chat, and a single-viewport 3-column grid on desktop that opens to Ask assistant.
 
 There is a **Run guided demo** button that automates a scripted 4-step scenario (cardiac strain → solar storm → rules fire → brief written).
+
+### Prototype scope and future system vision
+
+This repository is a **software prototype**: it simulates crew telemetry and
+demonstrates local rules, optional local Ollama chat, configurable external
+voice endpoints, and an offline-capable dashboard shell. It does **not**
+currently read wearable/suit sensors or radio, detect a real solar storm, or
+provide medically or operationally validated alerts.
+
+The longer-term concept is a sensor-connected system that can continue local
+monitoring without internet, using a local gateway, deterministic decision
+rules, and an already-installed local model and voice stack. It may support
+software-only simulation and hardware-plus-software deployments. The data flow,
+sensor candidates, degraded-network behavior, safety boundaries, and staged
+roadmap are documented in the **[System Vision](docs/system-vision.md)**.
 
 ---
 
