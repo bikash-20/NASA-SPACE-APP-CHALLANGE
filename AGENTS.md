@@ -48,9 +48,10 @@ app/
 
 public/
   manifest.webmanifest # Installable PWA metadata
-  sw.js                # PWA shell and static-asset cache; never API/model data
+  sw.js                # PWA shell, icons, and static-asset cache; never API/model data
 
 components/            # one file per panel/control
+  InstallBanner.tsx    # PWA install prompt and iOS Add to Home Screen guidance
   SettingsPanel.tsx    # browser-local Ollama and voice endpoint preferences
   ServiceWorkerRegistration.tsx
   ui/                  # tiny design system: Panel, Button, Sparkline,

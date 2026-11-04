@@ -51,7 +51,7 @@ Crew Health Monitor is a single-page dashboard that demonstrates a realistic spl
 - **Supports local inference** through a configurable Ollama URL and installed model. Briefs and chat stream directly from the browser to the local model; custom operator prompts cannot override the fixed alert and safety instructions.
 - **Supports optional voice I/O** through configurable local Whisper STT and Piper or Qwen3 TTS endpoints.
 - **Streams a visible chat** in its own Chat section so the user can discuss the crew snapshot or have casual conversations. OpenRouter health answers use a validated, server-rebuilt snapshot; local inference receives the app's deterministic snapshot directly.
-- **Runs as an installable PWA** with a cached app shell. The simulation remains available offline; cloud inference requires connectivity, while local inference requires Ollama and its model to be running.
+- **Runs as an installable PWA** with the crew-monitor badge for browser, Android, and iPhone icons plus an install banner. The cached app shell keeps the simulation available offline; cloud inference requires connectivity, while local inference requires Ollama and its model to be running.
 - **Compares crew readings** and records scenario changes and alert events in an inspectable mission timeline with replay actions.
 - **Supports repeatable simulation runs** with immutable seeded ticks, cardiac/sleep/storm presets, pause, and one-tick stepping.
 - **Stays responsive** across mobile, tablet, and desktop breakpoints with three distinct layouts, a 5-tab bottom nav on mobile that opens to Chat, and a single-viewport 3-column grid on desktop that opens to Ask assistant.
@@ -92,7 +92,7 @@ Without an OpenRouter key, the simulation, rules, AI score, and UI still work. S
 1. Install Ollama on the machine that will run inference and pull a model, for example `ollama pull <model-id>`.
 2. Open **Settings → Local Ollama**, enter the Ollama URL (default `http://localhost:11434`), select **Test connection**, choose one of the returned models, and save.
 3. Configure Ollama CORS for the exact origin hosting the page with `OLLAMA_ORIGINS`, then restart Ollama. For another device on a trusted LAN, Ollama must also bind to a LAN-reachable interface (for example `OLLAMA_HOST=0.0.0.0`) and the host firewall must allow the port. Do not expose unauthenticated Ollama to the public internet.
-4. For dashboard-only use without internet, install the PWA while online and load it once before disconnecting. The cached app shell supports the local simulation and rule engine; it does not cache or install model weights.
+4. Install from the in-app banner or your browser menu while online, then load the dashboard once before disconnecting. On iPhone/iPad, open the site in Safari and use **Share → Add to Home Screen**. The cached app shell supports the local simulation and rule engine; it does not cache or install model weights.
 
 Browser-to-Ollama inference intentionally requires no app proxy or database. Cross-origin requests must be permitted by Ollama. Browsers can block insecure HTTP requests to a LAN IP from an HTTPS-hosted dashboard; use localhost, serve the app on the local machine, or use a properly configured HTTPS endpoint. A browser cannot reach a model running on a different disconnected device unless that device remains reachable on the local network.
 

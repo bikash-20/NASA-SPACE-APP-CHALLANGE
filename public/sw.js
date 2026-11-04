@@ -1,5 +1,12 @@
-const CACHE_NAME = "crew-health-shell-v1";
-const APP_SHELL = ["/", "/manifest.webmanifest"];
+const CACHE_NAME = "crew-health-shell-v2";
+const APP_SHELL = [
+  "/",
+  "/manifest.webmanifest",
+  "/apple-touch-icon.png",
+  "/pwa-icon-192.png",
+  "/pwa-icon-512.png",
+  "/pwa-icon-maskable-512.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -54,7 +61,8 @@ self.addEventListener("fetch", (event) => {
 
   if (
     url.pathname.startsWith("/_next/static/") ||
-    url.pathname === "/manifest.webmanifest"
+    url.pathname === "/manifest.webmanifest" ||
+    url.pathname.endsWith(".png")
   ) {
     event.respondWith(
       caches.match(request).then(

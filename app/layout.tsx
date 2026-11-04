@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { MotionConfig } from "framer-motion";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { InstallBanner } from "@/components/InstallBanner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,6 +22,19 @@ export const metadata: Metadata = {
   description:
     "Mission-control dashboard for crew telemetry, rule-based alerts, and an LLM flight surgeon brief.",
   manifest: "/manifest.webmanifest",
+  applicationName: "Crew Health Monitor",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Crew Monitor",
+  },
+  icons: {
+    icon: [
+      { url: "/pwa-icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/pwa-icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
@@ -43,6 +57,7 @@ export default function RootLayout({
       >
         <MotionConfig reducedMotion="user">
           <ServiceWorkerRegistration />
+          <InstallBanner />
           {children}
         </MotionConfig>
       </body>
