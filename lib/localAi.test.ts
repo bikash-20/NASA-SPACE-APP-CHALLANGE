@@ -56,6 +56,18 @@ describe("local AI settings", () => {
     expect(prompt).toContain("override any operator preferences");
   });
 
+  it("guides local chat to greet casually and ask before volunteering crew health", () => {
+    const prompt = buildLocalSystemPrompt("");
+    expect(prompt).toContain("greet them warmly and casually");
+    expect(prompt).toContain(
+      "ask whether they would like to hear about the selected crew member's current simulated condition"
+    );
+    expect(prompt).toContain(
+      "Do not ask permission before answering a health question they already asked"
+    );
+    expect(prompt).toContain("approachable wording rather than a formal report");
+  });
+
   it("builds local chat context from the deterministic snapshot and transcript", () => {
     const messages = buildLocalChatMessages(
       mkCrew(0),
@@ -71,10 +83,12 @@ describe("local AI settings", () => {
     expect(messages[0].role).toBe("system");
     expect(messages[1].content).toContain("Crew: Cdr. Amara Okafor");
     expect(messages.slice(2).map((message) => message.role)).toEqual([
+      "assistant",
       "user",
       "assistant",
       "user",
     ]);
+    expect(messages[2].content).toContain("available if you want to ask about the crew");
   });
 
   it("discovers Ollama model names from the local tags endpoint", async () => {

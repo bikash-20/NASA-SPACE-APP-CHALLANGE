@@ -151,11 +151,15 @@ test("chat accepts casual messages while keeping crew-health claims snapshot-gro
 
   assert.equal(conversation.at(-1).content, "Hi! How are you?");
   assert.match(conversation[0].content, /casual conversation/i);
+  assert.match(conversation[0].content, /greet them warmly/i);
+  assert.match(conversation[0].content, /ask whether they would like to hear/i);
+  assert.match(conversation[0].content, /Do not ask permission before answering/i);
   assert.match(
     conversation[0].content,
     /For questions about the simulated crew, use only the provided snapshot/i
   );
   assert.match(conversation[0].content, /not medical guidance/i);
+  assert.match(conversation[2].content, /available if you want to ask about the crew/i);
   assert.equal(conversation[1].content.includes("Synthetic crew snapshot"), true);
 });
 
