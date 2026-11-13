@@ -25,6 +25,23 @@ import { MissionTimeline } from "@/components/MissionTimeline";
 import { CrewComparison } from "@/components/CrewComparison";
 import { TabbedPanel, type TabKey } from "@/components/TabbedPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import { QuickRoleBar } from "@/components/astroguard/QuickRoleBar";
+import { AuthModal } from "@/components/astroguard/AuthModal";
+import { LoginPage } from "@/components/astroguard/LoginPage";
+import { AstronautPortal } from "@/components/astroguard/AstronautPortal";
+import { DoctorHub } from "@/components/astroguard/DoctorHub";
+import {
+  DEMO_USERS,
+  type AstroRole,
+  type ConsultMessage,
+  type TriageIncident,
+  type IoTSensorDevice,
+} from "@/lib/astroGuardTypes";
+import {
+  DEFAULT_IOT_SENSORS,
+  INITIAL_CONSULT_MESSAGES,
+  INITIAL_TRIAGE_INCIDENTS,
+} from "@/lib/astroGuardData";
 import {
   mkCrew,
   clock as tickClock,
@@ -571,6 +588,135 @@ export default function Page() {
   const [scenariosOpen, setScenariosOpen] = useState(false);
   const previousSelectedCrew = useRef(state.selected);
 
+  const [currentRole, setCurrentRole] = useState<AstroRole | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [consultMessages, setConsultMessages] = useState<ConsultMessage[]>(
+    INITIAL_CONSULT_MESSAGES
+  );
+  const [triageIncidents, setTriageIncidents] = useState<TriageIncident[]>(
+    INITIAL_TRIAGE_INCIDENTS
+  );
+  const [iotSensors, setIotSensors] = useState<IoTSensorDevice[]>(
+    DEFAULT_IOT_SENSORS
+  );
+
+  const handleSendMessageToDoctor = useCallback(
+    (crewIndex: 0 | 1 | 2, text: string) => {
+      const c = state.crew[crewIndex];
+      const newMsg: ConsultMessage = {
+        id: `msg-${Date.now()}`,
+        senderRole: "astronaut",
+        senderName: c.n,
+        crewIndex,
+        text,
+        timestamp: tickClock(state.tick).split("·")[1]?.trim() || "Just now",
+        isReadByDoctor: false,
+      };
+      setConsultMessages((prev) => [...prev, newMsg]);
+    },
+    [state.crew, state.tick]
+  );
+
+  const handleSendVoiceNoteToDoctor = useCallback(
+    (crewIndex: 0 | 1 | 2) => {
+      const c = state.crew[crewIndex];
+      const newMsg: ConsultMessage = {
+        id: `msg-${Date.now()}`,
+        senderRole: "astronaut",
+        senderName: c.n,
+        crewIndex,
+        text: "Voice dispatch attached.",
+        voiceNoteDuration: 11,
+        timestamp: tickClock(state.tick).split("·")[1]?.trim() || "Just now",
+        isReadByDoctor: false,
+      };
+      setConsultMessages((prev) => [...prev, newMsg]);
+    },
+    [state.crew, state.tick]
+  );
+
+  const handleTriggerSos = useCallback(
+    (crewIndex: 0 | 1 | 2) => {
+      const c = state.crew[crewIndex];
+      const newInc: TriageIncident = {
+        id: `sos-${Date.now()}`,
+        crewIndex,
+        crewName: c.n,
+        callSign: `AST-00${crewIndex + 1}`,
+        title: `EMERGENCY SOS — Critical Telemetry Distress (${c.n})`,
+        detail: `Critical emergency signal triggered by ${c.n}. Immediate medical review required. Current vitals: ${Math.round(c.hr)} BPM, SpO₂ ${c.spo2.toFixed(1)}%.`,
+        severity: "critical",
+        timestamp: "Just now",
+        isSos: true,
+        flaggedToMissionControl: true,
+        isReadByDoctor: false,
+      };
+      setTriageIncidents((prev) => [newInc, ...prev]);
+
+      const newMsg: ConsultMessage = {
+        id: `msg-sos-${Date.now()}`,
+        senderRole: "system",
+        senderName: "EMERGENCY SYSTEM",
+        crewIndex,
+        text: `CRITICAL SOS ALARM TRIGGERED BY ${c.n.toUpperCase()} (${c.role.toUpperCase()})`,
+        timestamp: tickClock(state.tick).split("·")[1]?.trim() || "Just now",
+        isEmergencyAlert: true,
+        isReadByDoctor: false,
+      };
+      setConsultMessages((prev) => [...prev, newMsg]);
+    },
+    [state.crew, state.tick]
+  );
+
+  const handleSendDoctorReply = useCallback(
+    (crewIndex: 0 | 1 | 2, text: string) => {
+      const newMsg: ConsultMessage = {
+        id: `doc-${Date.now()}`,
+        senderRole: "doctor",
+        senderName: "Dr. Evelyn Vance (Flight Surgeon)",
+        crewIndex,
+        text,
+        timestamp: tickClock(state.tick).split("·")[1]?.trim() || "Just now",
+        isReadByDoctor: true,
+      };
+      setConsultMessages((prev) => [...prev, newMsg]);
+    },
+    [state.tick]
+  );
+
+  const handleMarkMessagesAsRead = useCallback((crewIndex: 0 | 1 | 2) => {
+    setConsultMessages((prev) =>
+      prev.map((m) =>
+        m.crewIndex === crewIndex && m.senderRole === "astronaut"
+          ? { ...m, isReadByDoctor: true }
+          : m
+      )
+    );
+    setTriageIncidents((prev) =>
+      prev.map((inc) =>
+        inc.crewIndex === crewIndex
+          ? { ...inc, isReadByDoctor: true }
+          : inc
+      )
+    );
+  }, []);
+
+  const handleFlagIncident = useCallback((id: string) => {
+    setTriageIncidents((prev) =>
+      prev.map((inc) =>
+        inc.id === id
+          ? { ...inc, flaggedToMissionControl: !inc.flaggedToMissionControl }
+          : inc
+      )
+    );
+  }, []);
+
+  const handleToggleSensor = useCallback((id: string) => {
+    setIotSensors((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, online: !s.online } : s))
+    );
+  }, []);
+
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(LOCAL_AI_SETTINGS_KEY);
@@ -1071,175 +1217,306 @@ export default function Page() {
     />
   );
 
-  return (
-    <div className="dashboard-root relative z-10 flex min-h-dvh flex-col">
-      <TopBar
-        clock={tickClock(state.tick)}
-        running={state.running}
-        speed={state.speed}
-        onToggle={() => dispatch({ type: "TOGGLE_RUN" })}
-        onStep={() => {
-          if (!state.running) dispatch({ type: "ADVANCE" });
+  if (!currentRole) {
+    return (
+      <LoginPage
+        onLogin={(role) => {
+          setCurrentRole(role);
+          if (role === "crew-0") dispatch({ type: "SELECT_CREW", i: 0 });
+          else if (role === "crew-1") dispatch({ type: "SELECT_CREW", i: 1 });
+          else if (role === "crew-2") dispatch({ type: "SELECT_CREW", i: 2 });
         }}
-        onSpeed={(s) => dispatch({ type: "SET_SPEED", speed: s })}
-        onDemo={startDemo}
-        onReset={reset}
-        onOpenScenarios={() => setScenariosOpen(true)}
-        onOpenSettings={() => setSettingsOpen(true)}
-        aiOn={state.aiOn}
-        compact={isCompact}
-        hideScenarios={false}
+      />
+    );
+  }
+
+  return (
+    <div className="relative min-h-dvh flex flex-col bg-[#050914] text-slate-100 font-sans">
+      <QuickRoleBar
+        currentRole={currentRole}
+        onSelectRole={(r) => {
+          setCurrentRole(r);
+          if (r === "crew-0") dispatch({ type: "SELECT_CREW", i: 0 });
+          else if (r === "crew-1") dispatch({ type: "SELECT_CREW", i: 1 });
+          else if (r === "crew-2") dispatch({ type: "SELECT_CREW", i: 2 });
+        }}
+        onOpenLoginModal={() => setAuthModalOpen(true)}
+        onSignOut={() => setCurrentRole(null)}
       />
 
-      <div className="desktop-simulation-row flex items-center justify-between gap-3 border-b border-white/5 px-3 py-1 text-xs sm:px-5">
-        <span className="font-semibold tracking-[0.12em] text-cyan-200">
-          SIMULATION
-        </span>
-        <span className="text-right text-white/60">
-          Synthetic telemetry · deterministic rules decide · AI only advises
-        </span>
-      </div>
-
-      <Pipeline
-        onStage={setStage}
-        values={state.pipelineValues}
-        desktop={!isCompact}
-        selected={sel}
-        aiOn={state.aiOn}
-        activeCount={activeAlertCount}
-        briefReady={!!state.brief}
-      />
-
-      {(state.demoActive || state.scenarioPreset) &&
-        state.caption !== CAP0 && (
-        <div
-          className="border-b border-white/5 bg-accent/5 px-3 py-2 text-sm font-medium text-accent sm:px-5"
-          role="status"
-          aria-live="polite"
-        >
-          {state.caption}
-        </div>
-      )}
-
-      <CrewWideBanner event={crewWide} />
-
-      <main
-        className={`desktop-dashboard-main flex flex-1 flex-col px-3 py-3 sm:px-5 sm:py-4 ${
-          isCompact ? "pb-24" : ""
-        }`}
-      >
-        {isCompact ? (
-          // Compact screens: keep each dashboard section one tap away.
-          <div
-            id="mobile-dashboard-panel"
-            role="tabpanel"
-            aria-labelledby={`mobile-tab-${mobileTab}`}
-            className="space-y-3"
-          >
-            {mobileTab === "vitals" && (
-              <div className={stageClass(1)}>{vitalsNode}</div>
-            )}
-            {mobileTab === "alerts" && (
-              <div className="space-y-3">
-                <div className={stageClass(5)}>{alertsNode}</div>
-                <div className={stageClass(5)}>{whyNode}</div>
-              </div>
-            )}
-            {mobileTab === "ai" && (
-              <div className="space-y-3">
-                <div className={stageClass(2)}>{crewNode}</div>
-                <div className={stageClass(3)}>{aiNode}</div>
-                <div className={stageClass(4)}>{rulesNode}</div>
-              </div>
-            )}
-            {mobileTab === "brief" && (
-              <div className={stageClass(6)}>{briefNode}</div>
-            )}
-            {mobileTab === "chat" && (
-              <div className={stageClass(6)}>{chatNode}</div>
-            )}
-          </div>
-        ) : (
-          <div className="desktop-dashboard-grid grid min-h-0 items-stretch gap-3">
-            <aside
-              className={`${stageClass(2)} desktop-dashboard-left flex min-w-0 flex-col gap-3`}
-            >
-              <CrewList
-                crew={state.crew}
-                selected={state.selected}
-                aiOn={state.aiOn}
-                onPick={selectCrew}
-                variant="rail"
-                causes={crewCauses}
-              />
-              <div className={`${stageClass(7)} desktop-scenario-wrap`}>
-                {scenariosNode}
-              </div>
-            </aside>
-
-            <div className="desktop-dashboard-center flex min-w-0 flex-col gap-3">
-              <div className={`${stageClass(1)} desktop-vitals-wrap`}>
-                {vitalsNode}
-              </div>
-              <TabbedPanel
-                active={desktopTab}
-                onChange={setDesktopTab}
-                alerts={desktopAlertsNode}
-                why={whyNode}
-                timeline={timelineNode}
-                brief={briefNode}
-                ask={chatNode}
-                alertsBadge={activeAlertCount}
-              />
-            </div>
-
-            <aside className="desktop-dashboard-right flex min-w-0 flex-col gap-3">
-              <div className={stageClass(3)}>{aiNode}</div>
-              <div className={`${stageClass(4)} desktop-rules-wrap`}>
-                {rulesNode}
-              </div>
-            </aside>
-          </div>
-        )}
-      </main>
-
-      {isCompact && (
-        <BottomTabs
-          active={mobileTab}
-          onChange={setMobileTab}
-          alertsBadge={activeAlertCount}
+      {currentRole === "crew-0" && (
+        <AstronautPortal
+          user={DEMO_USERS["crew-0"]}
+          crew={state.crew[0]}
+          allCrew={state.crew}
+          clockStr={tickClock(state.tick)}
+          consultMessages={consultMessages}
+          sensors={iotSensors}
+          onSendMessageToDoctor={(t) => handleSendMessageToDoctor(0, t)}
+          onSendVoiceNoteToDoctor={() => handleSendVoiceNoteToDoctor(0)}
+          onTriggerSos={() => handleTriggerSos(0)}
+          onToggleSensor={handleToggleSensor}
+          onSignOut={() => setCurrentRole(null)}
+          onAskAi={sendChat}
+          onGenerateBrief={writeBrief}
+          briefText={state.brief}
+          briefLoading={state.briefLoading}
+          briefError={state.briefError}
+          chatMessages={state.chat}
+          chatStreaming={state.chatStreaming}
+          chatError={state.chatError}
         />
       )}
 
-      <ScenarioPanel
-        variant="sheet"
-        open={scenariosOpen}
-        onClose={() => setScenariosOpen(false)}
-        storm={state.storm}
-        aiOn={state.aiOn}
-        selectedFlags={sel.f}
-        selected={sel}
-        activePreset={state.scenarioPreset}
-        onPreset={setScenario}
-        onToggle={toggleFlag}
-        onDemo={startDemo}
-        onReset={reset}
-      />
-
-      <SettingsPanel
-        open={settingsOpen && settingsLoaded}
-        settings={settings}
-        storageWarning={settingsLoadError}
-        onClose={() => setSettingsOpen(false)}
-        onSave={saveSettings}
-      />
-
-      {!isMobile && !isLg && (
-        <footer className="mt-auto px-3 py-2 text-center text-sm text-white/55 sm:px-5">
-          Simulation runs in the browser · the LLM only writes prose · rules
-          always decide alerts · deployed on Vercel
-        </footer>
+      {currentRole === "crew-1" && (
+        <AstronautPortal
+          user={DEMO_USERS["crew-1"]}
+          crew={state.crew[1]}
+          allCrew={state.crew}
+          clockStr={tickClock(state.tick)}
+          consultMessages={consultMessages}
+          sensors={iotSensors}
+          onSendMessageToDoctor={(t) => handleSendMessageToDoctor(1, t)}
+          onSendVoiceNoteToDoctor={() => handleSendVoiceNoteToDoctor(1)}
+          onTriggerSos={() => handleTriggerSos(1)}
+          onToggleSensor={handleToggleSensor}
+          onSignOut={() => setCurrentRole(null)}
+          onAskAi={sendChat}
+          onGenerateBrief={writeBrief}
+          briefText={state.brief}
+          briefLoading={state.briefLoading}
+          briefError={state.briefError}
+          chatMessages={state.chat}
+          chatStreaming={state.chatStreaming}
+          chatError={state.chatError}
+        />
       )}
+
+      {currentRole === "crew-2" && (
+        <AstronautPortal
+          user={DEMO_USERS["crew-2"]}
+          crew={state.crew[2]}
+          allCrew={state.crew}
+          clockStr={tickClock(state.tick)}
+          consultMessages={consultMessages}
+          sensors={iotSensors}
+          onSendMessageToDoctor={(t) => handleSendMessageToDoctor(2, t)}
+          onSendVoiceNoteToDoctor={() => handleSendVoiceNoteToDoctor(2)}
+          onTriggerSos={() => handleTriggerSos(2)}
+          onToggleSensor={handleToggleSensor}
+          onSignOut={() => setCurrentRole(null)}
+          onAskAi={sendChat}
+          onGenerateBrief={writeBrief}
+          briefText={state.brief}
+          briefLoading={state.briefLoading}
+          briefError={state.briefError}
+          chatMessages={state.chat}
+          chatStreaming={state.chatStreaming}
+          chatError={state.chatError}
+        />
+      )}
+
+      {currentRole === "doctor" && (
+        <DoctorHub
+          user={DEMO_USERS["doctor"]}
+          crewMembers={state.crew}
+          alerts={state.alerts}
+          incidents={triageIncidents}
+          consultMessages={consultMessages}
+          sensors={iotSensors}
+          clockStr={tickClock(state.tick)}
+          onSendDoctorReply={handleSendDoctorReply}
+          onFlagIncident={handleFlagIncident}
+          onToggleSensor={handleToggleSensor}
+          onSignOut={() => setCurrentRole(null)}
+          onMarkMessagesAsRead={handleMarkMessagesAsRead}
+        />
+      )}
+
+      {currentRole === "admin" && (
+        <div className="dashboard-root relative z-10 flex min-h-dvh flex-col">
+          <TopBar
+            clock={tickClock(state.tick)}
+            running={state.running}
+            speed={state.speed}
+            onToggle={() => dispatch({ type: "TOGGLE_RUN" })}
+            onStep={() => {
+              if (!state.running) dispatch({ type: "ADVANCE" });
+            }}
+            onSpeed={(s) => dispatch({ type: "SET_SPEED", speed: s })}
+            onDemo={startDemo}
+            onReset={reset}
+            onOpenScenarios={() => setScenariosOpen(true)}
+            onOpenSettings={() => setSettingsOpen(true)}
+            aiOn={state.aiOn}
+            compact={isCompact}
+            hideScenarios={false}
+          />
+
+          <div className="desktop-simulation-row flex items-center justify-between gap-3 border-b border-white/5 px-3 py-1 text-xs sm:px-5">
+            <span className="font-semibold tracking-[0.12em] text-cyan-200">
+              SIMULATION
+            </span>
+            <span className="text-right text-white/60">
+              Synthetic telemetry · deterministic rules decide · AI only advises
+            </span>
+          </div>
+
+          <Pipeline
+            onStage={setStage}
+            values={state.pipelineValues}
+            desktop={!isCompact}
+            selected={sel}
+            aiOn={state.aiOn}
+            activeCount={activeAlertCount}
+            briefReady={!!state.brief}
+          />
+
+          {(state.demoActive || state.scenarioPreset) &&
+            state.caption !== CAP0 && (
+            <div
+              className="border-b border-white/5 bg-accent/5 px-3 py-2 text-sm font-medium text-accent sm:px-5"
+              role="status"
+              aria-live="polite"
+            >
+              {state.caption}
+            </div>
+          )}
+
+          <CrewWideBanner event={crewWide} />
+
+          <main
+            className={`desktop-dashboard-main flex flex-1 flex-col px-3 py-3 sm:px-5 sm:py-4 ${
+              isCompact ? "pb-24" : ""
+            }`}
+          >
+            {isCompact ? (
+              // Compact screens: keep each dashboard section one tap away.
+              <div
+                id="mobile-dashboard-panel"
+                role="tabpanel"
+                aria-labelledby={`mobile-tab-${mobileTab}`}
+                className="space-y-3"
+              >
+                {mobileTab === "vitals" && (
+                  <div className={stageClass(1)}>{vitalsNode}</div>
+                )}
+                {mobileTab === "alerts" && (
+                  <div className="space-y-3">
+                    <div className={stageClass(5)}>{alertsNode}</div>
+                    <div className={stageClass(5)}>{whyNode}</div>
+                  </div>
+                )}
+                {mobileTab === "ai" && (
+                  <div className="space-y-3">
+                    <div className={stageClass(2)}>{crewNode}</div>
+                    <div className={stageClass(3)}>{aiNode}</div>
+                    <div className={stageClass(4)}>{rulesNode}</div>
+                  </div>
+                )}
+                {mobileTab === "brief" && (
+                  <div className={stageClass(6)}>{briefNode}</div>
+                )}
+                {mobileTab === "chat" && (
+                  <div className={stageClass(6)}>{chatNode}</div>
+                )}
+              </div>
+            ) : (
+              <div className="desktop-dashboard-grid grid min-h-0 items-stretch gap-3">
+                <aside
+                  className={`${stageClass(2)} desktop-dashboard-left flex min-w-0 flex-col gap-3`}
+                >
+                  <CrewList
+                    crew={state.crew}
+                    selected={state.selected}
+                    aiOn={state.aiOn}
+                    onPick={selectCrew}
+                    variant="rail"
+                    causes={crewCauses}
+                  />
+                  <div className={`${stageClass(7)} desktop-scenario-wrap`}>
+                    {scenariosNode}
+                  </div>
+                </aside>
+
+                <div className="desktop-dashboard-center flex min-w-0 flex-col gap-3">
+                  <div className={`${stageClass(1)} desktop-vitals-wrap`}>
+                    {vitalsNode}
+                  </div>
+                  <TabbedPanel
+                    active={desktopTab}
+                    onChange={setDesktopTab}
+                    alerts={desktopAlertsNode}
+                    why={whyNode}
+                    timeline={timelineNode}
+                    brief={briefNode}
+                    ask={chatNode}
+                    alertsBadge={activeAlertCount}
+                  />
+                </div>
+
+                <aside className="desktop-dashboard-right flex min-w-0 flex-col gap-3">
+                  <div className={stageClass(3)}>{aiNode}</div>
+                  <div className={`${stageClass(4)} desktop-rules-wrap`}>
+                    {rulesNode}
+                  </div>
+                </aside>
+              </div>
+            )}
+          </main>
+
+          {isCompact && (
+            <BottomTabs
+              active={mobileTab}
+              onChange={setMobileTab}
+              alertsBadge={activeAlertCount}
+            />
+          )}
+
+          <ScenarioPanel
+            variant="sheet"
+            open={scenariosOpen}
+            onClose={() => setScenariosOpen(false)}
+            storm={state.storm}
+            aiOn={state.aiOn}
+            selectedFlags={sel.f}
+            selected={sel}
+            activePreset={state.scenarioPreset}
+            onPreset={setScenario}
+            onToggle={toggleFlag}
+            onDemo={startDemo}
+            onReset={reset}
+          />
+
+          <SettingsPanel
+            open={settingsOpen && settingsLoaded}
+            settings={settings}
+            storageWarning={settingsLoadError}
+            onClose={() => setSettingsOpen(false)}
+            onSave={saveSettings}
+          />
+
+          {!isMobile && !isLg && (
+            <footer className="mt-auto px-3 py-2 text-center text-sm text-white/55 sm:px-5">
+              Simulation runs in the browser · the LLM only writes prose · rules
+              always decide alerts · deployed on Vercel
+            </footer>
+          )}
+        </div>
+      )}
+
+      <AuthModal
+        isOpen={authModalOpen}
+        currentRole={currentRole || "crew-0"}
+        onSelectRole={(r) => {
+          setCurrentRole(r);
+          setAuthModalOpen(false);
+          if (r === "crew-0") dispatch({ type: "SELECT_CREW", i: 0 });
+          else if (r === "crew-1") dispatch({ type: "SELECT_CREW", i: 1 });
+          else if (r === "crew-2") dispatch({ type: "SELECT_CREW", i: 2 });
+        }}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </div>
   );
 }

@@ -1,0 +1,212 @@
+"use client";
+
+import { useState } from "react";
+import type { ConsultMessage } from "@/lib/astroGuardTypes";
+
+interface MedicalConsultViewProps {
+  messages: ConsultMessage[];
+  onSendMessage: (text: string) => void;
+  onSendVoiceNote: () => void;
+  onStartCall: (type: "audio" | "video") => void;
+  onTriggerSos: () => void;
+  doctorName?: string;
+  doctorCallSign?: string;
+}
+
+export function MedicalConsultView({
+  messages,
+  onSendMessage,
+  onSendVoiceNote,
+  onStartCall,
+  onTriggerSos,
+  doctorName = "Dr. Evelyn Vance",
+  doctorCallSign = "MED-002",
+}: MedicalConsultViewProps) {
+  const [inputText, setInputText] = useState("");
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+    onSendMessage(inputText.trim());
+    setInputText("");
+  };
+
+  const toggleVoicePlay = (msgId: string) => {
+    if (playingVoiceId === msgId) {
+      setPlayingVoiceId(null);
+    } else {
+      setPlayingVoiceId(msgId);
+      setTimeout(() => {
+        setPlayingVoiceId(null);
+      }, 5000);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-[720px] rounded-2xl border border-slate-800 bg-slate-950/90 shadow-xl overflow-hidden font-sans">
+      {/* Top Tele-Health Header */}
+      <div className="flex flex-wrap items-center justify-between border-b border-slate-800 px-5 py-4 bg-slate-900/90 gap-3">
+        <div className="flex items-center gap-3.5">
+          <div className="relative">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-600 to-purple-700 text-base font-bold text-white shadow-md">
+              EV
+            </div>
+            <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-slate-950" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-white">{doctorName}</h3>
+              <span className="rounded-md bg-slate-800 px-2 py-0.5 font-mono text-xs font-semibold text-rose-300 border border-slate-700">
+                {doctorCallSign} · Chief Flight Surgeon
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 font-medium mt-0.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Direct Tele-Health Uplink Active · Zero-Delay Secure Channel</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Controls: Audio Call, Video Call & SOS */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => onStartCall("audio")}
+            className="flex h-10 px-3 items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-950/60 font-mono text-xs font-bold text-cyan-300 hover:bg-cyan-900/70 transition shadow"
+            title="Start Voice Call"
+          >
+            <span>📞</span>
+            <span className="hidden sm:inline">Voice Call</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onStartCall("video")}
+            className="flex h-10 px-3 items-center gap-1.5 rounded-xl border border-purple-500/40 bg-purple-950/60 font-mono text-xs font-bold text-purple-300 hover:bg-purple-900/70 transition shadow"
+            title="Start Video Tele-Health"
+          >
+            <span>📹</span>
+            <span className="hidden sm:inline">Video Uplink</span>
+          </button>
+          <button
+            type="button"
+            onClick={onTriggerSos}
+            className="rounded-xl border border-rose-500/60 bg-rose-600/30 px-3.5 py-2 font-mono text-xs font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-600/50 shadow-lg shadow-rose-950/40 transition animate-pulse"
+          >
+            🚨 SOS
+          </button>
+        </div>
+      </div>
+
+      {/* Message History Feed */}
+      <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        {messages.length === 0 ? (
+          <div className="text-center py-16 space-y-2">
+            <span className="text-3xl block">🩺</span>
+            <div className="text-sm font-mono text-slate-300 font-semibold">
+              Medical Tele-Health channel open with {doctorName}.
+            </div>
+            <div className="text-xs font-mono text-slate-400">
+              Send a message or voice note below to consult the Flight Surgeon.
+            </div>
+          </div>
+        ) : (
+          messages.map((m) => {
+            const isAstronaut = m.senderRole === "astronaut";
+            const isSystem = m.senderRole === "system";
+
+            if (isSystem) {
+              return (
+                <div
+                  key={m.id}
+                  className="mx-auto my-3 max-w-lg rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-2.5 text-center font-mono text-xs font-bold text-rose-300 shadow"
+                >
+                  ⚠ {m.text} ({m.timestamp})
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={m.id}
+                className={`flex flex-col ${
+                  isAstronaut ? "items-end" : "items-start"
+                }`}
+              >
+                <div className="flex items-center gap-2 text-xs font-mono text-slate-400 mb-1">
+                  <span className="font-semibold text-slate-300">{m.senderName}</span>
+                  <span>·</span>
+                  <span>{m.timestamp}</span>
+                </div>
+
+                <div
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-md ${
+                    isAstronaut
+                      ? "bg-cyan-600 text-white rounded-tr-none font-medium"
+                      : "bg-slate-900 text-slate-100 rounded-tl-none border border-slate-700"
+                  }`}
+                >
+                  {m.voiceNoteDuration ? (
+                    <div className="flex items-center gap-3 py-1">
+                      <button
+                        type="button"
+                        onClick={() => toggleVoicePlay(m.id)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition text-sm text-white"
+                      >
+                        {playingVoiceId === m.id ? "⏸" : "▶"}
+                      </button>
+                      <div>
+                        <div className="font-bold text-sm">Voice Dispatch</div>
+                        <div className="flex items-center gap-2 font-mono text-xs opacity-90">
+                          <span>0:00 / 0:{m.voiceNoteDuration}</span>
+                          {playingVoiceId === m.id && (
+                            <span className="text-emerald-300 animate-pulse font-bold">
+                              ● PLAYING AUDIO
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-line">{m.text}</p>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Input Bar */}
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-3 border-t border-slate-800 p-4 bg-slate-900/90"
+      >
+        <button
+          type="button"
+          onClick={onSendVoiceNote}
+          className="flex h-11 px-3.5 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 font-mono text-xs font-bold text-cyan-300 hover:bg-slate-800 transition"
+          title="Send Voice Dispatch"
+        >
+          <span>🎙️</span>
+          <span className="hidden sm:inline">Voice Note</span>
+        </button>
+
+        <input
+          type="text"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder="Type consultation message to Flight Surgeon..."
+          className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+        />
+
+        <button
+          type="submit"
+          className="rounded-xl bg-cyan-600 px-5 py-2.5 font-mono text-xs font-bold text-white hover:bg-cyan-500 transition shadow-lg shadow-cyan-600/30"
+        >
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
