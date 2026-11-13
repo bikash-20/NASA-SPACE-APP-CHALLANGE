@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DEMO_USERS, type AstroRole } from "@/lib/astroGuardTypes";
 
 interface AuthModalProps {
   isOpen: boolean;
   onSelectRole: (role: AstroRole) => void;
   onClose?: () => void;
-  currentRole: AstroRole;
+  currentRole?: AstroRole | null;
 }
 
 export function AuthModal({
@@ -16,9 +16,24 @@ export function AuthModal({
   onClose,
   currentRole,
 }: AuthModalProps) {
-  const [selectedUserKey, setSelectedUserKey] = useState<AstroRole>(currentRole);
-  const [emailInput, setEmailInput] = useState(DEMO_USERS[currentRole].email);
-  const [passInput, setPassInput] = useState(DEMO_USERS[currentRole].pass);
+  const safeRole: AstroRole =
+    currentRole && DEMO_USERS[currentRole] ? currentRole : "crew-0";
+
+  const [selectedUserKey, setSelectedUserKey] = useState<AstroRole>(safeRole);
+  const [emailInput, setEmailInput] = useState<string>(
+    DEMO_USERS[safeRole]?.email || "amara@ares.nasa.gov"
+  );
+  const [passInput, setPassInput] = useState<string>(
+    DEMO_USERS[safeRole]?.pass || "amara123"
+  );
+
+  useEffect(() => {
+    if (currentRole && DEMO_USERS[currentRole]) {
+      setSelectedUserKey(currentRole);
+      setEmailInput(DEMO_USERS[currentRole].email);
+      setPassInput(DEMO_USERS[currentRole].pass);
+    }
+  }, [currentRole]);
 
   if (!isOpen) return null;
 
@@ -115,40 +130,40 @@ export function AuthModal({
         <form onSubmit={handleSubmit} className="space-y-3 border-t border-slate-800 pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block font-mono text-[11px] uppercase text-slate-400 mb-1">
+              <label className="block text-xs font-mono uppercase text-slate-300 mb-1">
                 Operator Email
               </label>
               <input
                 type="email"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white font-mono focus:border-cyan-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs text-white font-mono focus:border-cyan-400 focus:outline-none"
                 required
               />
             </div>
             <div>
-              <label className="block font-mono text-[11px] uppercase text-slate-400 mb-1">
+              <label className="block text-xs font-mono uppercase text-slate-300 mb-1">
                 Access Passkey
               </label>
               <input
                 type="text"
                 value={passInput}
                 onChange={(e) => setPassInput(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white font-mono focus:border-cyan-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs text-white font-mono focus:border-cyan-400 focus:outline-none"
                 required
               />
             </div>
           </div>
 
           <div className="flex items-center justify-between pt-2">
-            <span className="font-mono text-[11px] text-emerald-400">
+            <span className="font-mono text-xs text-emerald-400">
               ● TLS 1.3 Certified Session Gateway
             </span>
             <button
               type="submit"
               className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-cyan-600/30 hover:from-cyan-400 hover:to-blue-500 transition"
             >
-              Sign In to {DEMO_USERS[selectedUserKey].name}
+              Sign In to {DEMO_USERS[selectedUserKey]?.name || "Console"}
             </button>
           </div>
         </form>

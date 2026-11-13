@@ -120,8 +120,8 @@ export function AstronautPortal({
 
   return (
     <div className="min-h-screen bg-[#050914] text-slate-100 flex flex-col md:flex-row font-sans">
-      {/* Astronaut Portal Left Sidebar */}
-      <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950 p-4 md:p-5 flex flex-col justify-between shrink-0">
+      {/* Astronaut Portal Left Sidebar - Sticky on desktop to eliminate left dead space */}
+      <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950 p-4 md:p-5 flex flex-col justify-between shrink-0 md:sticky md:top-12 md:h-[calc(100vh-3rem)] md:overflow-y-auto">
         <div>
           {/* Brand Header */}
           <div className="flex items-center gap-3.5 mb-8">

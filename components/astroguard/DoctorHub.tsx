@@ -96,7 +96,6 @@ export function DoctorHub({
     setReplyText("");
   };
 
-  // Severity metrics
   const criticalCount = incidents.filter((i) => i.severity === "critical").length;
   const warningCount = incidents.filter((i) => i.severity === "warning").length;
 
@@ -110,38 +109,43 @@ export function DoctorHub({
   );
 
   return (
-    <div className="min-h-screen bg-[#050914] text-slate-100 flex flex-col md:flex-row font-sans">
-      {/* Left Sidebar */}
-      <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950 p-4 md:p-5 flex flex-col justify-between shrink-0">
-        <div>
-          {/* Brand Header */}
-          <div className="flex items-center gap-3.5 mb-8">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-600 to-purple-700 text-2xl shadow-lg shadow-rose-600/30">
+    <div className="min-h-screen bg-[#050914] text-slate-100 flex flex-col font-sans">
+      {/* Top Navigation & Status Bar */}
+      <header className="sticky top-0 z-30 w-full border-b border-slate-800 bg-slate-950/95 px-4 sm:px-6 py-3.5 backdrop-blur-md shadow-lg">
+        <div className="mx-auto flex max-w-[1680px] w-full flex-wrap items-center justify-between gap-3">
+          {/* Brand & Doctor Info */}
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-600 to-purple-700 text-xl font-bold text-white shadow-md shadow-rose-600/30">
               ⚕️
             </div>
             <div>
-              <h1 className="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
-                <span>AstroGuard</span>
-              </h1>
-              <p className="font-mono text-xs font-semibold text-rose-400 uppercase tracking-wider">
-                Medical Operations
+              <div className="flex items-center gap-2">
+                <h1 className="text-base font-bold text-white">
+                  {user.name}
+                </h1>
+                <span className="rounded-md bg-rose-950 px-2 py-0.5 font-mono text-xs font-semibold text-rose-300 border border-rose-500/40">
+                  {user.callSign} · Flight Surgeon
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-medium">
+                Medical Operations Hub · Ares Deep-Space Fleet Telemetry
               </p>
             </div>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="space-y-1.5">
+          {/* Center Tabs */}
+          <nav className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 p-1 font-mono text-xs font-bold">
             <button
               type="button"
               onClick={() => setActiveTab("medical")}
-              className={`w-full flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 transition ${
                 activeTab === "medical"
-                  ? "bg-gradient-to-r from-rose-600 to-purple-700 text-white shadow-lg shadow-rose-600/25 font-bold"
-                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                  ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800"
               }`}
             >
-              <span className="text-base">🩺</span>
-              <span>Clinical Triage Hub</span>
+              <span>🩺</span>
+              <span>Clinical Triage</span>
             </button>
 
             <button
@@ -150,18 +154,16 @@ export function DoctorHub({
                 setActiveTab("chat");
                 if (onMarkMessagesAsRead) onMarkMessagesAsRead(selectedCrewIdx);
               }}
-              className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 transition ${
                 activeTab === "chat"
-                  ? "bg-gradient-to-r from-rose-600 to-purple-700 text-white shadow-lg shadow-rose-600/25 font-bold"
-                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                  ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800"
               }`}
             >
-              <div className="flex items-center gap-3.5">
-                <span className="text-base">💬</span>
-                <span>Tele-Health Channels</span>
-              </div>
+              <span>💬</span>
+              <span>Tele-Health</span>
               {unreadMessages.length > 0 && (
-                <span className="rounded-full bg-rose-500 px-2 py-0.5 text-xs font-bold text-white shadow animate-pulse">
+                <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-[10px] text-white animate-pulse">
                   {unreadMessages.length}
                 </span>
               )}
@@ -170,72 +172,30 @@ export function DoctorHub({
             <button
               type="button"
               onClick={() => setActiveTab("fleet")}
-              className={`w-full flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 transition ${
                 activeTab === "fleet"
-                  ? "bg-gradient-to-r from-rose-600 to-purple-700 text-white shadow-lg shadow-rose-600/25 font-bold"
-                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                  ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800"
               }`}
             >
-              <span className="text-base">📡</span>
-              <span>IoT Wearable Matrix</span>
+              <span>📡</span>
+              <span>IoT Wearables</span>
             </button>
           </nav>
-        </div>
 
-        {/* Doctor Station Profile & Sign Out */}
-        <div className="pt-5 border-t border-slate-800 space-y-3">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-rose-600 to-purple-800 font-bold text-sm text-white shadow">
-              EV
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-white truncate">
-                {user.name}
-              </div>
-              <div className="font-mono text-xs text-rose-400 font-semibold truncate">
-                {user.callSign} · Flight Surgeon
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 py-2.5 font-mono text-xs font-bold text-slate-200 hover:bg-rose-950 hover:text-rose-200 hover:border-rose-500/50 transition shadow-sm"
-          >
-            <span>[→ Sign Out to Gateway]</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Operations Workstation */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6">
-        {/* Top Header Bar with Notifications */}
-        <div className="relative flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-950/90 p-5 shadow-xl backdrop-blur-md">
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <span>Medical Operations Hub</span>
-              <span className="font-mono text-xs font-semibold text-rose-400 bg-rose-950/80 px-2 py-0.5 rounded border border-rose-500/30">
-                FLIGHT SURGEON CONSOLE
-              </span>
-            </h2>
-            <p className="text-xs text-slate-300 font-medium mt-0.5">
-              Live multi-crew biometric telemetry, continuous Lead-II ECG, and clinical triage
-            </p>
-          </div>
-
+          {/* Right Tools & Notification Bell */}
           <div className="flex items-center gap-3">
-            {/* Notification Bell with Badge & Dropdown */}
+            {/* Notification Bell */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowNotifications(!showNotifications)}
                 className={`relative flex h-10 w-10 items-center justify-center rounded-xl border transition ${
                   totalNotifications > 0
-                    ? "border-rose-500/60 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60"
+                    ? "border-rose-500/60 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 shadow-md shadow-rose-950"
                     : "border-slate-800 bg-slate-900 text-slate-300 hover:text-white"
                 }`}
-                title="View Incoming Notifications"
+                title="View Notifications"
               >
                 <span className="text-base">🔔</span>
                 {totalNotifications > 0 && (
@@ -245,12 +205,12 @@ export function DoctorHub({
                 )}
               </button>
 
-              {/* Dropdown Panel */}
+              {/* Notification Dropdown */}
               {showNotifications && (
                 <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-2xl space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                     <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                      Incoming Notifications ({totalNotifications})
+                      Notifications ({totalNotifications})
                     </span>
                     <button
                       type="button"
@@ -264,7 +224,7 @@ export function DoctorHub({
                   <div className="max-h-72 overflow-y-auto space-y-2">
                     {totalNotifications === 0 ? (
                       <div className="text-center py-4 text-xs font-mono text-slate-400 italic">
-                        No new incoming alerts. Telemetry nominal.
+                        No pending alerts. Telemetry nominal.
                       </div>
                     ) : (
                       <>
@@ -322,17 +282,23 @@ export function DoctorHub({
               )}
             </div>
 
-            <span className="rounded-full bg-emerald-950/90 px-3.5 py-1.5 font-mono text-xs font-bold text-emerald-400 border border-emerald-500/40 flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Telemetry Uplink Active</span>
-            </span>
-
-            <div className="rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-1.5 font-mono text-xs font-bold text-cyan-300">
+            <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 font-mono text-xs font-bold text-cyan-300">
               {clockStr}
             </div>
+
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-1.5 font-mono text-xs font-bold text-slate-200 hover:bg-rose-950 hover:text-rose-200 hover:border-rose-500/40 transition"
+            >
+              Sign Out [→
+            </button>
           </div>
         </div>
+      </header>
 
+      {/* Main Full-Width Dashboard Content */}
+      <main className="flex-1 w-full max-w-[1680px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* 4 Metric Summary Counter Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
@@ -392,7 +358,7 @@ export function DoctorHub({
         {/* TAB 1: CLINICAL TRIAGE & ECG HUB */}
         {activeTab === "medical" && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               {/* Left Column: Assigned Roster Cards */}
               <div className="rounded-2xl border border-slate-800 bg-slate-950/90 p-5 space-y-4 shadow-xl">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -497,7 +463,7 @@ export function DoctorHub({
                   </div>
                 </div>
 
-                {/* Vitals Quadrant with Large, Legible Figures */}
+                {/* Vitals Quadrant */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5">
                     <span className="font-mono text-xs text-slate-400 uppercase font-bold block mb-1">
@@ -680,7 +646,7 @@ export function DoctorHub({
 
         {/* TAB 2: CHAT & TELE-HEALTH CHANNELS */}
         {activeTab === "chat" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[700px]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[720px]">
             {/* Crew Selector Column */}
             <div className="rounded-2xl border border-slate-800 bg-slate-950/90 p-5 space-y-3 shadow-xl">
               <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200 border-b border-slate-800 pb-3">

@@ -24,8 +24,8 @@ export function QuickRoleBar({
   ];
 
   return (
-    <div className="sticky top-0 z-40 w-full border-b border-cyan-500/30 bg-slate-950/95 px-4 py-2 backdrop-blur-md shadow-lg shadow-black/60 font-sans">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
+    <div className="sticky top-0 z-40 w-full border-b border-cyan-500/30 bg-slate-950/95 px-4 sm:px-6 py-2 backdrop-blur-md shadow-lg shadow-black/60 font-sans">
+      <div className="mx-auto flex w-full max-w-[1680px] flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-sm shadow-md shadow-cyan-500/30">
             🛡️
