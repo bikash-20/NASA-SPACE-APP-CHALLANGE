@@ -1,7 +1,8 @@
 # NASA Space App Challenge — Crew Health Monitor
 live link: https://crew-health-monitoring.vercel.app/
-<img width="1280" height="796" alt="image" src="https://github.com/user-attachments/assets/44e52f6d-8b58-4e16-a810-9347ab11bdb8" />
-<img width="1280" height="796" alt="image" src="https://github.com/user-attachments/assets/f01ae46a-2d11-43cf-a484-dffa54ca2b0f" />
+<img width="1280" height="796" alt="image" src="https://github.com/user-attachments/assets/d067918d-0478-47f9-9adb-f4c261674eed" />
+![Uploading image.png…]()
+
 
 
 
