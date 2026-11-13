@@ -1,6 +1,7 @@
 "use client";
 
 import type { Crew } from "@/lib/types";
+import { useI18n } from "@/lib/i18nContext";
 
 interface MicroArrayAssayProps {
   crew?: Crew;
@@ -8,50 +9,71 @@ interface MicroArrayAssayProps {
 }
 
 export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) {
+  const { locale, t, formatNumber } = useI18n();
+
   const isSleepDeficit = crew ? crew.sleep < 5.5 : false;
   const isHighStress = crew ? crew.stress > 55 : false;
   const isRadiationSurge = crew ? crew.rate > 0.5 || crew.dose > 120 : false;
   const crewOffset = crew ? (crew.id === 0 ? 0 : crew.id === 1 ? -4 : 5) : 0;
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "ACTIVE":
+        return t("statusActive");
+      case "OPTIMAL":
+        return t("statusOptimal");
+      case "DEFICIT":
+        return t("statusDeficit");
+      case "WATCH":
+        return t("statusWatch");
+      case "ACTIVE DEFENSE":
+        return t("statusActiveDefense");
+      case "OK":
+        return t("statusOk");
+      default:
+        return status;
+    }
+  };
+
   const vitamins = [
     {
-      name: "Vitamin A",
-      val: `${1750 + crewOffset * 25} IU`,
+      name: locale === "bn" ? "ভিটামিন এ (Vitamin A)" : "Vitamin A",
+      val: `${formatNumber(1750 + crewOffset * 25)} IU`,
       pct: 70 + crewOffset,
       status: "ACTIVE",
       color: "from-amber-500 to-yellow-400",
     },
     {
-      name: "B-Complex",
-      val: isSleepDeficit ? "7.2 mg" : `${(12 + crewOffset * 0.4).toFixed(1)} mg`,
+      name: locale === "bn" ? "বি-কমপ্লেক্স (B-Complex)" : "B-Complex",
+      val: isSleepDeficit ? `${formatNumber(7.2)} mg` : `${formatNumber((12 + crewOffset * 0.4).toFixed(1))} mg`,
       pct: isSleepDeficit ? 36 : Math.min(100, 60 + crewOffset),
       status: isSleepDeficit ? "DEFICIT" : "ACTIVE",
       color: isSleepDeficit ? "from-rose-500 to-amber-500" : "from-amber-500 to-yellow-400",
     },
     {
-      name: "Vitamin C",
-      val: isRadiationSurge ? "92 mg" : `${75 + crewOffset} mg`,
+      name: locale === "bn" ? "ভিটামিন সি (Vitamin C)" : "Vitamin C",
+      val: isRadiationSurge ? `${formatNumber(92)} mg` : `${formatNumber(75 + crewOffset)} mg`,
       pct: isRadiationSurge ? 95 : Math.min(100, 88 + crewOffset),
       status: "OPTIMAL",
       color: "from-emerald-500 to-teal-400",
     },
     {
-      name: "Vitamin D3",
-      val: `${550 + crewOffset * 15} IU`,
+      name: locale === "bn" ? "ভিটামিন ডি৩ (Vitamin D3)" : "Vitamin D3",
+      val: `${formatNumber(550 + crewOffset * 15)} IU`,
       pct: 35 + crewOffset,
       status: "DEFICIT",
       color: "from-rose-500 to-amber-500",
     },
     {
-      name: "Vitamin E",
-      val: isRadiationSurge ? "14 mg" : `${(9 + crewOffset * 0.3).toFixed(1)} mg`,
+      name: locale === "bn" ? "ভিটামিন ই (Vitamin E)" : "Vitamin E",
+      val: isRadiationSurge ? `${formatNumber(14)} mg` : `${formatNumber((9 + crewOffset * 0.3).toFixed(1))} mg`,
       pct: isRadiationSurge ? 85 : Math.min(100, 55 + crewOffset),
       status: isRadiationSurge ? "ACTIVE DEFENSE" : "ACTIVE",
       color: isRadiationSurge ? "from-cyan-500 to-emerald-400" : "from-amber-500 to-yellow-400",
     },
     {
-      name: "Vitamin K",
-      val: `${50 + crewOffset * 2} mcg`,
+      name: locale === "bn" ? "ভিটামিন কে (Vitamin K)" : "Vitamin K",
+      val: `${formatNumber(50 + crewOffset * 2)} mcg`,
       pct: 65 + crewOffset,
       status: "ACTIVE",
       color: "from-amber-500 to-yellow-400",
@@ -60,36 +82,36 @@ export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) 
 
   const minerals = [
     {
-      name: "Iron (Fe)",
-      val: `${(5.5 + crewOffset * 0.2).toFixed(1)} mg`,
+      name: locale === "bn" ? "আয়রন (Iron - Fe)" : "Iron (Fe)",
+      val: `${formatNumber((5.5 + crewOffset * 0.2).toFixed(1))} mg`,
       pct: 75 + crewOffset,
       status: "OK",
       color: "from-amber-500 to-yellow-400",
     },
     {
-      name: "Calcium (Ca)",
-      val: `${620 + crewOffset * 20} mg`,
+      name: locale === "bn" ? "ক্যালসিয়াম (Calcium - Ca)" : "Calcium (Ca)",
+      val: `${formatNumber(620 + crewOffset * 20)} mg`,
       pct: 45 + crewOffset,
       status: "WATCH",
       color: "from-amber-500 to-orange-400",
     },
     {
-      name: "Magnesium (Mg)",
-      val: isHighStress ? "165 mg" : `${230 + crewOffset * 8} mg`,
+      name: locale === "bn" ? "ম্যাগনেসিয়াম (Magnesium - Mg)" : "Magnesium (Mg)",
+      val: isHighStress ? `${formatNumber(165)} mg` : `${formatNumber(230 + crewOffset * 8)} mg`,
       pct: isHighStress ? 48 : Math.min(100, 80 + crewOffset),
       status: isHighStress ? "WATCH" : "OK",
       color: isHighStress ? "from-amber-500 to-orange-400" : "from-amber-500 to-yellow-400",
     },
     {
-      name: "Zinc (Zn)",
-      val: `${(6.2 + crewOffset * 0.2).toFixed(1)} mg`,
+      name: locale === "bn" ? "জিঙ্ক (Zinc - Zn)" : "Zinc (Zn)",
+      val: `${formatNumber((6.2 + crewOffset * 0.2).toFixed(1))} mg`,
       pct: 70 + crewOffset,
       status: "OK",
       color: "from-amber-500 to-yellow-400",
     },
     {
-      name: "Potassium (K)",
-      val: `${1950 + crewOffset * 40} mg`,
+      name: locale === "bn" ? "পটাশিয়াম (Potassium - K)" : "Potassium (K)",
+      val: `${formatNumber(1950 + crewOffset * 40)} mg`,
       pct: Math.min(100, 88 + crewOffset),
       status: "OPTIMAL",
       color: "from-emerald-500 to-teal-400",
@@ -104,11 +126,11 @@ export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) 
         <div className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
           <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
-            03 Micro-Array Assay · Biomarker Profiling
+            {t("biomarkerTitle")}
           </h3>
         </div>
         <span className="font-mono text-xs font-semibold text-cyan-300">
-          Mass Spectrometry · Nominal
+          {t("biomarkerSubtitle")}
         </span>
       </div>
 
@@ -116,7 +138,7 @@ export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) 
         {/* Vitamins */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
           <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-3 border-b border-slate-800/80 pb-2">
-            Key Vitamins (A, B, C, D3, E, K)
+            {t("keyVitamins")}
           </div>
           <div className="space-y-3">
             {vitamins.map((v) => (
@@ -134,7 +156,7 @@ export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) 
                           : "bg-slate-800 text-amber-300 border border-amber-500/40"
                       }`}
                     >
-                      {v.status}
+                      {getStatusText(v.status)}
                     </span>
                   </div>
                 </div>
@@ -152,7 +174,7 @@ export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) 
         {/* Minerals */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
           <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-3 border-b border-slate-800/80 pb-2">
-            Essential Minerals (Fe, Ca, Mg, Zn, K)
+            {t("essentialMinerals")}
           </div>
           <div className="space-y-3.5">
             {minerals.map((m) => (
@@ -170,7 +192,7 @@ export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) 
                           : "bg-slate-800 text-slate-200 border border-slate-700"
                       }`}
                     >
-                      {m.status}
+                      {getStatusText(m.status)}
                     </span>
                   </div>
                 </div>

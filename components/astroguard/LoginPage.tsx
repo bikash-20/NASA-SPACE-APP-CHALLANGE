@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { DEMO_USERS, type AstroRole } from "@/lib/astroGuardTypes";
+import { useI18n } from "@/lib/i18nContext";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 interface LoginPageProps {
   onLogin: (role: AstroRole) => void;
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
+  const { t, locale } = useI18n();
   const [selectedRole, setSelectedRole] = useState<AstroRole>("crew-0");
   const [email, setEmail] = useState(DEMO_USERS["crew-0"].email);
   const [password, setPassword] = useState(DEMO_USERS["crew-0"].pass);
@@ -32,7 +35,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     if (matchedRole) {
       onLogin(matchedRole);
     } else {
-      setErrorMsg("Invalid credentials. Please click any demo card above to load valid credentials.");
+      setErrorMsg(t("loginError"));
     }
   };
 
@@ -48,23 +51,25 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              <span>AstroGuard</span>
+              <span>{t("appName")}</span>
               <span className="rounded-md bg-cyan-950 px-2 py-0.5 font-mono text-xs font-bold text-cyan-400 border border-cyan-500/30">
                 ARES-1 GATEWAY
               </span>
             </h1>
             <p className="text-sm font-medium text-slate-400">
-              NASA Space Apps Challenge · Autonomous Crew Health &amp; Tele-Health System
+              NASA Space Apps Challenge · {t("continuousMonitoring")}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 font-mono text-xs">
-          <span className="flex items-center gap-1.5 rounded-full bg-emerald-950/80 px-3 py-1 font-semibold text-emerald-400 border border-emerald-500/40">
+        <div className="flex items-center gap-3 font-mono text-xs">
+          <LanguageSwitcher />
+
+          <span className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-950/80 px-3 py-1 font-semibold text-emerald-400 border border-emerald-500/40">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Telemetry Uplink Active</span>
+            <span>{locale === "bn" ? "টেলিমেট্রি সক্রিয়" : "Telemetry Active"}</span>
           </span>
-          <span className="hidden sm:inline-block rounded-full bg-slate-900 px-3 py-1 text-slate-400 border border-slate-800">
+          <span className="hidden md:inline-block rounded-full bg-slate-900 px-3 py-1 text-slate-400 border border-slate-800">
             TLS 1.3 Certified
           </span>
         </div>
@@ -76,13 +81,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/40 p-6 shadow-xl">
           <div className="max-w-3xl space-y-2">
             <span className="font-mono text-xs font-bold uppercase tracking-wider text-cyan-400">
-              Multi-Tenant Role Isolation
+              {locale === "bn" ? "মাল্টি-টেন্যান্ট রোল আইসোলেশন" : "Multi-Tenant Role Isolation"}
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Select an Astronaut, Doctor, or Mission Control Console
+              {t("gatewaySubtitle")}
             </h2>
             <p className="text-sm text-slate-300 leading-relaxed">
-              Every crew member gets their own private portal with isolated tele-health channels, real-time Lead-II ECG canvas monitoring, 24H biometric charts, and IoT bio-links. The Flight Surgeon oversees clinical triage and incoming calls.
+              {locale === "bn"
+                ? "প্রত্যেক ক্রু সদস্যের জন্য ব্যক্তিগত পোর্টাল, এনক্রিপ্ট করা টেলি-হেলথ চ্যানেল, সরাসরি লিড-II ইসিজি মনিটরিং এবং আইওটি বায়ো-লিংক সমন্বিত। ফ্লাইট সার্জন ক্লিনিক্যাল ট্রায়াজ ও কল পরিচালনা করেন।"
+                : "Every crew member gets their own private portal with isolated tele-health channels, real-time Lead-II ECG canvas monitoring, 24H biometric charts, and IoT bio-links. The Flight Surgeon oversees clinical triage and incoming calls."}
             </p>
           </div>
         </div>
@@ -91,10 +98,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-300">
-              Demo Access Profiles · 1-Click Immediate Login
+              {t("oneClickProfiles")}
             </h3>
             <span className="font-mono text-xs text-amber-400 font-semibold">
-              Credentials Exposed for Evaluation
+              {locale === "bn" ? "মূল্যায়নের জন্য তথ্য উন্মুক্ত" : "Credentials Exposed for Evaluation"}
             </span>
           </div>
 
@@ -132,7 +139,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         </div>
                         <div>
                           <h4 className="text-base font-bold text-white leading-tight">
-                            {u.name}
+                            {roleKey === "crew-0"
+                              ? t("cdrAmara")
+                              : roleKey === "crew-1"
+                              ? t("drLin")
+                              : roleKey === "crew-2"
+                              ? t("engRafi")
+                              : roleKey === "doctor"
+                              ? t("drEvelyn")
+                              : t("flightDirector")}
                           </h4>
                           <span className="font-mono text-xs text-cyan-400 font-medium">
                             {u.callSign}
@@ -150,15 +165,23 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         }`}
                       >
                         {isDoctor
-                          ? "Doctor Hub"
+                          ? t("flightSurgeon")
                           : isAdmin
-                          ? "Admin"
-                          : "Astronaut"}
+                          ? t("missionControl")
+                          : t("astronautConsole").split(" ")[0]}
                       </span>
                     </div>
 
                     <p className="text-xs text-slate-300 font-medium">
-                      {u.roleTitle}
+                      {roleKey === "crew-0"
+                        ? t("commanderRole")
+                        : roleKey === "crew-1"
+                        ? t("surgeonRole")
+                        : roleKey === "crew-2"
+                        ? t("engineerRole")
+                        : roleKey === "doctor"
+                        ? t("chiefSurgeonRole")
+                        : t("flightDirectorRole")}
                     </p>
 
                     {/* Credentials Preview Strip */}
@@ -184,7 +207,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                       onClick={() => handleSelectRolePreset(roleKey)}
                       className="flex-1 rounded-xl border border-slate-700 bg-slate-900 py-2 font-mono text-xs text-slate-300 hover:text-white hover:bg-slate-800 transition"
                     >
-                      Prefill Form
+                      {locale === "bn" ? "ফর্ম পূরণ" : "Prefill Form"}
                     </button>
                     <button
                       type="button"
@@ -200,7 +223,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           : "bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/30"
                       }`}
                     >
-                      Sign In →
+                      {locale === "bn" ? "লগইন →" : "Sign In →"}
                     </button>
                   </div>
                 </div>
@@ -213,17 +236,19 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-6 max-w-xl mx-auto shadow-xl">
           <div className="border-b border-slate-800 pb-3 mb-4">
             <h3 className="text-base font-bold text-white">
-              Manual Operator Sign-In
+              {locale === "bn" ? "ম্যানুয়াল অপারেটর সাইন-ইন" : "Manual Operator Sign-In"}
             </h3>
             <p className="text-xs text-slate-400 font-mono mt-0.5">
-              Enter email and passkey to launch your authorized module
+              {locale === "bn"
+                ? "অনুমোদিত কনসোলে প্রবেশ করতে ইমেইল ও পাসকি দিন"
+                : "Enter email and passkey to launch your authorized module"}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                Operator Email
+                {t("operatorEmail")}
               </label>
               <input
                 type="email"
@@ -237,7 +262,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
             <div>
               <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                Passkey
+                {t("accessPasskey")}
               </label>
               <input
                 type="text"
@@ -259,7 +284,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               type="submit"
               className="w-full rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 py-3 font-mono text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-400 hover:to-indigo-500 transition"
             >
-              Authenticate &amp; Launch Console
+              {locale === "bn" ? "যাচাই করুন এবং কনসোল চালু করুন" : "Authenticate & Launch Console"}
             </button>
           </form>
         </div>

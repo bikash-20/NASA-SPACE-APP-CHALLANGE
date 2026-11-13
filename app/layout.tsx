@@ -4,6 +4,7 @@ import "./globals.css";
 import { MotionConfig } from "framer-motion";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { InstallBanner } from "@/components/InstallBanner";
+import { I18nProvider } from "@/lib/i18nContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -56,9 +57,11 @@ export default function RootLayout({
         style={{ lineHeight: "var(--lh-body)" }}
       >
         <MotionConfig reducedMotion="user">
-          <ServiceWorkerRegistration />
-          <InstallBanner />
-          {children}
+          <I18nProvider>
+            <ServiceWorkerRegistration />
+            <InstallBanner />
+            {children}
+          </I18nProvider>
         </MotionConfig>
       </body>
     </html>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ConsultMessage } from "@/lib/astroGuardTypes";
+import { useI18n } from "@/lib/i18nContext";
 
 interface MedicalConsultViewProps {
   messages: ConsultMessage[];
@@ -22,6 +23,7 @@ export function MedicalConsultView({
   doctorName = "Dr. Evelyn Vance",
   doctorCallSign = "MED-002",
 }: MedicalConsultViewProps) {
+  const { locale, t } = useI18n();
   const [inputText, setInputText] = useState("");
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
 
@@ -58,12 +60,16 @@ export function MedicalConsultView({
             <div className="flex items-center gap-2">
               <h3 className="text-base font-bold text-white">{doctorName}</h3>
               <span className="rounded-md bg-slate-800 px-2 py-0.5 font-mono text-xs font-semibold text-rose-300 border border-slate-700">
-                {doctorCallSign} · Chief Flight Surgeon
+                {doctorCallSign} · {t("chiefSurgeonRole")}
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 font-medium mt-0.5">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Direct Tele-Health Uplink Active · Zero-Delay Secure Channel</span>
+              <span>
+                {locale === "bn"
+                  ? "সরাসরি টেলি-হেলথ সংযোগ সক্রিয় · সুরক্ষিত চ্যানেল"
+                  : "Direct Tele-Health Uplink Active · Zero-Delay Secure Channel"}
+              </span>
             </div>
           </div>
         </div>
@@ -74,24 +80,24 @@ export function MedicalConsultView({
             type="button"
             onClick={() => onStartCall("audio")}
             className="flex h-10 px-3 items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-950/60 font-mono text-xs font-bold text-cyan-300 hover:bg-cyan-900/70 transition shadow"
-            title="Start Voice Call"
+            title={t("startVoiceCall")}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
             </svg>
-            <span className="hidden sm:inline">Voice Call</span>
+            <span className="hidden sm:inline">{t("startVoiceCall")}</span>
           </button>
           <button
             type="button"
             onClick={() => onStartCall("video")}
             className="flex h-10 px-3 items-center gap-1.5 rounded-xl border border-purple-500/40 bg-purple-950/60 font-mono text-xs font-bold text-purple-300 hover:bg-purple-900/70 transition shadow"
-            title="Start Video Tele-Health"
+            title={t("startVideoUplink")}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="23 7 16 12 23 17 23 7" />
               <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
             </svg>
-            <span className="hidden sm:inline">Video Uplink</span>
+            <span className="hidden sm:inline">{t("startVideoUplink")}</span>
           </button>
           <button
             type="button"
@@ -103,7 +109,7 @@ export function MedicalConsultView({
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            <span>SOS</span>
+            <span>{t("sosDispatch")}</span>
           </button>
         </div>
       </div>
@@ -120,10 +126,10 @@ export function MedicalConsultView({
               </svg>
             </div>
             <div className="text-sm font-mono text-slate-300 font-semibold">
-              Medical Tele-Health channel open with {doctorName}.
+              {t("medicalChannelOpenWith")} {doctorName}.
             </div>
             <div className="text-xs font-mono text-slate-400">
-              Send a message or voice note below to consult the Flight Surgeon.
+              {t("sendVoiceToConsult")}
             </div>
           </div>
         ) : (
@@ -172,12 +178,12 @@ export function MedicalConsultView({
                         {playingVoiceId === m.id ? "⏸" : "▶"}
                       </button>
                       <div>
-                        <div className="font-bold text-sm">Voice Dispatch</div>
+                        <div className="font-bold text-sm">{t("voiceDispatch")}</div>
                         <div className="flex items-center gap-2 font-mono text-xs opacity-90">
                           <span>0:00 / 0:{m.voiceNoteDuration}</span>
                           {playingVoiceId === m.id && (
                             <span className="text-emerald-300 animate-pulse font-bold">
-                              ● PLAYING AUDIO
+                              ● {t("playingAudio")}
                             </span>
                           )}
                         </div>
@@ -202,21 +208,21 @@ export function MedicalConsultView({
           type="button"
           onClick={onSendVoiceNote}
           className="flex h-11 px-3.5 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 font-mono text-xs font-bold text-cyan-300 hover:bg-slate-800 transition"
-          title="Send Voice Dispatch"
+          title={t("voiceNote")}
         >
           <svg className="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
             <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
             <line x1="12" y1="19" x2="12" y2="22" />
           </svg>
-          <span className="hidden sm:inline">Voice Note</span>
+          <span className="hidden sm:inline">{t("voiceNote")}</span>
         </button>
 
         <input
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          placeholder="Type consultation message to Flight Surgeon..."
+          placeholder={t("typeConsultPlaceholder")}
           className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
         />
 
@@ -224,7 +230,7 @@ export function MedicalConsultView({
           type="submit"
           className="rounded-xl bg-cyan-600 px-5 py-2.5 font-mono text-xs font-bold text-white hover:bg-cyan-500 transition shadow-lg shadow-cyan-600/30"
         >
-          Send
+          {t("send")}
         </button>
       </form>
     </div>

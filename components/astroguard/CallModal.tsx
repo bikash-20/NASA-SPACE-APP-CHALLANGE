@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ActiveCallState } from "@/lib/astroGuardTypes";
+import { useI18n } from "@/lib/i18nContext";
 
 interface CallModalProps {
   callState: ActiveCallState;
@@ -16,6 +17,7 @@ export function CallModal({
   onToggleMute,
   onToggleVideo,
 }: CallModalProps) {
+  const { locale, t, formatNumber } = useI18n();
   const [seconds, setSeconds] = useState(0);
 
   useEffect(() => {
@@ -43,11 +45,13 @@ export function CallModal({
           <div className="flex items-center gap-2.5">
             <span className="h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-mono text-xs uppercase tracking-wider text-cyan-300 font-bold">
-              Encrypted Tele-Health Uplink · {callState.type === "video" ? "Video Tele-Presence" : "Direct Voice Comm"}
+              {locale === "bn"
+                ? `এনক্রিপ্ট করা টেলি-হেলথ আপলিঙ্ক · ${callState.type === "video" ? "ভিডিও টেলি-উপস্থিতি" : "ভয়েস যোগাযোগ"}`
+                : `Encrypted Tele-Health Uplink · ${callState.type === "video" ? "Video Tele-Presence" : "Direct Voice Comm"}`}
             </span>
           </div>
           <span className="rounded-md bg-emerald-950 px-2.5 py-1 font-mono text-xs font-bold text-emerald-300 border border-emerald-500/40">
-            ● {timerStr}
+            ● {formatNumber(timerStr)}
           </span>
         </div>
 
@@ -70,13 +74,15 @@ export function CallModal({
                   {callState.crewName}
                 </span>
                 <span className="font-mono text-xs text-cyan-300 mt-1 font-medium">
-                  Direct Deep-Space Feed · 1080p 60fps
+                  {locale === "bn"
+                    ? "সরাসরি ডিপ-স্পেস ফিড · 1080p 60fps"
+                    : "Direct Deep-Space Feed · 1080p 60fps"}
                 </span>
               </div>
 
               {/* HUD Elements */}
               <div className="absolute top-3 left-3 font-mono text-xs text-emerald-300 bg-slate-950/90 px-2.5 py-1 rounded-md border border-emerald-500/40 font-bold">
-                REC ● 14.8 Mbps
+                {locale === "bn" ? "রেকর্ড ● ১৪.৮ Mbps" : "REC ● 14.8 Mbps"}
               </div>
               <div className="absolute bottom-3 right-3 font-mono text-xs text-slate-300 bg-slate-950/90 px-2.5 py-1 rounded-md border border-slate-800 font-medium">
                 Hab-2 Tele-Health Vault
@@ -98,7 +104,9 @@ export function CallModal({
                 {callState.crewName}
               </h3>
               <p className="font-mono text-xs text-slate-300 mt-1 font-medium">
-                Direct Voice Uplink Connected · 48 kHz Opus
+                {locale === "bn"
+                  ? "সরাসরি ভয়েস আপলিঙ্ক সংযুক্ত · ৪৮ kHz Opus"
+                  : "Direct Voice Uplink Connected · 48 kHz Opus"}
               </p>
 
               {/* Dynamic Sound Wave Simulator */}
@@ -129,7 +137,7 @@ export function CallModal({
                 ? "bg-rose-950 text-rose-300 border-rose-500/60"
                 : "bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800"
             }`}
-            title={callState.isMuted ? "Unmute Mic" : "Mute Mic"}
+            title={callState.isMuted ? t("unmuteMic") : t("muteMic")}
           >
             {callState.isMuted ? (
               <svg className="w-5 h-5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -157,7 +165,7 @@ export function CallModal({
                   ? "bg-rose-950 text-rose-300 border-rose-500/60"
                   : "bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800"
               }`}
-              title={callState.isVideoMuted ? "Enable Video" : "Disable Video"}
+              title={callState.isVideoMuted ? t("enableVideo") : t("disableVideo")}
             >
               {callState.isVideoMuted ? (
                 <svg className="w-5 h-5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -179,7 +187,7 @@ export function CallModal({
             onClick={onClose}
             className="flex h-12 px-7 items-center justify-center gap-2 rounded-2xl bg-rose-600 font-mono text-xs font-extrabold uppercase tracking-wider text-white shadow-lg shadow-rose-600/40 hover:bg-rose-500 transition"
           >
-            <span>Terminate Call</span>
+            <span>{t("terminateCall")}</span>
             <span>✕</span>
           </button>
         </div>

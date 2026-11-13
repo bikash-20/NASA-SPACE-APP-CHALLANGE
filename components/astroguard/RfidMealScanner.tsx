@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DEFAULT_NUTRITION_ITEMS } from "@/lib/astroGuardData";
 import type { NutritionItem } from "@/lib/astroGuardTypes";
+import { useI18n } from "@/lib/i18nContext";
 
 interface RfidMealScannerProps {
   onScanItem?: (item: NutritionItem) => void;
@@ -10,6 +11,7 @@ interface RfidMealScannerProps {
 }
 
 export function RfidMealScanner({ onScanItem, className = "" }: RfidMealScannerProps) {
+  const { locale, t, formatNumber } = useI18n();
   const [scannedId, setScannedId] = useState<string | null>(null);
 
   const handleScan = (item: NutritionItem) => {
@@ -22,6 +24,22 @@ export function RfidMealScanner({ onScanItem, className = "" }: RfidMealScannerP
     }, 1500);
   };
 
+  const getItemName = (name: string) => {
+    if (locale !== "bn") return name;
+    switch (name) {
+      case "Irradiated Chicken Breast":
+        return "জীবাণুমুক্ত মুরগির মাংস (চিকেন ব্রেস্ট)";
+      case "Lyophilized Berry Mix":
+        return "শুকনো বেরি মিশ্রণ (বেরি মিক্স)";
+      case "Electrolyte Hab-Pack":
+        return "ইলেক্ট্রোলাইট হাব-প্যাক (পানীয়)";
+      case "Thermalized Brown Rice":
+        return "থার্মালাইজড বাদামী চালের ভাত (রাইস)";
+      default:
+        return name;
+    }
+  };
+
   return (
     <div
       className={`rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-xl font-sans ${className}`}
@@ -30,11 +48,13 @@ export function RfidMealScanner({ onScanItem, className = "" }: RfidMealScannerP
         <div className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-pulse" />
           <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
-            04 RFID Space-Meal Scanner
+            {t("rfidScannerTitle")}
           </h3>
         </div>
         <span className="font-mono text-xs font-semibold text-slate-300">
-          Galley Scanner · Optical RFID Port Armed
+          {locale === "bn"
+            ? "গ্যালি স্ক্যানার · অপটিক্যাল আরএফআইডি পোর্ট প্রস্তুত"
+            : "Galley Scanner · Optical RFID Port Armed"}
         </span>
       </div>
 
@@ -80,12 +100,12 @@ export function RfidMealScanner({ onScanItem, className = "" }: RfidMealScannerP
                   </span>
                 </div>
                 <h4 className="text-sm font-bold text-white line-clamp-1">
-                  {item.name}
+                  {getItemName(item.name)}
                 </h4>
                 <div className="mt-1.5 flex items-center gap-2 font-mono text-xs text-slate-300 font-medium">
-                  <span className="text-cyan-300 font-bold">+{item.caloriesKcal} kcal</span>
+                  <span className="text-cyan-300 font-bold">+{formatNumber(item.caloriesKcal)} kcal</span>
                   <span>·</span>
-                  <span className="text-amber-300 font-bold">+{item.proteinG}g Pro</span>
+                  <span className="text-amber-300 font-bold">+{formatNumber(item.proteinG)}g Pro</span>
                 </div>
               </div>
 
@@ -98,7 +118,13 @@ export function RfidMealScanner({ onScanItem, className = "" }: RfidMealScannerP
                     : "bg-slate-950 text-cyan-300 border-cyan-500/40 hover:bg-cyan-950 hover:border-cyan-400 hover:text-white"
                 }`}
               >
-                {isScanning ? "✓ SCANNED & SYNCED" : "TRIGGER RFID"}
+                {isScanning
+                  ? locale === "bn"
+                    ? "✓ স্ক্যান ও সিঙ্ক সম্পন্ন"
+                    : "✓ SCANNED & SYNCED"
+                  : locale === "bn"
+                  ? "আরএফআইডি স্ক্যান"
+                  : "TRIGGER RFID"}
               </button>
             </div>
           );

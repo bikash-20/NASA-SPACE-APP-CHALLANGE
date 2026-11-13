@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { IoTSensorDevice } from "@/lib/astroGuardTypes";
+import { useI18n } from "@/lib/i18nContext";
 
 interface BioLinkViewProps {
   sensors: IoTSensorDevice[];
@@ -16,6 +17,7 @@ export function BioLinkView({
   crewName,
   callSign,
 }: BioLinkViewProps) {
+  const { locale, t, formatNumber } = useI18n();
   const [showPairModal, setShowPairModal] = useState(false);
   const [pinCode, setPinCode] = useState("");
   const [pairingSuccess, setPairingSuccess] = useState(false);
@@ -40,45 +42,49 @@ export function BioLinkView({
         <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-lg">
           <div className="flex items-center justify-between">
             <span className="font-mono text-xs uppercase tracking-wider text-slate-400 font-bold">
-              Edge Gateway Hub
+              {locale === "bn" ? "এজ গেটওয়ে হাব" : "Edge Gateway Hub"}
             </span>
             <span className="rounded-md bg-emerald-950 px-2.5 py-0.5 font-mono text-xs font-bold text-emerald-300 border border-emerald-500/40">
-              ● LIVE 100Hz
+              ● {locale === "bn" ? "সরাসরি ১০০Hz" : "LIVE 100Hz"}
             </span>
           </div>
           <div className="mt-2 text-lg font-bold text-white">Hab 2 - Rack 4B</div>
           <div className="mt-1 font-mono text-xs text-cyan-300 font-medium">
-            Local Mesh BLE 5.3 Active
+            {locale === "bn" ? "স্থানীয় মেশ BLE ৫.৩ সক্রিয়" : "Local Mesh BLE 5.3 Active"}
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-lg">
           <div className="flex items-center justify-between">
             <span className="font-mono text-xs uppercase tracking-wider text-slate-400 font-bold">
-              Paired Sensors
+              {locale === "bn" ? "সংযুক্ত সেন্সরসমূহ" : "Paired Sensors"}
             </span>
             <span className="rounded-md bg-cyan-950 px-2.5 py-0.5 font-mono text-xs font-bold text-cyan-300 border border-cyan-500/40">
               BLE 5.3 / USB Link
             </span>
           </div>
           <div className="mt-2 text-lg font-bold text-white">
-            {onlineCount} of {sensors.length} Online
+            {locale === "bn"
+              ? `${formatNumber(onlineCount)} / ${formatNumber(sensors.length)} টি সক্রিয়`
+              : `${onlineCount} of ${sensors.length} Online`}
           </div>
           <div className="mt-1 font-mono text-xs text-slate-300 font-medium">
-            Latency &lt; 8ms · Jitter 0.4ms
+            {locale === "bn" ? "লেটেন্সি < ৮ms · জিটার ০.৪ms" : "Latency < 8ms · Jitter 0.4ms"}
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-lg">
           <div className="flex items-center justify-between">
             <span className="font-mono text-xs uppercase tracking-wider text-slate-400 font-bold">
-              Biometric Vault
+              {locale === "bn" ? "বায়োমেট্রিক ভল্ট" : "Biometric Vault"}
             </span>
             <span className="rounded-md bg-purple-950 px-2.5 py-0.5 font-mono text-xs font-bold text-purple-300 border border-purple-500/40">
               TLS 1.3 Certified
             </span>
           </div>
-          <div className="mt-2 text-lg font-bold text-white">{callSign} · Vault Verified</div>
+          <div className="mt-2 text-lg font-bold text-white">
+            {callSign} · {locale === "bn" ? "ভল্ট যাচাইকৃত" : "Vault Verified"}
+          </div>
           <div className="mt-1 font-mono text-xs text-slate-300 font-medium truncate">
             {crewName}
           </div>
@@ -90,7 +96,9 @@ export function BioLinkView({
         <div className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-pulse" />
           <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
-            Active Biometric Sensors &amp; Wearables ({sensors.length})
+            {locale === "bn"
+              ? `সক্রিয় বায়োমেট্রিক সেন্সর ও পরিধানযোগ্য (${formatNumber(sensors.length)})`
+              : `Active Biometric Sensors & Wearables (${sensors.length})`}
           </h3>
         </div>
         <button
@@ -98,7 +106,7 @@ export function BioLinkView({
           onClick={() => setShowPairModal(true)}
           className="rounded-xl border border-cyan-500/40 bg-cyan-950/60 px-4 py-2 font-mono text-xs font-bold text-cyan-300 hover:bg-cyan-900 transition shadow"
         >
-          + Connect by Phone / PIN Number
+          {locale === "bn" ? "+ ফোন / পিন কোড দিয়ে সংযুক্ত করুন" : "+ Connect by Phone / PIN Number"}
         </button>
       </div>
 
@@ -122,7 +130,13 @@ export function BioLinkView({
                     }`}
                   />
                   <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-400">
-                    {s.online ? "LIVE SIMULATION" : "DISCONNECTED"}
+                    {s.online
+                      ? locale === "bn"
+                        ? "সরাসরি সিমুলেশন"
+                        : "LIVE SIMULATION"
+                      : locale === "bn"
+                      ? "বিচ্ছিন্ন"
+                      : "DISCONNECTED"}
                   </span>
                 </div>
                 <button
@@ -131,7 +145,13 @@ export function BioLinkView({
                   className="text-xs font-mono font-semibold text-slate-400 hover:text-rose-400 transition"
                   title="Toggle Sensor Link"
                 >
-                  {s.online ? "Disconnect" : "Reconnect"}
+                  {s.online
+                    ? locale === "bn"
+                      ? "বিচ্ছিন্ন করুন"
+                      : "Disconnect"
+                    : locale === "bn"
+                    ? "পুনরায় সংযুক্ত"
+                    : "Reconnect"}
                 </button>
               </div>
 
@@ -166,25 +186,28 @@ export function BioLinkView({
 
               <div className="rounded-xl border border-slate-800/80 bg-slate-900/80 p-3 font-mono text-xs space-y-1.5">
                 <div className="flex justify-between text-slate-400">
-                  <span>Protocol:</span>
+                  <span>{t("protocol")}</span>
                   <span className="text-slate-200 font-semibold">{s.protocol}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Signal RSSI:</span>
+                  <span>{locale === "bn" ? "সিগন্যাল RSSI:" : "Signal RSSI:"}</span>
                   <span
                     className={`font-semibold ${
                       s.signalRssi > -60 ? "text-emerald-400" : "text-amber-400"
                     }`}
                   >
-                    {s.signalRssi > -60 ? "EXCELLENT" : "GOOD"} ({s.signalRssi} dBm)
+                    {s.signalRssi > -60
+                      ? locale === "bn" ? "উত্তম" : "EXCELLENT"
+                      : locale === "bn" ? "ভালো" : "GOOD"}{" "}
+                    ({formatNumber(s.signalRssi)} dBm)
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Battery:</span>
-                  <span className="text-cyan-300 font-bold">{s.batteryPct}%</span>
+                  <span>{t("battery")}</span>
+                  <span className="text-cyan-300 font-bold">{formatNumber(s.batteryPct)}%</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Category:</span>
+                  <span>{locale === "bn" ? "ক্যাটেগরি:" : "Category:"}</span>
                   <span className="text-slate-300 font-medium">{s.dataCategory}</span>
                 </div>
               </div>
@@ -192,7 +215,7 @@ export function BioLinkView({
               {/* Payload Strip */}
               <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-3 font-mono text-xs text-cyan-300">
                 <span className="text-[11px] text-slate-400 block uppercase font-bold mb-0.5">
-                  Live Stream Payload
+                  {locale === "bn" ? "লাইভ স্ট্রিম পেলোড" : "Live Stream Payload"}
                 </span>
                 <span className="font-bold text-white">{s.livePayload}</span>
               </div>
@@ -200,7 +223,9 @@ export function BioLinkView({
 
             <div className="mt-4 border-t border-slate-800 pt-3 text-xs font-mono text-slate-400 flex justify-between items-center">
               <span className="truncate text-slate-400">{s.calibrationNote}</span>
-              <span className="text-emerald-400 font-bold shrink-0 ml-2">Sync: Just now</span>
+              <span className="text-emerald-400 font-bold shrink-0 ml-2">
+                {locale === "bn" ? "সিঙ্ক: এইমাত্র" : "Sync: Just now"}
+              </span>
             </div>
           </div>
         ))}
@@ -211,16 +236,20 @@ export function BioLinkView({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in">
           <div className="w-full max-w-md rounded-2xl border border-cyan-500/40 bg-slate-950 p-6 shadow-2xl">
             <h4 className="text-lg font-bold text-white">
-              Pair Biometric Sensor / Smartwatch
+              {locale === "bn"
+                ? "বায়োমেট্রিক সেন্সর / স্মার্টওয়াচ যুক্ত করুন"
+                : "Pair Biometric Sensor / Smartwatch"}
             </h4>
             <p className="mt-1 text-sm text-slate-300 leading-relaxed">
-              Enter the 6-digit Bluetooth/WiFi pairing PIN displayed on your smartwatch or bio-patch.
+              {locale === "bn"
+                ? "আপনার স্মার্টওয়াচ বা বায়ো-প্যাচে প্রদর্শিত ৬-ডিজিটের ব্লুটুথ/ওয়াইফাই পেয়ারিং পিন কোড প্রদান করুন।"
+                : "Enter the 6-digit Bluetooth/WiFi pairing PIN displayed on your smartwatch or bio-patch."}
             </p>
 
             <form onSubmit={handlePair} className="mt-5 space-y-4">
               <div>
                 <label className="block text-xs font-mono font-bold uppercase text-slate-300 mb-1.5">
-                  Device Passkey / PIN
+                  {locale === "bn" ? "ডিভাইস পাসকি / পিন" : "Device Passkey / PIN"}
                 </label>
                 <input
                   type="text"
@@ -234,7 +263,9 @@ export function BioLinkView({
 
               {pairingSuccess && (
                 <div className="rounded-xl bg-emerald-950 p-3 text-center text-xs font-mono text-emerald-300 font-bold border border-emerald-500/40">
-                  ✓ Pair successful! Handshake verified via TLS 1.3 mesh.
+                  {locale === "bn"
+                    ? "✓ সংযোগ সফল! TLS ১.৩ মেশ এর মাধ্যমে হ্যান্ডশেক যাচাই সম্পন্ন।"
+                    : "✓ Pair successful! Handshake verified via TLS 1.3 mesh."}
                 </div>
               )}
 
@@ -244,13 +275,13 @@ export function BioLinkView({
                   onClick={() => setShowPairModal(false)}
                   className="rounded-xl px-4 py-2 text-xs font-mono text-slate-400 hover:text-white"
                 >
-                  Cancel
+                  {locale === "bn" ? "বাতিল" : "Cancel"}
                 </button>
                 <button
                   type="submit"
                   className="rounded-xl bg-cyan-600 px-5 py-2 text-xs font-mono font-bold text-white hover:bg-cyan-500 transition shadow-lg shadow-cyan-600/30"
                 >
-                  Confirm &amp; Pair
+                  {locale === "bn" ? "নিশ্চিত করুন ও পেয়ার করুন" : "Confirm & Pair"}
                 </button>
               </div>
             </form>

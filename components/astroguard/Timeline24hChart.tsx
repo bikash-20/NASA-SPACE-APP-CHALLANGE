@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { Crew } from "@/lib/types";
+import { useI18n } from "@/lib/i18nContext";
 
 interface Timeline24hChartProps {
   crew: Crew;
@@ -9,6 +10,8 @@ interface Timeline24hChartProps {
 }
 
 export function Timeline24hChart({ crew, className = "" }: Timeline24hChartProps) {
+  const { locale, t, formatNumber } = useI18n();
+
   const data = useMemo(() => {
     const points = [];
     const baseHr = crew.bhr;
@@ -64,23 +67,23 @@ export function Timeline24hChart({ crew, className = "" }: Timeline24hChartProps
         <div className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
           <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
-            24H Telemetry Timeline · Heart Rate &amp; Glucose
+            {t("timelineTitle")}
           </h3>
         </div>
         <div className="flex items-center gap-4 text-xs font-mono font-semibold">
           <div className="flex items-center gap-2 text-rose-400">
             <span className="inline-block h-2 w-4 rounded-full bg-rose-500" />
-            <span>Heart Rate (BPM)</span>
+            <span>{locale === "bn" ? "হৃদস্পন্দন (BPM)" : "Heart Rate (BPM)"}</span>
           </div>
           <div className="flex items-center gap-2 text-cyan-300">
             <span className="inline-block h-2 w-4 rounded-full bg-cyan-400" />
-            <span>Glucose (mg/dL)</span>
+            <span>{t("glucose")}</span>
           </div>
           <div className="flex items-center gap-1.5 text-amber-300">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3" />
             </svg>
-            <span>Meal Events</span>
+            <span>{t("mealEvents")}</span>
           </div>
         </div>
       </div>
@@ -101,9 +104,9 @@ export function Timeline24hChart({ crew, className = "" }: Timeline24hChartProps
           ))}
 
           {/* Meal Marker Vertical Pins */}
-          {[{ x: paddingX + innerW * (7.5 / 24), label: "Breakfast" },
-            { x: paddingX + innerW * (13 / 24), label: "Lunch" },
-            { x: paddingX + innerW * (19 / 24), label: "Dinner" }].map((pin, i) => (
+          {[{ x: paddingX + innerW * (7.5 / 24), label: t("breakfast") },
+            { x: paddingX + innerW * (13 / 24), label: t("lunch") },
+            { x: paddingX + innerW * (19 / 24), label: t("dinner") }].map((pin, i) => (
             <g key={i}>
               <line
                 x1={pin.x}
@@ -147,11 +150,11 @@ export function Timeline24hChart({ crew, className = "" }: Timeline24hChartProps
           />
 
           {/* X-Axis labels */}
-          {["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "24:00"].map((t, idx) => {
+          {["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "24:00"].map((timeStr, idx) => {
             const xPos = paddingX + (idx / 6) * innerW;
             return (
               <text
-                key={t}
+                key={timeStr}
                 x={xPos}
                 y={height - 8}
                 fill="#94a3b8"
@@ -160,7 +163,7 @@ export function Timeline24hChart({ crew, className = "" }: Timeline24hChartProps
                 fontWeight="bold"
                 textAnchor="middle"
               >
-                {t}
+                {formatNumber(timeStr)}
               </text>
             );
           })}

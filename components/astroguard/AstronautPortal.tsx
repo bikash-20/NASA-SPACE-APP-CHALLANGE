@@ -18,6 +18,8 @@ import { Timeline24hChart } from "./Timeline24hChart";
 import { BioLinkView } from "./BioLinkView";
 import { MedicalConsultView } from "./MedicalConsultView";
 import { CallModal } from "./CallModal";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useI18n } from "@/lib/i18nContext";
 
 interface AstronautPortalProps {
   user: AstroUser;
@@ -62,6 +64,7 @@ export function AstronautPortal({
   chatStreaming,
   chatError,
 }: AstronautPortalProps) {
+  const { t, locale, formatNumber } = useI18n();
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "ai" | "consult" | "biolink"
   >("dashboard");
@@ -154,10 +157,10 @@ export function AstronautPortal({
               {!sidebarCollapsed && (
                 <div>
                   <h1 className="text-base font-bold tracking-tight text-white">
-                    AstroGuard
+                    {t("appName")}
                   </h1>
                   <p className="font-mono text-xs font-semibold text-cyan-400 uppercase tracking-wider">
-                    Astronaut Console
+                    {t("astronautConsole")}
                   </p>
                 </div>
               )}
@@ -178,7 +181,7 @@ export function AstronautPortal({
             <button
               type="button"
               onClick={() => setActiveTab("dashboard")}
-              title="Mission Telemetry"
+              title={t("navTelemetry")}
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
                   ? "justify-center p-3"
@@ -194,13 +197,13 @@ export function AstronautPortal({
                 <line x1="12" y1="20" x2="12" y2="4" />
                 <line x1="6" y1="20" x2="6" y2="14" />
               </svg>
-              {!sidebarCollapsed && <span>Mission Telemetry</span>}
+              {!sidebarCollapsed && <span>{t("navTelemetry")}</span>}
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab("ai")}
-              title="AI Health Copilot"
+              title={t("navAiCopilot")}
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
                   ? "justify-center p-3"
@@ -215,13 +218,13 @@ export function AstronautPortal({
                 <circle cx="12" cy="12" r="4" />
                 <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
               </svg>
-              {!sidebarCollapsed && <span>AI Health Copilot</span>}
+              {!sidebarCollapsed && <span>{t("navAiCopilot")}</span>}
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab("consult")}
-              title="Doctor Tele-Health"
+              title={t("navTeleHealth")}
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
                   ? "justify-center p-3 relative"
@@ -236,7 +239,7 @@ export function AstronautPortal({
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
-                {!sidebarCollapsed && <span>Doctor Tele-Health</span>}
+                {!sidebarCollapsed && <span>{t("navTeleHealth")}</span>}
               </div>
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
             </button>
@@ -244,7 +247,7 @@ export function AstronautPortal({
             <button
               type="button"
               onClick={() => setActiveTab("biolink")}
-              title="Bio-Link (IoT Wearables)"
+              title={t("navBioLink")}
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
                   ? "justify-center p-3"
@@ -258,7 +261,7 @@ export function AstronautPortal({
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" />
               </svg>
-              {!sidebarCollapsed && <span>Bio-Link (IoT Wearables)</span>}
+              {!sidebarCollapsed && <span>{t("navBioLink")}</span>}
             </button>
           </nav>
         </div>
@@ -293,10 +296,10 @@ export function AstronautPortal({
             className={`w-full flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900 font-mono text-xs font-bold text-slate-200 hover:bg-rose-950 hover:text-rose-200 hover:border-rose-500/50 transition shadow-sm ${
               sidebarCollapsed ? "p-2.5" : "gap-2 py-2.5"
             }`}
-            title="Sign Out to Login Gateway"
+            title={t("signOut")}
           >
             <span>[→</span>
-            {!sidebarCollapsed && <span>Sign Out</span>}
+            {!sidebarCollapsed && <span>{t("signOut")}</span>}
           </button>
         </div>
       </aside>
@@ -318,25 +321,27 @@ export function AstronautPortal({
             )}
             <div>
               <h2 className="text-xl font-bold text-white flex items-center gap-2.5">
-                <span>Mission Console</span>
+                <span>{t("missionConsole")}</span>
                 <span className="font-mono text-xs font-semibold text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/30">
                   {user.name} ({user.callSign})
                 </span>
               </h2>
               <p className="text-xs text-slate-300 font-medium mt-0.5">
-                Continuous physiological monitoring, nutrition telemetry &amp; flight surgeon uplink
+                {t("continuousMonitoring")}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+
             <button
               type="button"
               onClick={handleSosClick}
               className="rounded-xl border border-rose-500/60 bg-rose-600/30 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-600/50 shadow-lg shadow-rose-950/50 transition flex items-center gap-1.5"
             >
               <span className="h-2 w-2 rounded-full bg-rose-400 animate-ping" />
-              <span>EMERGENCY SOS</span>
+              <span>{t("emergencySos")}</span>
             </button>
 
             {/* Medical Notifications Bell */}
@@ -349,7 +354,7 @@ export function AstronautPortal({
                     ? "border-cyan-500/60 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/60 shadow-md shadow-cyan-950"
                     : "border-slate-800 bg-slate-900 text-slate-300 hover:text-white"
                 }`}
-                title="View Telemetry & Medical Notifications"
+                title={t("notificationsTitle")}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -357,7 +362,7 @@ export function AstronautPortal({
                 </svg>
                 {totalNotifications > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-[11px] font-bold text-slate-950 ring-2 ring-slate-950 animate-pulse">
-                    {totalNotifications}
+                    {formatNumber(totalNotifications)}
                   </span>
                 )}
               </button>
@@ -366,7 +371,7 @@ export function AstronautPortal({
                 <div className="fixed sm:absolute inset-x-4 sm:inset-x-auto sm:right-0 top-20 sm:top-12 z-50 w-auto sm:w-96 rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-2xl space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                     <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                      Notifications &amp; Alarms ({totalNotifications})
+                      {t("notificationsTitle")} ({formatNumber(totalNotifications)})
                     </span>
                     <button
                       type="button"
@@ -451,7 +456,7 @@ export function AstronautPortal({
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            <span>CRITICAL EMERGENCY SOS DISPATCHED TO FLIGHT SURGEON &amp; MISSION CONTROL! Telemetry priority elevated.</span>
+            <span>{t("sosBannerMsg")}</span>
           </div>
         )}
 
@@ -462,13 +467,13 @@ export function AstronautPortal({
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
               <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
                 <span className="font-mono text-xs uppercase font-bold text-slate-400 block mb-1">
-                  Heart Rate
+                  {t("heartRate")}
                 </span>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-extrabold font-mono text-rose-400">
-                    {Math.round(crew.hr)}
+                    {formatNumber(Math.round(crew.hr))}
                   </span>
-                  <span className="text-xs font-mono text-slate-400">BPM</span>
+                  <span className="text-xs font-mono text-slate-400">{t("bpm")}</span>
                 </div>
                 <span
                   className={`font-mono text-xs mt-1 block font-semibold ${
@@ -480,20 +485,20 @@ export function AstronautPortal({
                   }`}
                 >
                   {crew.hr > crew.bhr * 1.3
-                    ? "Elevated Watch"
+                    ? t("elevatedWatch")
                     : crew.hr > crew.bhr * 1.15
-                    ? "Mild Exertion"
-                    : `Baseline: ${crew.bhr} BPM`}
+                    ? t("mildExertion")
+                    : `${t("baseline")}: ${formatNumber(crew.bhr)} ${t("bpm")}`}
                 </span>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
                 <span className="font-mono text-xs uppercase font-bold text-slate-400 block mb-1">
-                  Blood Oxygen
+                  {t("bloodOxygen")}
                 </span>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-extrabold font-mono text-cyan-300">
-                    {crew.spo2.toFixed(1)}%
+                    {formatNumber(crew.spo2.toFixed(1))}%
                   </span>
                 </div>
                 <span
@@ -505,17 +510,17 @@ export function AstronautPortal({
                       : "text-emerald-400"
                   }`}
                 >
-                  {crew.spo2 < 92 ? "Hypoxic Alert" : crew.spo2 < 95 ? "Marginal Diffusion" : "Optimal Diffusion"}
+                  {crew.spo2 < 92 ? t("hypoxicAlert") : crew.spo2 < 95 ? t("marginalDiffusion") : t("optimalDiffusion")}
                 </span>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
                 <span className="font-mono text-xs uppercase font-bold text-slate-400 block mb-1">
-                  Sleep Avg
+                  {t("sleepAvg")}
                 </span>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-extrabold font-mono text-indigo-300">
-                    {crew.sleep.toFixed(1)}h
+                    {formatNumber(crew.sleep.toFixed(1))}h
                   </span>
                 </div>
                 <span
@@ -523,17 +528,17 @@ export function AstronautPortal({
                     crew.sleep < 5.5 ? "text-amber-400" : "text-slate-400"
                   }`}
                 >
-                  {crew.sleep < 5.5 ? "Deficit Watch" : "3-Night Rolling"}
+                  {crew.sleep < 5.5 ? t("deficitWatch") : t("rollingNight")}
                 </span>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
                 <span className="font-mono text-xs uppercase font-bold text-slate-400 block mb-1">
-                  Stress Index
+                  {t("stressIndex")}
                 </span>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-extrabold font-mono text-amber-400">
-                    {Math.round(crew.stress)}
+                    {formatNumber(Math.round(crew.stress))}
                   </span>
                   <span className="text-xs font-mono text-slate-400">/100</span>
                 </div>
@@ -542,17 +547,17 @@ export function AstronautPortal({
                     crew.stress > 50 ? "text-amber-400" : "text-slate-400"
                   }`}
                 >
-                  {crew.stress > 50 ? "Elevated Strain" : "Autonomic Balance"}
+                  {crew.stress > 50 ? t("elevatedStrain") : t("autonomicBalance")}
                 </span>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md col-span-2 sm:col-span-1">
                 <span className="font-mono text-xs uppercase font-bold text-slate-400 block mb-1">
-                  30D Dose
+                  {t("dose30d")}
                 </span>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-extrabold font-mono text-purple-300">
-                    {crew.dose.toFixed(0)}
+                    {formatNumber(crew.dose.toFixed(0))}
                   </span>
                   <span className="text-xs font-mono text-slate-400">mSv</span>
                 </div>
@@ -561,7 +566,7 @@ export function AstronautPortal({
                     crew.rate > 0.5 ? "text-amber-400" : "text-slate-400"
                   }`}
                 >
-                  {crew.rate > 0.5 ? `SPE Surge · ${crew.rate.toFixed(2)} mSv/h` : `Rate: ${crew.rate.toFixed(2)} mSv/h`}
+                  {crew.rate > 0.5 ? `${t("speSurgeWatch")} · ${formatNumber(crew.rate.toFixed(2))} mSv/h` : `${t("rate")}: ${formatNumber(crew.rate.toFixed(2))} mSv/h`}
                 </span>
               </div>
             </div>
@@ -603,10 +608,10 @@ export function AstronautPortal({
                       <circle cx="12" cy="12" r="4" />
                       <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
                     </svg>
-                    <span>AstroGuard Physiological Copilot</span>
+                    <span>{t("aiCopilotTitle")}</span>
                   </h3>
                   <p className="text-xs text-slate-300 font-medium mt-0.5">
-                    Synthesizing {user.name}&apos;s verified telemetry snapshot. Rules decide, AI advises.
+                    {t("aiCopilotSubtitle")}
                   </p>
                 </div>
                 <button
@@ -615,7 +620,7 @@ export function AstronautPortal({
                   disabled={briefLoading}
                   className="rounded-xl bg-cyan-600 px-5 py-2.5 font-mono text-xs font-bold text-white hover:bg-cyan-500 transition disabled:opacity-50 shadow-lg shadow-cyan-600/25"
                 >
-                  {briefLoading ? "Generating Brief..." : "Generate Health Brief"}
+                  {briefLoading ? t("briefGenerating") : t("generateHealthBrief")}
                 </button>
               </div>
 
@@ -632,20 +637,22 @@ export function AstronautPortal({
                 </div>
               ) : (
                 <div className="mb-6 rounded-2xl border border-slate-800 bg-slate-900/40 p-5 text-center font-mono text-xs text-slate-400">
-                  No brief generated yet. Click &ldquo;Generate Health Brief&rdquo; above to synthesize current telemetry.
+                  {t("noBriefYet")}
                 </div>
               )}
 
               {/* Interactive AI Chat */}
               <div className="border-t border-slate-800 pt-5">
                 <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200 mb-3">
-                  Ask Medical Assistant About Your Vitals
+                  {t("askAboutVitals")}
                 </h4>
 
                 <div className="space-y-3 mb-4 max-h-72 overflow-y-auto">
                   {chatMessages.length === 0 ? (
                     <div className="text-xs font-mono text-slate-400 italic">
-                      Ask questions like &ldquo;How is my cardiovascular recovery?&rdquo; or &ldquo;Should I increase hydration?&rdquo;
+                      {locale === "bn"
+                        ? "আপনার কার্ডিওভাসকুলার রিকভারি, ঘুম বা হাইড্রেশন বৃদ্ধি সম্পর্কে প্রশ্ন করুন।"
+                        : "Ask questions like \"How is my cardiovascular recovery?\" or \"Should I increase hydration?\""}
                     </div>
                   ) : (
                     chatMessages.map((msg, idx) => (
@@ -658,7 +665,7 @@ export function AstronautPortal({
                         }`}
                       >
                         <span className="font-mono text-xs font-bold text-slate-400 uppercase block mb-1">
-                          {msg.role === "user" ? "You" : "AI Copilot"}
+                          {msg.role === "user" ? t("you") : t("medicalAssistant")}
                         </span>
                         <p className="whitespace-pre-line">{msg.content}</p>
                       </div>
@@ -666,7 +673,7 @@ export function AstronautPortal({
                   )}
                   {chatStreaming && (
                     <div className="text-xs font-mono text-cyan-400 animate-pulse">
-                      AI is generating reply...
+                      {locale === "bn" ? "এআই উত্তর তৈরি করছে..." : "AI is generating reply..."}
                     </div>
                   )}
                   {chatError && (
@@ -681,14 +688,14 @@ export function AstronautPortal({
                     type="text"
                     value={aiInput}
                     onChange={(e) => setAiInput(e.target.value)}
-                    placeholder="Ask about your vitals, sleep deficit, or exercise protocol..."
+                    placeholder={t("askPlaceholder")}
                     className="flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none font-mono"
                   />
                   <button
                     type="submit"
                     className="rounded-xl bg-cyan-600 px-5 py-2.5 font-mono text-xs font-bold text-white hover:bg-cyan-500 transition shadow-md shadow-cyan-600/30"
                   >
-                    Send
+                    {t("send")}
                   </button>
                 </form>
               </div>

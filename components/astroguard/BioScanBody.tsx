@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Crew } from "@/lib/types";
+import { useI18n } from "@/lib/i18nContext";
 
 interface BioScanBodyProps {
   crew: Crew;
@@ -9,6 +10,7 @@ interface BioScanBodyProps {
 }
 
 export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
+  const { locale, t, formatNumber } = useI18n();
   const [activeNode, setActiveNode] = useState<string>("cardiac");
 
   // Dynamically compute hemodynamic and respiratory vitals based on crew telemetry
@@ -24,76 +26,110 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
     crew.stress * 0.04
   ).toFixed(1);
 
+  const getStatusLabel = (status: "Alert" | "Watch" | "Optimal" | "Nominal" | "Elevated") => {
+    if (locale !== "bn") return status;
+    switch (status) {
+      case "Alert":
+        return "সতর্ক সংকেত";
+      case "Watch":
+        return "নজরদারি";
+      case "Optimal":
+        return "অনুকূল";
+      case "Elevated":
+        return "উচ্চ";
+      case "Nominal":
+      default:
+        return "স্বাভাবিক";
+    }
+  };
+
   const nodes = [
     {
       id: "neuro",
-      name: "Neuro / Cranial Activity",
+      name: t("neuroNode"),
       cx: 100,
       cy: 42,
       r: 6,
-      status: crew.sleep < 5.5 ? "Watch" : crew.stress > 65 ? "Elevated" : "Nominal",
+      statusRaw: crew.sleep < 5.5 ? "Watch" : crew.stress > 65 ? "Elevated" : "Nominal",
+      status: getStatusLabel(crew.sleep < 5.5 ? "Watch" : crew.stress > 65 ? "Elevated" : "Nominal"),
       color: crew.sleep < 5.5 ? "#f59e0b" : crew.stress > 65 ? "#f43f5e" : "#10b981",
-      val: `Sleep: ${crew.sleep.toFixed(1)}h · Stress: ${Math.round(crew.stress)}/100`,
+      val: locale === "bn"
+        ? `ঘুম: ${formatNumber(crew.sleep.toFixed(1))} ঘণ্টা · স্ট্রেস: ${formatNumber(Math.round(crew.stress))}/১০০`
+        : `Sleep: ${crew.sleep.toFixed(1)}h · Stress: ${Math.round(crew.stress)}/100`,
     },
     {
       id: "respiratory",
-      name: "Pulmonary & SpO₂ Exchange",
+      name: t("pulmonaryNode"),
       cx: 100,
       cy: 88,
       r: 7,
-      status: crew.spo2 < 92 ? "Alert" : crew.spo2 < 95 ? "Watch" : "Optimal",
+      statusRaw: crew.spo2 < 92 ? "Alert" : crew.spo2 < 95 ? "Watch" : "Optimal",
+      status: getStatusLabel(crew.spo2 < 92 ? "Alert" : crew.spo2 < 95 ? "Watch" : "Optimal"),
       color: crew.spo2 < 92 ? "#ef4444" : crew.spo2 < 95 ? "#f59e0b" : "#10b981",
-      val: `SpO₂: ${crew.spo2.toFixed(1)}% · Resp: ${respRate} Br/min`,
+      val: locale === "bn"
+        ? `SpO₂: ${formatNumber(crew.spo2.toFixed(1))}% · শ্বাস: ${formatNumber(respRate)} বার/মিনিট`
+        : `SpO₂: ${crew.spo2.toFixed(1)}% · Resp: ${respRate} Br/min`,
     },
     {
       id: "cardiac",
-      name: "Cardiac & Hemodynamics",
+      name: t("cardiacNode"),
       cx: 108,
       cy: 104,
       r: 8,
-      status: crew.hr > 105 ? "Alert" : crew.hr > 85 ? "Watch" : "Optimal",
+      statusRaw: crew.hr > 105 ? "Alert" : crew.hr > 85 ? "Watch" : "Optimal",
+      status: getStatusLabel(crew.hr > 105 ? "Alert" : crew.hr > 85 ? "Watch" : "Optimal"),
       color: crew.hr > 105 ? "#ef4444" : crew.hr > 85 ? "#f59e0b" : "#10b981",
-      val: `Heart Rate: ${Math.round(crew.hr)} BPM · BP: ${sysBp}/${diaBp}`,
+      val: locale === "bn"
+        ? `হৃদস্পন্দন: ${formatNumber(Math.round(crew.hr))} BPM · রক্তচাপ: ${formatNumber(sysBp)}/${formatNumber(diaBp)}`
+        : `Heart Rate: ${Math.round(crew.hr)} BPM · BP: ${sysBp}/${diaBp}`,
     },
     {
       id: "gut",
-      name: "Metabolic / Interstitial Glucose",
+      name: t("metabolicNode"),
       cx: 100,
       cy: 142,
       r: 6,
-      status: crew.stress > 55 ? "Watch" : "Nominal",
+      statusRaw: crew.stress > 55 ? "Watch" : "Nominal",
+      status: getStatusLabel(crew.stress > 55 ? "Watch" : "Nominal"),
       color: crew.stress > 55 ? "#f59e0b" : "#06b6d4",
-      val: `Glucose: ${dynGlucose} mg/dL · Hydration: ${dynHydration}%`,
+      val: locale === "bn"
+        ? `গ্লুকোজ: ${formatNumber(dynGlucose)} mg/dL · আর্দ্রতা: ${formatNumber(dynHydration)}%`
+        : `Glucose: ${dynGlucose} mg/dL · Hydration: ${dynHydration}%`,
     },
     {
       id: "dosimetry",
-      name: "Dosimetry & Cellular Radiation",
+      name: t("dosimetryNode"),
       cx: 100,
       cy: 175,
       r: 6,
-      status: crew.dose > 150 ? "Alert" : crew.rate > 0.5 ? "Watch" : "Nominal",
+      statusRaw: crew.dose > 150 ? "Alert" : crew.rate > 0.5 ? "Watch" : "Nominal",
+      status: getStatusLabel(crew.dose > 150 ? "Alert" : crew.rate > 0.5 ? "Watch" : "Nominal"),
       color: crew.dose > 150 ? "#ef4444" : crew.rate > 0.5 ? "#f59e0b" : "#8b5cf6",
-      val: `30D Dose: ${crew.dose.toFixed(0)} mSv · Rate: ${crew.rate.toFixed(2)} mSv/h`,
+      val: locale === "bn"
+        ? `৩০ দিনের ডোজ: ${formatNumber(crew.dose.toFixed(0))} mSv · হার: ${formatNumber(crew.rate.toFixed(2))} mSv/h`
+        : `30D Dose: ${crew.dose.toFixed(0)} mSv · Rate: ${crew.rate.toFixed(2)} mSv/h`,
     },
     {
       id: "muscle-r",
-      name: "Right Limb Actigraphy & Tone",
+      name: t("rightLimbNode"),
       cx: 66,
       cy: 130,
       r: 5,
-      status: "Nominal",
+      statusRaw: "Nominal",
+      status: getStatusLabel("Nominal"),
       color: "#8b5cf6",
-      val: "6-Axis IMU Active · Muscle: 98%",
+      val: locale === "bn" ? "৬-অক্ষ IMU সক্রিয় · পেশী: ৯৮%" : "6-Axis IMU Active · Muscle: 98%",
     },
     {
       id: "muscle-l",
-      name: "Left Limb Actigraphy & Tone",
+      name: t("leftLimbNode"),
       cx: 134,
       cy: 130,
       r: 5,
-      status: "Nominal",
+      statusRaw: "Nominal",
+      status: getStatusLabel("Nominal"),
       color: "#8b5cf6",
-      val: "6-Axis IMU Active · Muscle: 98%",
+      val: locale === "bn" ? "৬-অক্ষ IMU সক্রিয় · পেশী: ৯৮%" : "6-Axis IMU Active · Muscle: 98%",
     },
   ];
 
@@ -107,11 +143,11 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
         <div className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-pulse" />
           <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
-            Bio-Scan 2D Anatomical Telemetry
+            {t("bioScanTitle")}
           </h3>
         </div>
         <span className="font-mono text-xs font-bold text-cyan-300">
-          Scoping: {crew.n}
+          {t("scoping")}: {crew.n}
         </span>
       </div>
 
@@ -192,7 +228,7 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
         <div className="space-y-4">
           <div className="rounded-2xl border border-cyan-500/40 bg-cyan-950/30 p-4 shadow-md">
             <div className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
-              Active Sensor Telemetry
+              {t("activeSensorTelemetry")}
             </div>
             <div className="text-base font-bold text-white mt-1">
               {current.name}
@@ -201,9 +237,9 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
               <span className="font-mono text-slate-200 font-medium">{current.val}</span>
               <span
                 className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold ${
-                  current.status === "Alert"
+                  current.statusRaw === "Alert"
                     ? "bg-rose-950 text-rose-300 border border-rose-500/50"
-                    : current.status === "Watch"
+                    : current.statusRaw === "Watch" || current.statusRaw === "Elevated"
                     ? "bg-amber-950 text-amber-300 border border-amber-500/50"
                     : "bg-emerald-950 text-emerald-300 border border-emerald-500/40"
                 }`}
@@ -230,7 +266,7 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
                     className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: n.color }}
                   />
-                  <span className="truncate">{n.name.split(" ")[0]}</span>
+                  <span className="truncate">{n.name}</span>
                 </div>
                 <span className="font-mono text-xs font-semibold text-slate-400">
                   {n.status}

@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/lib/i18nContext";
+
 interface MacroGaugesProps {
   proteinPct?: number;
   fatsPct?: number;
@@ -19,29 +21,39 @@ export function MacroGauges({
   maxCalories = 2600,
   className = "",
 }: MacroGaugesProps) {
+  const { locale, t, formatNumber } = useI18n();
+
   const macros = [
     {
-      label: "Protein",
+      label: t("protein"),
       pct: proteinPct,
-      detail: `${Math.round((proteinPct / 100) * 95)} / 95g`,
+      detail: locale === "bn"
+        ? `${formatNumber(Math.round((proteinPct / 100) * 95))} / ${formatNumber(95)} গ্রাম`
+        : `${Math.round((proteinPct / 100) * 95)} / 95g`,
       stroke: "#06b6d4",
     },
     {
-      label: "Healthy Fats",
+      label: t("healthyFats"),
       pct: fatsPct,
-      detail: `${Math.round((fatsPct / 100) * 70)} / 70g`,
+      detail: locale === "bn"
+        ? `${formatNumber(Math.round((fatsPct / 100) * 70))} / ${formatNumber(70)} গ্রাম`
+        : `${Math.round((fatsPct / 100) * 70)} / 70g`,
       stroke: "#f59e0b",
     },
     {
-      label: "Fiber",
+      label: t("fiber"),
       pct: fiberPct,
-      detail: `${Math.round((fiberPct / 100) * 32)} / 32g`,
+      detail: locale === "bn"
+        ? `${formatNumber(Math.round((fiberPct / 100) * 32))} / ${formatNumber(32)} গ্রাম`
+        : `${Math.round((fiberPct / 100) * 32)} / 32g`,
       stroke: "#10b981",
     },
     {
-      label: "Water",
+      label: t("water"),
       pct: waterPct,
-      detail: `${((waterPct / 100) * 2.8).toFixed(2)} / 2.8L`,
+      detail: locale === "bn"
+        ? `${formatNumber(((waterPct / 100) * 2.8).toFixed(2))} / ${formatNumber(2.8)} লিটার`
+        : `${((waterPct / 100) * 2.8).toFixed(2)} / 2.8L`,
       stroke: "#38bdf8",
     },
   ];
@@ -56,11 +68,11 @@ export function MacroGauges({
         <div className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
           <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
-            02 Macro &amp; Metabolic Energy HUD
+            {t("macroHudTitle")}
           </h3>
         </div>
         <span className="font-mono text-xs font-semibold text-cyan-300">
-          Target vs Consumed (24H Window)
+          {t("macroHudSubtitle")}
         </span>
       </div>
 
@@ -99,7 +111,7 @@ export function MacroGauges({
                   />
                 </svg>
                 <span className="absolute font-mono text-sm font-bold text-white">
-                  {m.pct}%
+                  {formatNumber(m.pct)}%
                 </span>
               </div>
               <span className="mt-2 text-sm font-bold text-white">
@@ -117,11 +129,11 @@ export function MacroGauges({
       <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 space-y-2">
         <div className="flex items-center justify-between text-xs sm:text-sm">
           <span className="font-mono text-xs font-bold text-slate-300 uppercase tracking-wider">
-            Energy · Basal Metabolic Reserve
+            {t("energyReserve")}
           </span>
           <div className="font-mono text-sm">
-            <span className="font-extrabold text-cyan-300 text-base">{caloriesKcal}</span>
-            <span className="text-slate-400"> / {maxCalories} kcal</span>
+            <span className="font-extrabold text-cyan-300 text-base">{formatNumber(caloriesKcal)}</span>
+            <span className="text-slate-400"> / {formatNumber(maxCalories)} kcal</span>
           </div>
         </div>
 
@@ -133,9 +145,9 @@ export function MacroGauges({
         </div>
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-300">
-          <span>Remaining: <strong className="text-white">{maxCalories - caloriesKcal} kcal</strong></span>
+          <span>{t("remaining")}: <strong className="text-white">{formatNumber(maxCalories - caloriesKcal)} kcal</strong></span>
           <span className="text-cyan-300 font-semibold">
-            Tissue Hydration Index: {(76.0 + (waterPct > 50 ? (waterPct - 50) * 0.14 : 0) - (calPct > 80 ? 0.8 : 0)).toFixed(1)}%
+            {t("hydrationIndex")}: {formatNumber((76.0 + (waterPct > 50 ? (waterPct - 50) * 0.14 : 0) - (calPct > 80 ? 0.8 : 0)).toFixed(1))}%
           </span>
           <span
             className={`rounded-md px-2 py-0.5 font-bold border ${
@@ -146,7 +158,7 @@ export function MacroGauges({
                 : "bg-emerald-950 text-emerald-300 border-emerald-500/40"
             }`}
           >
-            {calPct < 40 ? "CALORIE DEFICIT" : calPct > 90 ? "METABOLIC PEAK" : "METABOLIC NOMINAL"}
+            {calPct < 40 ? t("calorieDeficit") : calPct > 90 ? t("metabolicPeak") : t("metabolicNominal")}
           </span>
         </div>
       </div>

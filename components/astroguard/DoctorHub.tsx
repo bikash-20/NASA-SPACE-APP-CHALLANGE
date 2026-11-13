@@ -12,6 +12,8 @@ import type {
 import { ECGMonitor } from "./ECGMonitor";
 import { CallModal } from "./CallModal";
 import { BioLinkView } from "./BioLinkView";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useI18n } from "@/lib/i18nContext";
 
 interface DoctorHubProps {
   user: AstroUser;
@@ -42,6 +44,7 @@ export function DoctorHub({
   onSignOut,
   onMarkMessagesAsRead,
 }: DoctorHubProps) {
+  const { t, locale, formatNumber } = useI18n();
   const [selectedCrewIdx, setSelectedCrewIdx] = useState<0 | 1 | 2>(0);
   const [activeTab, setActiveTab] = useState<"medical" | "chat" | "fleet">("medical");
   const [filterSeverity, setFilterSeverity] = useState<"all" | "critical" | "warning" | "nominal">("all");
@@ -162,11 +165,11 @@ export function DoctorHub({
                   {user.name}
                 </h1>
                 <span className="rounded-md bg-rose-950 px-2 py-0.5 font-mono text-xs font-semibold text-rose-300 border border-rose-500/40">
-                  {user.callSign} · Flight Surgeon
+                  {user.callSign} · {t("flightSurgeon")}
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium">
-                Medical Operations Hub · Ares Deep-Space Fleet Telemetry
+                {t("medicalOpsHub")} · {t("continuousMonitoring")}
               </p>
             </div>
           </div>
@@ -185,7 +188,7 @@ export function DoctorHub({
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
               </svg>
-              <span>Clinical Triage</span>
+              <span>{t("tabMedical")}</span>
             </button>
 
             <button
@@ -203,10 +206,10 @@ export function DoctorHub({
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              <span>Tele-Health</span>
+              <span>{t("tabChat")}</span>
               {unreadMessages.length > 0 && (
                 <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-[10px] text-white animate-pulse">
-                  {unreadMessages.length}
+                  {formatNumber(unreadMessages.length)}
                 </span>
               )}
             </button>
@@ -223,7 +226,7 @@ export function DoctorHub({
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" />
               </svg>
-              <span>IoT Wearables</span>
+              <span>{t("tabFleet")}</span>
             </button>
           </nav>
 
@@ -329,6 +332,8 @@ export function DoctorHub({
               )}
             </div>
 
+            <LanguageSwitcher />
+
             <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 font-mono text-xs font-bold text-cyan-300">
               {clockStr}
             </div>
@@ -338,7 +343,7 @@ export function DoctorHub({
               onClick={onSignOut}
               className="rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-1.5 font-mono text-xs font-bold text-slate-200 hover:bg-rose-950 hover:text-rose-200 hover:border-rose-500/40 transition"
             >
-              Sign Out [→
+              {t("signOut")} [→
             </button>
           </div>
         </div>
@@ -350,54 +355,54 @@ export function DoctorHub({
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
             <span className="font-mono text-xs uppercase tracking-wider text-slate-400 font-bold">
-              Assigned Astronauts
+              {t("assignedAstronauts")}
             </span>
             <div className="mt-2 text-3xl font-extrabold font-mono text-white">
-              {crewMembers.length}
+              {formatNumber(crewMembers.length)}
             </div>
             <span className="font-mono text-xs text-cyan-400 font-medium">
-              Ares-1 Flight Roster
+              {t("fleetRoster")}
             </span>
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
             <span className="font-mono text-xs uppercase tracking-wider text-slate-400 font-bold">
-              Advisory Watch
+              {t("advisoryWatchCount")}
             </span>
             <div className="mt-2 text-3xl font-extrabold font-mono text-amber-400">
-              {warningCount}
+              {formatNumber(warningCount)}
             </div>
             <span className="font-mono text-xs text-amber-500 font-medium">
-              Physiological Drift
+              {t("physiologicalDrift")}
             </span>
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
             <span className="font-mono text-xs uppercase tracking-wider text-slate-400 font-bold">
-              Critical Triage
+              {t("criticalTriageCount")}
             </span>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-3xl font-extrabold font-mono text-rose-400">
-                {criticalCount}
+                {formatNumber(criticalCount)}
               </span>
               {criticalCount > 0 && (
                 <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-ping" />
               )}
             </div>
             <span className="font-mono text-xs text-rose-400 font-medium">
-              Immediate Review
+              {t("immediateReview")}
             </span>
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
             <span className="font-mono text-xs uppercase tracking-wider text-slate-400 font-bold">
-              Active Signals
+              {t("activeSignalsCount")}
             </span>
             <div className="mt-2 text-3xl font-extrabold font-mono text-cyan-300">
-              {incidents.length + alerts.length}
+              {formatNumber(incidents.length + alerts.length)}
             </div>
             <span className="font-mono text-xs text-slate-300 font-medium">
-              Rule + SOS Alarms
+              {t("ruleSosAlarms")}
             </span>
           </div>
         </div>
@@ -410,10 +415,10 @@ export function DoctorHub({
               <div className="rounded-2xl border border-slate-800 bg-slate-950/90 p-5 space-y-4 shadow-xl">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
-                    Assigned Astronaut Roster
+                    {t("assignedRoster")}
                   </h3>
                   <span className="font-mono text-xs text-cyan-400 font-semibold">
-                    Select to Scope
+                    {t("selectToScope")}
                   </span>
                 </div>
 
@@ -423,7 +428,11 @@ export function DoctorHub({
                     const cAlerts = alerts.filter((a) => a.i === idx).length;
                     const hasCritical = c.r?.some((lv) => lv === 2) || c.hr > 115 || c.spo2 < 90;
                     const hasWatch = c.r?.some((lv) => lv === 1) || cAlerts > 0 || c.hr > 90 || c.spo2 < 94;
-                    const statusLabel = hasCritical ? "CRITICAL" : hasWatch ? "WATCH" : "NOMINAL";
+                    const statusLabel = hasCritical
+                      ? (locale === "bn" ? "জরুরি" : "CRITICAL")
+                      : hasWatch
+                      ? (locale === "bn" ? "নজরদারি" : "WATCH")
+                      : (locale === "bn" ? "স্বাভাবিক" : "NOMINAL");
 
                     return (
                       <div
@@ -458,10 +467,10 @@ export function DoctorHub({
                         <div className="mt-3.5 grid grid-cols-3 gap-2 border-t border-slate-800/80 pt-3 text-center">
                           <div className="rounded-xl bg-slate-950/80 p-2 border border-slate-800">
                             <span className="text-[11px] font-mono text-slate-400 block uppercase font-medium">
-                              Heart Rate
+                              {t("heartRate")}
                             </span>
                             <span className="text-sm font-bold font-mono text-rose-400">
-                              {Math.round(c.hr)} BPM
+                              {formatNumber(Math.round(c.hr))} {t("bpm")}
                             </span>
                           </div>
                           <div className="rounded-xl bg-slate-950/80 p-2 border border-slate-800">
@@ -469,15 +478,15 @@ export function DoctorHub({
                               SpO₂
                             </span>
                             <span className="text-sm font-bold font-mono text-cyan-400">
-                              {c.spo2.toFixed(1)}%
+                              {formatNumber(c.spo2.toFixed(1))}%
                             </span>
                           </div>
                           <div className="rounded-xl bg-slate-950/80 p-2 border border-slate-800">
                             <span className="text-[11px] font-mono text-slate-400 block uppercase font-medium">
-                              Alerts
+                              {t("criticalAlarm").split(" ")[0]}
                             </span>
                             <span className="text-sm font-bold font-mono text-amber-400">
-                              {cAlerts}
+                              {formatNumber(cAlerts)}
                             </span>
                           </div>
                         </div>
@@ -493,7 +502,7 @@ export function DoctorHub({
                   <div className="flex items-center gap-2.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-pulse" />
                     <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-slate-100">
-                      {selectedCrew.n} · Live Cardiovascular Telemetry
+                      {selectedCrew.n} · {t("liveCardioTelemetry")}
                     </h3>
                   </div>
                   <div className="flex items-center gap-2.5">
@@ -505,7 +514,7 @@ export function DoctorHub({
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                       </svg>
-                      <span>Voice Call</span>
+                      <span>{t("voiceCall")}</span>
                     </button>
                     <button
                       type="button"
@@ -516,7 +525,7 @@ export function DoctorHub({
                         <polygon points="23 7 16 12 23 17 23 7" />
                         <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
                       </svg>
-                      <span>Video Uplink</span>
+                      <span>{t("videoUplink")}</span>
                     </button>
                   </div>
                 </div>
@@ -525,11 +534,11 @@ export function DoctorHub({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5">
                     <span className="font-mono text-xs text-slate-400 uppercase font-bold block mb-1">
-                      Heart Rate
+                      {t("heartRate")}
                     </span>
                     <div className="text-2xl sm:text-3xl font-extrabold font-mono text-rose-400">
-                      {Math.round(selectedCrew.hr)}{" "}
-                      <span className="text-xs font-medium text-slate-400">BPM</span>
+                      {formatNumber(Math.round(selectedCrew.hr))}{" "}
+                      <span className="text-xs font-medium text-slate-400">{t("bpm")}</span>
                     </div>
                     <span
                       className={`font-mono text-xs font-semibold mt-1 block ${
@@ -540,16 +549,16 @@ export function DoctorHub({
                           : "text-emerald-400"
                       }`}
                     >
-                      {selectedCrew.hr > 105 ? "Tachycardia Alert" : selectedCrew.hr > 85 ? "Elevated Watch" : "Resting Baseline"}
+                      {selectedCrew.hr > 105 ? t("tachycardiaAlert") : selectedCrew.hr > 85 ? t("elevatedWatch") : t("restingBaseline")}
                     </span>
                   </div>
 
                   <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5">
                     <span className="font-mono text-xs text-slate-400 uppercase font-bold block mb-1">
-                      Blood Oxygen
+                      {t("bloodOxygen")}
                     </span>
                     <div className="text-2xl sm:text-3xl font-extrabold font-mono text-cyan-400">
-                      {selectedCrew.spo2.toFixed(1)}%
+                      {formatNumber(selectedCrew.spo2.toFixed(1))}%
                     </div>
                     <span
                       className={`font-mono text-xs font-semibold mt-1 block ${
@@ -560,29 +569,29 @@ export function DoctorHub({
                           : "text-emerald-400"
                       }`}
                     >
-                      {selectedCrew.spo2 < 92 ? "Hypoxic Alert" : selectedCrew.spo2 < 95 ? "Marginal Diffusion" : "Optimal Diffusion"}
+                      {selectedCrew.spo2 < 92 ? t("hypoxicAlert") : selectedCrew.spo2 < 95 ? t("marginalDiffusion") : t("optimalDiffusion")}
                     </span>
                   </div>
 
                   <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5">
                     <span className="font-mono text-xs text-slate-400 uppercase font-bold block mb-1">
-                      Blood Pressure
+                      {t("bloodPressure")}
                     </span>
                     <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-100">
-                      {sysBp}/{diaBp}{" "}
+                      {formatNumber(sysBp)}/{formatNumber(diaBp)}{" "}
                       <span className="text-xs font-medium text-slate-400">mmHg</span>
                     </div>
                     <span className="font-mono text-xs text-slate-400 font-semibold mt-1 block">
-                      MAP ~{mapBp} mmHg
+                      MAP ~{formatNumber(mapBp)} mmHg
                     </span>
                   </div>
 
                   <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5">
                     <span className="font-mono text-xs text-slate-400 uppercase font-bold block mb-1">
-                      Respiration / Temp
+                      {t("respirationTemp")}
                     </span>
                     <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-100">
-                      {respRate}{" "}
+                      {formatNumber(respRate)}{" "}
                       <span className="text-xs font-medium text-slate-400">Br/min</span>
                     </div>
                     <span
@@ -590,7 +599,7 @@ export function DoctorHub({
                         parseFloat(bodyTemp) > 37.3 ? "text-amber-400" : "text-emerald-400"
                       }`}
                     >
-                      {bodyTemp}°C · {parseFloat(bodyTemp) > 37.3 ? "Thermal Drift" : "Normothermic"}
+                      {formatNumber(bodyTemp)}°C · {parseFloat(bodyTemp) > 37.3 ? t("thermalDrift") : t("normothermic")}
                     </span>
                   </div>
                 </div>
@@ -608,10 +617,10 @@ export function DoctorHub({
               <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-3">
                 <div>
                   <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
-                    Clinical Triage &amp; Anomaly Signals
+                    {t("clinicalTriageTitle")}
                   </h3>
                   <p className="text-xs text-slate-400 font-medium">
-                    Prioritized telemetry alarms and astronaut emergency signals
+                    {t("clinicalTriageSubtitle")}
                   </p>
                 </div>
 
@@ -626,7 +635,7 @@ export function DoctorHub({
                         : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
                     }`}
                   >
-                    All · {allTriageIncidents.length}
+                    {t("filterAll")} · {formatNumber(allTriageIncidents.length)}
                   </button>
                   <button
                     type="button"
@@ -637,7 +646,7 @@ export function DoctorHub({
                         : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
                     }`}
                   >
-                    Critical · {criticalCount}
+                    {t("filterCritical")} · {formatNumber(criticalCount)}
                   </button>
                   <button
                     type="button"
@@ -648,7 +657,7 @@ export function DoctorHub({
                         : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
                     }`}
                   >
-                    Warning · {warningCount}
+                    {t("filterWarning")} · {formatNumber(warningCount)}
                   </button>
                 </div>
               </div>
@@ -695,7 +704,7 @@ export function DoctorHub({
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                         </svg>
-                        <span>Voice Call</span>
+                        <span>{t("voiceCall")}</span>
                       </button>
                       <button
                         type="button"
@@ -706,7 +715,7 @@ export function DoctorHub({
                           <polygon points="23 7 16 12 23 17 23 7" />
                           <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
                         </svg>
-                        <span>Video Uplink</span>
+                        <span>{t("videoUplink")}</span>
                       </button>
                       <button
                         type="button"
@@ -718,8 +727,8 @@ export function DoctorHub({
                         }`}
                       >
                         {inc.flaggedToMissionControl
-                          ? "✓ Flagged to Control"
-                          : "Flag to Control"}
+                          ? t("flaggedToControl")
+                          : t("flagToControl")}
                       </button>
                     </div>
                   </div>
@@ -735,7 +744,7 @@ export function DoctorHub({
             {/* Crew Selector Column */}
             <div className="rounded-2xl border border-slate-800 bg-slate-950/90 p-5 space-y-3 shadow-xl">
               <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200 border-b border-slate-800 pb-3">
-                Assigned Tele-Health Channels
+                {t("assignedTeleHealthChannels")}
               </h3>
               {crewMembers.map((c, idx) => {
                 const cUnread = consultMessages.filter(
@@ -759,12 +768,12 @@ export function DoctorHub({
                     <div>
                       <div className="font-bold text-sm text-white">{c.n}</div>
                       <div className="font-mono text-xs text-slate-400 mt-0.5">
-                        {c.role} · AST-00{idx + 1}
+                        {c.role} · AST-00{formatNumber(idx + 1)}
                       </div>
                     </div>
                     {cUnread > 0 ? (
                       <span className="rounded-full bg-rose-500 px-2 py-0.5 text-xs font-bold text-white shadow animate-pulse">
-                        {cUnread} new
+                        {formatNumber(cUnread)} {t("newMsg")}
                       </span>
                     ) : (
                       <svg className="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -781,10 +790,10 @@ export function DoctorHub({
               <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3.5 bg-slate-900/80">
                 <div>
                   <h4 className="text-sm font-bold text-white">
-                    Direct Flight Surgeon Channel · {selectedCrew.n}
+                    {t("directFlightSurgeonChannel")} · {selectedCrew.n}
                   </h4>
                   <span className="font-mono text-xs text-emerald-400 font-medium">
-                    Encrypted Hab-Station Channel Active
+                    {t("encryptedChannelActive")}
                   </span>
                 </div>
                 <div className="flex gap-2.5">
@@ -792,7 +801,7 @@ export function DoctorHub({
                     type="button"
                     onClick={() => handleStartCall(selectedCrewIdx, "audio")}
                     className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-500/40 bg-cyan-950/60 text-cyan-300 hover:bg-cyan-900 transition"
-                    title="Start Encrypted Voice Call"
+                    title={t("voiceCall")}
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -802,7 +811,7 @@ export function DoctorHub({
                     type="button"
                     onClick={() => handleStartCall(selectedCrewIdx, "video")}
                     className="flex h-9 w-9 items-center justify-center rounded-xl border border-purple-500/40 bg-purple-950/60 text-purple-300 hover:bg-purple-900 transition"
-                    title="Start Encrypted Video Uplink"
+                    title={t("videoUplink")}
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="23 7 16 12 23 17 23 7" />
@@ -816,7 +825,7 @@ export function DoctorHub({
               <div className="flex-1 overflow-y-auto p-5 space-y-4">
                 {crewMessages.length === 0 ? (
                   <div className="text-sm font-mono text-slate-400 italic text-center mt-20">
-                    No consultation messages logged yet with {selectedCrew.n}.
+                    {t("noConsultMessages")} {selectedCrew.n}.
                   </div>
                 ) : (
                   crewMessages.map((m) => {
@@ -855,14 +864,18 @@ export function DoctorHub({
                   type="text"
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder={`Send flight surgeon advisory to ${selectedCrew.n}...`}
+                  placeholder={
+                    locale === "bn"
+                      ? `${selectedCrew.n}-কে ফ্লাইট সার্জন পরামর্শ পাঠান...`
+                      : `Send flight surgeon advisory to ${selectedCrew.n}...`
+                  }
                   className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
                 />
                 <button
                   type="submit"
                   className="rounded-xl bg-purple-600 px-5 py-2.5 font-mono text-xs font-bold text-white hover:bg-purple-500 transition shadow-lg shadow-purple-600/30"
                 >
-                  Send Advisory
+                  {t("sendAdvisory")}
                 </button>
               </form>
             </div>

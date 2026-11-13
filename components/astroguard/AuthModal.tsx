@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DEMO_USERS, type AstroRole } from "@/lib/astroGuardTypes";
+import { useI18n } from "@/lib/i18nContext";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export function AuthModal({
   onClose,
   currentRole,
 }: AuthModalProps) {
+  const { locale, t } = useI18n();
   const safeRole: AstroRole =
     currentRole && DEMO_USERS[currentRole] ? currentRole : "crew-0";
 
@@ -55,14 +57,16 @@ export function AuthModal({
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-lg shadow-lg shadow-cyan-500/30">
-              🛡️
+              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
             </div>
             <div>
               <h2 className="text-base font-bold text-white tracking-wide">
-                AstroGuard Space Health Access Gateway
+                {t("gatewayTitle")}
               </h2>
               <p className="font-mono text-xs text-cyan-400">
-                Select a demo role or sign in with exposed credentials
+                {t("gatewaySubtitle")}
               </p>
             </div>
           </div>
@@ -80,7 +84,7 @@ export function AuthModal({
         {/* 1-Click Role Selection Cards */}
         <div className="my-5">
           <label className="block font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-            1-Click Demo Profiles (Credentials Pre-loaded)
+            {t("oneClickProfiles")}
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {(Object.keys(DEMO_USERS) as AstroRole[]).map((roleKey) => {
@@ -112,11 +116,11 @@ export function AuthModal({
 
                   <div className="mt-2 w-full pt-1.5 border-t border-slate-800/80 font-mono text-[10px] text-slate-400 space-y-0.5">
                     <div>
-                      <span className="text-slate-500">Email: </span>
+                      <span className="text-slate-500">{locale === "bn" ? "ইমেইল: " : "Email: "}</span>
                       <span className="text-slate-300">{u.email}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500">Pass: </span>
+                      <span className="text-slate-500">{locale === "bn" ? "পাসওয়ার্ড: " : "Pass: "}</span>
                       <span className="text-amber-400 font-semibold">{u.pass}</span>
                     </div>
                   </div>
@@ -131,7 +135,7 @@ export function AuthModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-mono uppercase text-slate-300 mb-1">
-                Operator Email
+                {t("operatorEmail")}
               </label>
               <input
                 type="email"
@@ -143,7 +147,7 @@ export function AuthModal({
             </div>
             <div>
               <label className="block text-xs font-mono uppercase text-slate-300 mb-1">
-                Access Passkey
+                {t("accessPasskey")}
               </label>
               <input
                 type="text"
@@ -157,13 +161,13 @@ export function AuthModal({
 
           <div className="flex items-center justify-between pt-2">
             <span className="font-mono text-xs text-emerald-400">
-              ● TLS 1.3 Certified Session Gateway
+              ● {t("tlsCertified")}
             </span>
             <button
               type="submit"
               className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-cyan-600/30 hover:from-cyan-400 hover:to-blue-500 transition"
             >
-              Sign In to {DEMO_USERS[selectedUserKey]?.name || "Console"}
+              {t("signInTo")} {DEMO_USERS[selectedUserKey]?.name || "Console"}
             </button>
           </div>
         </form>
