@@ -1,7 +1,9 @@
 # NASA Space App Challenge — Crew Health Monitor
 live link: https://crew-health-monitoring.vercel.app/
-<img width="1280" height="761" alt="image" src="https://github.com/user-attachments/assets/f865a4e6-1598-4f41-8a2d-da066a50dd27" />
-<img width="1280" height="761" alt="image" src="https://github.com/user-attachments/assets/6848eeca-9077-484d-bcc5-0fa425451a9c" />
+<img width="1280" height="796" alt="image" src="https://github.com/user-attachments/assets/44e52f6d-8b58-4e16-a810-9347ab11bdb8" />
+<img width="1280" height="796" alt="image" src="https://github.com/user-attachments/assets/f01ae46a-2d11-43cf-a484-dffa54ca2b0f" />
+
+
 
 
 A mission-control-style dashboard that simulates crew telemetry, runs a **deterministic, rule-based** alert engine in the browser, and uses an LLM to **write prose only** — never to raise alerts. Choose the existing [OpenRouter](https://openrouter.ai) service or connect directly from the browser to a local Ollama server.
