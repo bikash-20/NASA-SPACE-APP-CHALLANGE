@@ -65,6 +65,8 @@ export function AstronautPortal({
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "ai" | "consult" | "biolink"
   >("dashboard");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const [callState, setCallState] = useState<ActiveCallState>({
     isOpen: false,
@@ -118,58 +120,100 @@ export function AstronautPortal({
     setAiInput("");
   };
 
+  const doctorTransmissions = isolatedMessages.filter(
+    (m) => m.senderRole === "doctor"
+  );
+
   return (
     <div className="min-h-screen bg-[#050914] text-slate-100 flex flex-col md:flex-row font-sans">
-      {/* Astronaut Portal Left Sidebar - Sticky on desktop to eliminate left dead space */}
-      <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950 p-4 md:p-5 flex flex-col justify-between shrink-0 md:sticky md:top-12 md:h-[calc(100vh-3rem)] md:overflow-y-auto">
-        <div>
+      {/* Astronaut Portal Left Sidebar - Collapsible & Sticky to eliminate dead space */}
+      <aside
+        className={`w-full border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950 p-4 transition-all duration-300 flex flex-col justify-between shrink-0 md:sticky md:top-0 md:h-screen md:self-start md:overflow-y-auto ${
+          sidebarCollapsed ? "md:w-20 items-center" : "md:w-72"
+        }`}
+      >
+        <div className="w-full">
           {/* Brand Header */}
-          <div className="flex items-center gap-3.5 mb-8">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-2xl shadow-lg shadow-cyan-500/25">
-              🛡️
+          <div
+            className={`flex items-center mb-6 ${
+              sidebarCollapsed
+                ? "flex-col justify-center gap-2"
+                : "justify-between gap-3"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-xl shadow-lg shadow-cyan-500/25 shrink-0">
+                🛡️
+              </div>
+              {!sidebarCollapsed && (
+                <div>
+                  <h1 className="text-base font-bold tracking-tight text-white">
+                    AstroGuard
+                  </h1>
+                  <p className="font-mono text-xs font-semibold text-cyan-400 uppercase tracking-wider">
+                    Astronaut Console
+                  </p>
+                </div>
+              )}
             </div>
-            <div>
-              <h1 className="text-base font-bold tracking-tight text-white">
-                AstroGuard
-              </h1>
-              <p className="font-mono text-xs font-semibold text-cyan-400 uppercase tracking-wider">
-                Astronaut Console
-              </p>
-            </div>
+
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="hidden md:flex h-8 w-8 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:text-white hover:border-cyan-500/40 transition text-xs font-mono"
+              title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {sidebarCollapsed ? "▶" : "◀"}
+            </button>
           </div>
 
           {/* Navigation Items */}
-          <nav className="space-y-1.5">
+          <nav className="space-y-2 w-full">
             <button
               type="button"
               onClick={() => setActiveTab("dashboard")}
-              className={`w-full flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              title="Mission Telemetry"
+              className={`w-full flex items-center rounded-xl transition ${
+                sidebarCollapsed
+                  ? "justify-center p-3"
+                  : "gap-3.5 px-4 py-3 text-sm font-semibold"
+              } ${
                 activeTab === "dashboard"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
               <span className="text-base">📊</span>
-              <span>Mission Telemetry</span>
+              {!sidebarCollapsed && <span>Mission Telemetry</span>}
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab("ai")}
-              className={`w-full flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              title="AI Health Copilot"
+              className={`w-full flex items-center rounded-xl transition ${
+                sidebarCollapsed
+                  ? "justify-center p-3"
+                  : "gap-3.5 px-4 py-3 text-sm font-semibold"
+              } ${
                 activeTab === "ai"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
               <span className="text-base">🧠</span>
-              <span>AI Health Copilot</span>
+              {!sidebarCollapsed && <span>AI Health Copilot</span>}
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab("consult")}
-              className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              title="Doctor Tele-Health"
+              className={`w-full flex items-center rounded-xl transition ${
+                sidebarCollapsed
+                  ? "justify-center p-3 relative"
+                  : "justify-between px-4 py-3 text-sm font-semibold"
+              } ${
                 activeTab === "consult"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
@@ -177,7 +221,7 @@ export function AstronautPortal({
             >
               <div className="flex items-center gap-3.5">
                 <span className="text-base">💬</span>
-                <span>Doctor Tele-Health</span>
+                {!sidebarCollapsed && <span>Doctor Tele-Health</span>}
               </div>
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
             </button>
@@ -185,58 +229,87 @@ export function AstronautPortal({
             <button
               type="button"
               onClick={() => setActiveTab("biolink")}
-              className={`w-full flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              title="Bio-Link (IoT Wearables)"
+              className={`w-full flex items-center rounded-xl transition ${
+                sidebarCollapsed
+                  ? "justify-center p-3"
+                  : "gap-3.5 px-4 py-3 text-sm font-semibold"
+              } ${
                 activeTab === "biolink"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
               <span className="text-base">📡</span>
-              <span>Bio-Link (IoT Wearables)</span>
+              {!sidebarCollapsed && <span>Bio-Link (IoT Wearables)</span>}
             </button>
           </nav>
         </div>
 
         {/* User Card in Sidebar */}
-        <div className="pt-5 border-t border-slate-800 space-y-3">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-600 to-blue-800 font-bold text-sm text-white shadow">
-              {user.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-white truncate">
-                {user.name}
+        <div className="pt-4 border-t border-slate-800 space-y-3 w-full">
+          {!sidebarCollapsed ? (
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-600 to-blue-800 font-bold text-sm text-white shadow shrink-0">
+                {user.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}
               </div>
-              <div className="font-mono text-xs text-cyan-400 font-semibold truncate">
-                {user.callSign} · {user.roleTitle.split("&")[0]}
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold text-white truncate">
+                  {user.name}
+                </div>
+                <div className="font-mono text-xs text-cyan-400 font-semibold truncate">
+                  {user.callSign} · {user.roleTitle.split("&")[0]}
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex justify-center" title={`${user.name} (${user.callSign})`}>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-600 to-blue-800 font-bold text-xs text-white shadow">
+                {user.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}
+              </div>
+            </div>
+          )}
 
           <button
             type="button"
             onClick={onSignOut}
-            className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 py-2.5 font-mono text-xs font-bold text-slate-200 hover:bg-rose-950 hover:text-rose-200 hover:border-rose-500/50 transition shadow-sm"
+            className={`w-full flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900 font-mono text-xs font-bold text-slate-200 hover:bg-rose-950 hover:text-rose-200 hover:border-rose-500/50 transition shadow-sm ${
+              sidebarCollapsed ? "p-2.5" : "gap-2 py-2.5"
+            }`}
+            title="Sign Out to Login Gateway"
           >
-            <span>[→ Sign Out to Gateway]</span>
+            <span>[→</span>
+            {!sidebarCollapsed && <span>Sign Out</span>}
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6">
+      <main className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6">
         {/* Top Header Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-950/90 p-5 shadow-xl backdrop-blur-md">
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2.5">
-              <span>Mission Console</span>
-              <span className="font-mono text-xs font-semibold text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/30">
-                {user.name} ({user.callSign})
-              </span>
-            </h2>
-            <p className="text-xs text-slate-300 font-medium mt-0.5">
-              Continuous physiological monitoring, nutrition telemetry &amp; flight surgeon uplink
-            </p>
+          <div className="flex items-center gap-3">
+            {sidebarCollapsed && (
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(false)}
+                className="hidden md:flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-500/40 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/60 transition font-mono text-xs"
+                title="Expand Navigation Sidebar"
+              >
+                ▶
+              </button>
+            )}
+            <div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2.5">
+                <span>Mission Console</span>
+                <span className="font-mono text-xs font-semibold text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/30">
+                  {user.name} ({user.callSign})
+                </span>
+              </h2>
+              <p className="text-xs text-slate-300 font-medium mt-0.5">
+                Continuous physiological monitoring, nutrition telemetry &amp; flight surgeon uplink
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -247,6 +320,75 @@ export function AstronautPortal({
             >
               🚨 Emergency SOS
             </button>
+
+            {/* Medical Notifications Bell */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`relative flex h-10 w-10 items-center justify-center rounded-xl border transition ${
+                  doctorTransmissions.length > 0
+                    ? "border-cyan-500/60 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/60 shadow-md shadow-cyan-950"
+                    : "border-slate-800 bg-slate-900 text-slate-300 hover:text-white"
+                }`}
+                title="View Doctor Notifications"
+              >
+                <span className="text-base">🔔</span>
+                {doctorTransmissions.length > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-[11px] font-bold text-slate-950 ring-2 ring-slate-950 animate-pulse">
+                    {doctorTransmissions.length}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-2xl space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
+                      Surgeon Transmissions ({doctorTransmissions.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowNotifications(false)}
+                      className="text-slate-400 hover:text-white text-xs font-mono"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto space-y-2">
+                    {doctorTransmissions.length === 0 ? (
+                      <div className="text-center py-4 text-xs font-mono text-slate-400 italic">
+                        No medical transmissions. Telemetry nominal.
+                      </div>
+                    ) : (
+                      doctorTransmissions.map((msg) => (
+                        <div
+                          key={msg.id}
+                          onClick={() => {
+                            setActiveTab("consult");
+                            setShowNotifications(false);
+                          }}
+                          className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900/90 p-3 hover:border-cyan-500/40 transition text-left"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-xs font-bold text-cyan-300">
+                              Dr. Evelyn Vance
+                            </span>
+                            <span className="font-mono text-[10px] text-slate-400">
+                              {msg.timestamp}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-200 mt-1 line-clamp-2">
+                            {msg.text}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 font-mono text-xs font-bold text-cyan-300">
               {clockStr}
             </div>

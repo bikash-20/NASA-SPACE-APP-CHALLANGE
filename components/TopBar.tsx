@@ -14,6 +14,7 @@ interface TopBarProps {
   onReset: () => void;
   onOpenScenarios?: () => void;
   onOpenSettings?: () => void;
+  onSignOut?: () => void;
   aiOn?: boolean;
   /** Mobile only — shows the compact title row with the open-scenarios button. */
   compact?: boolean;
@@ -36,6 +37,7 @@ export function TopBar({
   onReset,
   onOpenScenarios,
   onOpenSettings,
+  onSignOut,
   compact,
   hideScenarios,
 }: TopBarProps) {
@@ -167,6 +169,16 @@ export function TopBar({
           <span className="hidden font-mono text-sm tabular-nums text-white/60 sm:inline">
             {clock}
           </span>
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="rounded-md border border-rose-500/40 bg-rose-950/40 px-2.5 py-1 font-mono text-xs font-semibold text-rose-300 hover:bg-rose-900/60 hover:text-white transition"
+              title="Sign Out to Login Gateway"
+            >
+              Sign Out [→
+            </button>
+          )}
         </div>
       </div>
     </header>

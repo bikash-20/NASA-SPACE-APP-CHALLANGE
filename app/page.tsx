@@ -1232,18 +1232,6 @@ export default function Page() {
 
   return (
     <div className="relative min-h-dvh flex flex-col bg-[#050914] text-slate-100 font-sans">
-      <QuickRoleBar
-        currentRole={currentRole}
-        onSelectRole={(r) => {
-          setCurrentRole(r);
-          if (r === "crew-0") dispatch({ type: "SELECT_CREW", i: 0 });
-          else if (r === "crew-1") dispatch({ type: "SELECT_CREW", i: 1 });
-          else if (r === "crew-2") dispatch({ type: "SELECT_CREW", i: 2 });
-        }}
-        onOpenLoginModal={() => setAuthModalOpen(true)}
-        onSignOut={() => setCurrentRole(null)}
-      />
-
       {currentRole === "crew-0" && (
         <AstronautPortal
           user={DEMO_USERS["crew-0"]}
@@ -1348,6 +1336,7 @@ export default function Page() {
             onReset={reset}
             onOpenScenarios={() => setScenariosOpen(true)}
             onOpenSettings={() => setSettingsOpen(true)}
+            onSignOut={() => setCurrentRole(null)}
             aiOn={state.aiOn}
             compact={isCompact}
             hideScenarios={false}
