@@ -64,14 +64,14 @@ export function MacroGauges({
     <div
       className={`rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-xl font-sans ${className}`}
     >
-      <div className="mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-2">
         <div className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-          <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
+          <h3 className="font-mono text-sm sm:text-base font-bold uppercase tracking-wider text-slate-200">
             {t("macroHudTitle")}
           </h3>
         </div>
-        <span className="font-mono text-xs font-semibold text-cyan-300">
+        <span className="font-mono text-xs sm:text-sm font-semibold text-cyan-300">
           {t("macroHudSubtitle")}
         </span>
       </div>
@@ -85,21 +85,21 @@ export function MacroGauges({
           return (
             <div
               key={m.label}
-              className="flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-sm"
+              className="flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-sm"
             >
               <div className="relative flex items-center justify-center">
-                <svg className="w-20 h-20 transform -rotate-90">
+                <svg className="w-22 h-22 transform -rotate-90">
                   <circle
-                    cx="40"
-                    cy="40"
+                    cx="44"
+                    cy="44"
                     r={radius}
                     stroke="rgba(51, 65, 85, 0.4)"
                     strokeWidth="5"
                     fill="transparent"
                   />
                   <circle
-                    cx="40"
-                    cy="40"
+                    cx="44"
+                    cy="44"
                     r={radius}
                     stroke={m.stroke}
                     strokeWidth="5"
@@ -110,14 +110,14 @@ export function MacroGauges({
                     className="transition-all duration-700 ease-out"
                   />
                 </svg>
-                <span className="absolute font-mono text-sm font-bold text-white">
+                <span className="absolute font-mono text-base font-bold text-white">
                   {formatNumber(m.pct)}%
                 </span>
               </div>
-              <span className="mt-2 text-sm font-bold text-white">
+              <span className="mt-2.5 text-base font-bold text-white text-center">
                 {m.label}
               </span>
-              <span className="font-mono text-xs text-slate-300 font-medium">
+              <span className="font-mono text-xs sm:text-sm text-slate-200 font-semibold mt-0.5">
                 {m.detail}
               </span>
             </div>
@@ -126,31 +126,31 @@ export function MacroGauges({
       </div>
 
       {/* Energy / Basal Reserve Bar */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 space-y-2">
-        <div className="flex items-center justify-between text-xs sm:text-sm">
-          <span className="font-mono text-xs font-bold text-slate-300 uppercase tracking-wider">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 space-y-3">
+        <div className="flex items-center justify-between text-sm sm:text-base">
+          <span className="font-mono text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wider">
             {t("energyReserve")}
           </span>
-          <div className="font-mono text-sm">
-            <span className="font-extrabold text-cyan-300 text-base">{formatNumber(caloriesKcal)}</span>
-            <span className="text-slate-400"> / {formatNumber(maxCalories)} kcal</span>
+          <div className="font-mono text-sm sm:text-base">
+            <span className="font-extrabold text-cyan-300 text-lg">{formatNumber(caloriesKcal)}</span>
+            <span className="text-slate-300 font-semibold"> / {formatNumber(maxCalories)} kcal</span>
           </div>
         </div>
 
-        <div className="h-3 w-full rounded-full bg-slate-800 overflow-hidden">
+        <div className="h-3.5 w-full rounded-full bg-slate-800 overflow-hidden">
           <div
             className="h-full rounded-full bg-gradient-to-r from-teal-500 via-cyan-400 to-emerald-400 transition-all duration-500"
             style={{ width: `${calPct}%` }}
           />
         </div>
 
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-300">
-          <span>{t("remaining")}: <strong className="text-white">{formatNumber(maxCalories - caloriesKcal)} kcal</strong></span>
-          <span className="text-cyan-300 font-semibold">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm font-mono text-slate-200">
+          <span>{t("remaining")}: <strong className="text-white text-sm sm:text-base">{formatNumber(maxCalories - caloriesKcal)} kcal</strong></span>
+          <span className="text-cyan-300 font-bold">
             {t("hydrationIndex")}: {formatNumber((76.0 + (waterPct > 50 ? (waterPct - 50) * 0.14 : 0) - (calPct > 80 ? 0.8 : 0)).toFixed(1))}%
           </span>
           <span
-            className={`rounded-md px-2 py-0.5 font-bold border ${
+            className={`rounded-lg px-2.5 py-1 text-xs sm:text-sm font-bold border ${
               calPct < 40
                 ? "bg-amber-950 text-amber-300 border-amber-500/40"
                 : calPct > 90

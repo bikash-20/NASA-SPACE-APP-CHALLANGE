@@ -41,51 +41,51 @@ export function BioLinkView({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-lg">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs uppercase tracking-wider text-slate-400 font-bold">
+            <span className="font-mono text-xs sm:text-sm uppercase tracking-wider text-slate-300 font-bold">
               {locale === "bn" ? "এজ গেটওয়ে হাব" : "Edge Gateway Hub"}
             </span>
-            <span className="rounded-md bg-emerald-950 px-2.5 py-0.5 font-mono text-xs font-bold text-emerald-300 border border-emerald-500/40">
+            <span className="rounded-md bg-emerald-950 px-2.5 py-0.5 font-mono text-xs sm:text-sm font-bold text-emerald-300 border border-emerald-500/40">
               ● {locale === "bn" ? "সরাসরি ১০০Hz" : "LIVE 100Hz"}
             </span>
           </div>
-          <div className="mt-2 text-lg font-bold text-white">Hab 2 - Rack 4B</div>
-          <div className="mt-1 font-mono text-xs text-cyan-300 font-medium">
+          <div className="mt-2 text-xl font-extrabold text-white">Hab 2 - Rack 4B</div>
+          <div className="mt-1 font-mono text-xs sm:text-sm text-cyan-300 font-semibold">
             {locale === "bn" ? "স্থানীয় মেশ BLE ৫.৩ সক্রিয়" : "Local Mesh BLE 5.3 Active"}
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-lg">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs uppercase tracking-wider text-slate-400 font-bold">
+            <span className="font-mono text-xs sm:text-sm uppercase tracking-wider text-slate-300 font-bold">
               {locale === "bn" ? "সংযুক্ত সেন্সরসমূহ" : "Paired Sensors"}
             </span>
-            <span className="rounded-md bg-cyan-950 px-2.5 py-0.5 font-mono text-xs font-bold text-cyan-300 border border-cyan-500/40">
+            <span className="rounded-md bg-cyan-950 px-2.5 py-0.5 font-mono text-xs sm:text-sm font-bold text-cyan-300 border border-cyan-500/40">
               BLE 5.3 / USB Link
             </span>
           </div>
-          <div className="mt-2 text-lg font-bold text-white">
+          <div className="mt-2 text-xl font-extrabold text-white">
             {locale === "bn"
               ? `${formatNumber(onlineCount)} / ${formatNumber(sensors.length)} টি সক্রিয়`
               : `${onlineCount} of ${sensors.length} Online`}
           </div>
-          <div className="mt-1 font-mono text-xs text-slate-300 font-medium">
+          <div className="mt-1 font-mono text-xs sm:text-sm text-slate-300 font-semibold">
             {locale === "bn" ? "লেটেন্সি < ৮ms · জিটার ০.৪ms" : "Latency < 8ms · Jitter 0.4ms"}
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-lg">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs uppercase tracking-wider text-slate-400 font-bold">
+            <span className="font-mono text-xs sm:text-sm uppercase tracking-wider text-slate-300 font-bold">
               {locale === "bn" ? "বায়োমেট্রিক ভল্ট" : "Biometric Vault"}
             </span>
-            <span className="rounded-md bg-purple-950 px-2.5 py-0.5 font-mono text-xs font-bold text-purple-300 border border-purple-500/40">
+            <span className="rounded-md bg-purple-950 px-2.5 py-0.5 font-mono text-xs sm:text-sm font-bold text-purple-300 border border-purple-500/40">
               TLS 1.3 Certified
             </span>
           </div>
-          <div className="mt-2 text-lg font-bold text-white">
+          <div className="mt-2 text-xl font-extrabold text-white">
             {callSign} · {locale === "bn" ? "ভল্ট যাচাইকৃত" : "Vault Verified"}
           </div>
-          <div className="mt-1 font-mono text-xs text-slate-300 font-medium truncate">
+          <div className="mt-1 font-mono text-xs sm:text-sm text-slate-200 font-semibold truncate">
             {crewName}
           </div>
         </div>
@@ -95,7 +95,7 @@ export function BioLinkView({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-pulse" />
-          <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
+          <h3 className="font-mono text-sm sm:text-base font-bold uppercase tracking-wider text-slate-200">
             {locale === "bn"
               ? `সক্রিয় বায়োমেট্রিক সেন্সর ও পরিধানযোগ্য (${formatNumber(sensors.length)})`
               : `Active Biometric Sensors & Wearables (${sensors.length})`}
@@ -104,7 +104,7 @@ export function BioLinkView({
         <button
           type="button"
           onClick={() => setShowPairModal(true)}
-          className="rounded-xl border border-cyan-500/40 bg-cyan-950/60 px-4 py-2 font-mono text-xs font-bold text-cyan-300 hover:bg-cyan-900 transition shadow"
+          className="rounded-xl border border-cyan-500/40 bg-cyan-950/60 px-4 py-2.5 font-mono text-xs sm:text-sm font-bold text-cyan-300 hover:bg-cyan-900 transition shadow"
         >
           {locale === "bn" ? "+ ফোন / পিন কোড দিয়ে সংযুক্ত করুন" : "+ Connect by Phone / PIN Number"}
         </button>
@@ -156,8 +156,8 @@ export function BioLinkView({
               </div>
 
               <div>
-                <div className="text-base font-bold text-white flex items-center gap-2.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-950 border border-slate-800 text-cyan-400 shrink-0">
+                <div className="text-base sm:text-lg font-extrabold text-white flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-950 border border-slate-800 text-cyan-400 shrink-0">
                     {s.type === "watch" ? (
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="7" />
@@ -181,18 +181,18 @@ export function BioLinkView({
                   </div>
                   <span className="truncate">{s.name}</span>
                 </div>
-                <div className="font-mono text-xs text-slate-400 font-semibold mt-1">{s.code}</div>
+                <div className="font-mono text-xs sm:text-sm text-slate-300 font-bold mt-1">{s.code}</div>
               </div>
 
-              <div className="rounded-xl border border-slate-800/80 bg-slate-900/80 p-3 font-mono text-xs space-y-1.5">
+              <div className="rounded-xl border border-slate-800/80 bg-slate-900/80 p-3.5 font-mono text-xs sm:text-sm space-y-2">
                 <div className="flex justify-between text-slate-400">
                   <span>{t("protocol")}</span>
-                  <span className="text-slate-200 font-semibold">{s.protocol}</span>
+                  <span className="text-slate-100 font-bold">{s.protocol}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>{locale === "bn" ? "সিগন্যাল RSSI:" : "Signal RSSI:"}</span>
                   <span
-                    className={`font-semibold ${
+                    className={`font-bold ${
                       s.signalRssi > -60 ? "text-emerald-400" : "text-amber-400"
                     }`}
                   >
@@ -204,25 +204,25 @@ export function BioLinkView({
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>{t("battery")}</span>
-                  <span className="text-cyan-300 font-bold">{formatNumber(s.batteryPct)}%</span>
+                  <span className="text-cyan-300 font-extrabold">{formatNumber(s.batteryPct)}%</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>{locale === "bn" ? "ক্যাটেগরি:" : "Category:"}</span>
-                  <span className="text-slate-300 font-medium">{s.dataCategory}</span>
+                  <span className="text-slate-200 font-semibold">{s.dataCategory}</span>
                 </div>
               </div>
 
               {/* Payload Strip */}
-              <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-3 font-mono text-xs text-cyan-300">
-                <span className="text-[11px] text-slate-400 block uppercase font-bold mb-0.5">
+              <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-3.5 font-mono text-xs sm:text-sm text-cyan-300">
+                <span className="text-xs text-slate-300 block uppercase font-bold mb-1">
                   {locale === "bn" ? "লাইভ স্ট্রিম পেলোড" : "Live Stream Payload"}
                 </span>
-                <span className="font-bold text-white">{s.livePayload}</span>
+                <span className="font-bold text-white text-sm sm:text-base">{s.livePayload}</span>
               </div>
             </div>
 
-            <div className="mt-4 border-t border-slate-800 pt-3 text-xs font-mono text-slate-400 flex justify-between items-center">
-              <span className="truncate text-slate-400">{s.calibrationNote}</span>
+            <div className="mt-4 border-t border-slate-800 pt-3 text-xs sm:text-sm font-mono text-slate-300 flex justify-between items-center">
+              <span className="truncate text-slate-300 font-medium">{s.calibrationNote}</span>
               <span className="text-emerald-400 font-bold shrink-0 ml-2">
                 {locale === "bn" ? "সিঙ্ক: এইমাত্র" : "Sync: Just now"}
               </span>

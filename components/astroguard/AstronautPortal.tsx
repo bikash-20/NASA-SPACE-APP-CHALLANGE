@@ -156,10 +156,10 @@ export function AstronautPortal({
               </div>
               {!sidebarCollapsed && (
                 <div>
-                  <h1 className="text-base font-bold tracking-tight text-white">
+                  <h1 className="text-lg font-bold tracking-tight text-white">
                     {t("appName")}
                   </h1>
-                  <p className="font-mono text-xs font-semibold text-cyan-400 uppercase tracking-wider">
+                  <p className="font-mono text-sm font-bold text-cyan-400 uppercase tracking-wider">
                     {t("astronautConsole")}
                   </p>
                 </div>
@@ -169,7 +169,7 @@ export function AstronautPortal({
             <button
               type="button"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden md:flex h-8 w-8 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:text-white hover:border-cyan-500/40 transition text-xs font-mono"
+              className="hidden md:flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:text-white hover:border-cyan-500/40 transition text-sm font-mono"
               title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
               {sidebarCollapsed ? "▶" : "◀"}
@@ -177,22 +177,22 @@ export function AstronautPortal({
           </div>
 
           {/* Navigation Items */}
-          <nav className="space-y-2 w-full">
+          <nav className="space-y-2.5 w-full">
             <button
               type="button"
               onClick={() => setActiveTab("dashboard")}
               title={t("navTelemetry")}
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
-                  ? "justify-center p-3"
-                  : "gap-3 px-3.5 py-2.5 text-xs font-semibold"
+                  ? "justify-center p-3.5"
+                  : "gap-3 px-4 py-3 text-sm font-bold"
               } ${
                 activeTab === "dashboard"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="20" x2="18" y2="10" />
                 <line x1="12" y1="20" x2="12" y2="4" />
                 <line x1="6" y1="20" x2="6" y2="14" />
@@ -206,15 +206,15 @@ export function AstronautPortal({
               title={t("navAiCopilot")}
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
-                  ? "justify-center p-3"
-                  : "gap-3 px-3.5 py-2.5 text-xs font-semibold"
+                  ? "justify-center p-3.5"
+                  : "gap-3 px-4 py-3 text-sm font-bold"
               } ${
                 activeTab === "ai"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="4" />
                 <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
               </svg>
@@ -227,21 +227,21 @@ export function AstronautPortal({
               title={t("navTeleHealth")}
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
-                  ? "justify-center p-3 relative"
-                  : "justify-between px-3.5 py-2.5 text-xs font-semibold"
+                  ? "justify-center p-3.5 relative"
+                  : "justify-between px-4 py-3 text-sm font-bold"
               } ${
                 activeTab === "consult"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-3">
-                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
                 {!sidebarCollapsed && <span>{t("navTeleHealth")}</span>}
               </div>
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping" />
             </button>
 
             <button
@@ -250,15 +250,15 @@ export function AstronautPortal({
               title={t("navBioLink")}
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
-                  ? "justify-center p-3"
-                  : "gap-3 px-3.5 py-2.5 text-xs font-semibold"
+                  ? "justify-center p-3.5"
+                  : "gap-3 px-4 py-3 text-sm font-bold"
               } ${
                 activeTab === "biolink"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" />
               </svg>
               {!sidebarCollapsed && <span>{t("navBioLink")}</span>}
@@ -270,21 +270,21 @@ export function AstronautPortal({
         <div className="pt-4 border-t border-slate-800 space-y-3 w-full">
           {!sidebarCollapsed ? (
             <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-600 to-blue-800 font-bold text-sm text-white shadow shrink-0">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-600 to-blue-800 font-bold text-base text-white shadow shrink-0">
                 {user.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-bold text-white truncate">
+                <div className="text-base font-bold text-white truncate">
                   {user.name}
                 </div>
-                <div className="font-mono text-xs text-cyan-400 font-semibold truncate">
+                <div className="font-mono text-sm text-cyan-400 font-semibold truncate">
                   {user.callSign} · {user.roleTitle.split("&")[0]}
                 </div>
               </div>
             </div>
           ) : (
             <div className="flex justify-center" title={`${user.name} (${user.callSign})`}>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-600 to-blue-800 font-bold text-xs text-white shadow">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-600 to-blue-800 font-bold text-sm text-white shadow">
                 {user.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}
               </div>
             </div>
@@ -293,8 +293,8 @@ export function AstronautPortal({
           <button
             type="button"
             onClick={onSignOut}
-            className={`w-full flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900 font-mono text-xs font-bold text-slate-200 hover:bg-rose-950 hover:text-rose-200 hover:border-rose-500/50 transition shadow-sm ${
-              sidebarCollapsed ? "p-2.5" : "gap-2 py-2.5"
+            className={`w-full flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900 font-mono text-sm font-bold text-slate-200 hover:bg-rose-950 hover:text-rose-200 hover:border-rose-500/50 transition shadow-sm ${
+              sidebarCollapsed ? "p-3" : "gap-2 py-3"
             }`}
             title={t("signOut")}
           >
@@ -320,13 +320,13 @@ export function AstronautPortal({
               </button>
             )}
             <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-2.5">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2.5">
                 <span>{t("missionConsole")}</span>
-                <span className="font-mono text-xs font-semibold text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/30">
+                <span className="font-mono text-xs sm:text-sm font-semibold text-cyan-300 bg-cyan-950/80 px-2.5 py-0.5 rounded-lg border border-cyan-500/30">
                   {user.name} ({user.callSign})
                 </span>
               </h2>
-              <p className="text-xs text-slate-300 font-medium mt-0.5">
+              <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1">
                 {t("continuousMonitoring")}
               </p>
             </div>
@@ -338,9 +338,9 @@ export function AstronautPortal({
             <button
               type="button"
               onClick={handleSosClick}
-              className="rounded-xl border border-rose-500/60 bg-rose-600/30 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-600/50 shadow-lg shadow-rose-950/50 transition flex items-center gap-1.5"
+              className="rounded-xl border border-rose-500/60 bg-rose-600/30 px-5 py-2.5 font-mono text-sm font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-600/50 shadow-lg shadow-rose-950/50 transition flex items-center gap-2"
             >
-              <span className="h-2 w-2 rounded-full bg-rose-400 animate-ping" />
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-400 animate-ping" />
               <span>{t("emergencySos")}</span>
             </button>
 
@@ -464,19 +464,19 @@ export function AstronautPortal({
         {activeTab === "dashboard" && (
           <div className="space-y-6">
             {/* Vitals Summary Strip with Large Figures */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
-                <span className="font-mono text-xs uppercase font-bold text-slate-400 block mb-1">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-md">
+                <span className="font-mono text-xs sm:text-sm uppercase font-bold text-slate-300 block mb-1.5">
                   {t("heartRate")}
                 </span>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl sm:text-3xl font-extrabold font-mono text-rose-400">
+                  <span className="text-3xl sm:text-4xl font-extrabold font-mono text-rose-400">
                     {formatNumber(Math.round(crew.hr))}
                   </span>
-                  <span className="text-xs font-mono text-slate-400">{t("bpm")}</span>
+                  <span className="text-xs sm:text-sm font-mono text-slate-400 font-bold">{t("bpm")}</span>
                 </div>
                 <span
-                  className={`font-mono text-xs mt-1 block font-semibold ${
+                  className={`font-mono text-xs sm:text-sm mt-1.5 block font-semibold ${
                     crew.hr > crew.bhr * 1.3
                       ? "text-rose-400"
                       : crew.hr > crew.bhr * 1.15
@@ -492,17 +492,17 @@ export function AstronautPortal({
                 </span>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
-                <span className="font-mono text-xs uppercase font-bold text-slate-400 block mb-1">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-md">
+                <span className="font-mono text-xs sm:text-sm uppercase font-bold text-slate-300 block mb-1.5">
                   {t("bloodOxygen")}
                 </span>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl sm:text-3xl font-extrabold font-mono text-cyan-300">
+                  <span className="text-3xl sm:text-4xl font-extrabold font-mono text-cyan-300">
                     {formatNumber(crew.spo2.toFixed(1))}%
                   </span>
                 </div>
                 <span
-                  className={`font-mono text-xs font-semibold mt-1 block ${
+                  className={`font-mono text-xs sm:text-sm font-semibold mt-1.5 block ${
                     crew.spo2 < 92
                       ? "text-rose-400"
                       : crew.spo2 < 95
@@ -514,17 +514,17 @@ export function AstronautPortal({
                 </span>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
-                <span className="font-mono text-xs uppercase font-bold text-slate-400 block mb-1">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-md">
+                <span className="font-mono text-xs sm:text-sm uppercase font-bold text-slate-300 block mb-1.5">
                   {t("sleepAvg")}
                 </span>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl sm:text-3xl font-extrabold font-mono text-indigo-300">
+                  <span className="text-3xl sm:text-4xl font-extrabold font-mono text-indigo-300">
                     {formatNumber(crew.sleep.toFixed(1))}h
                   </span>
                 </div>
                 <span
-                  className={`font-mono text-xs font-semibold mt-1 block ${
+                  className={`font-mono text-xs sm:text-sm font-semibold mt-1.5 block ${
                     crew.sleep < 5.5 ? "text-amber-400" : "text-slate-400"
                   }`}
                 >
@@ -532,18 +532,18 @@ export function AstronautPortal({
                 </span>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md">
-                <span className="font-mono text-xs uppercase font-bold text-slate-400 block mb-1">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-md">
+                <span className="font-mono text-xs sm:text-sm uppercase font-bold text-slate-300 block mb-1.5">
                   {t("stressIndex")}
                 </span>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl sm:text-3xl font-extrabold font-mono text-amber-400">
+                  <span className="text-3xl sm:text-4xl font-extrabold font-mono text-amber-400">
                     {formatNumber(Math.round(crew.stress))}
                   </span>
-                  <span className="text-xs font-mono text-slate-400">/100</span>
+                  <span className="text-xs sm:text-sm font-mono text-slate-400 font-bold">/100</span>
                 </div>
                 <span
-                  className={`font-mono text-xs font-semibold mt-1 block ${
+                  className={`font-mono text-xs sm:text-sm font-semibold mt-1.5 block ${
                     crew.stress > 50 ? "text-amber-400" : "text-slate-400"
                   }`}
                 >
@@ -551,18 +551,18 @@ export function AstronautPortal({
                 </span>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-md col-span-2 sm:col-span-1">
-                <span className="font-mono text-xs uppercase font-bold text-slate-400 block mb-1">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-md col-span-2 sm:col-span-1">
+                <span className="font-mono text-xs sm:text-sm uppercase font-bold text-slate-300 block mb-1.5">
                   {t("dose30d")}
                 </span>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl sm:text-3xl font-extrabold font-mono text-purple-300">
+                  <span className="text-3xl sm:text-4xl font-extrabold font-mono text-purple-300">
                     {formatNumber(crew.dose.toFixed(0))}
                   </span>
-                  <span className="text-xs font-mono text-slate-400">mSv</span>
+                  <span className="text-xs sm:text-sm font-mono text-slate-400 font-bold">mSv</span>
                 </div>
                 <span
-                  className={`font-mono text-xs font-semibold mt-1 block ${
+                  className={`font-mono text-xs sm:text-sm font-semibold mt-1.5 block ${
                     crew.rate > 0.5 ? "text-amber-400" : "text-slate-400"
                   }`}
                 >
@@ -603,14 +603,14 @@ export function AstronautPortal({
             <div className="rounded-2xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl">
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-5">
                 <div>
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2.5">
-                    <svg className="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
+                    <svg className="w-6 h-6 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <circle cx="12" cy="12" r="4" />
                       <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
                     </svg>
                     <span>{t("aiCopilotTitle")}</span>
                   </h3>
-                  <p className="text-xs text-slate-300 font-medium mt-0.5">
+                  <p className="text-sm text-slate-300 font-medium mt-1">
                     {t("aiCopilotSubtitle")}
                   </p>
                 </div>
@@ -618,7 +618,7 @@ export function AstronautPortal({
                   type="button"
                   onClick={onGenerateBrief}
                   disabled={briefLoading}
-                  className="rounded-xl bg-cyan-600 px-5 py-2.5 font-mono text-xs font-bold text-white hover:bg-cyan-500 transition disabled:opacity-50 shadow-lg shadow-cyan-600/25"
+                  className="rounded-xl bg-cyan-600 px-6 py-3 font-mono text-sm font-bold text-white hover:bg-cyan-500 transition disabled:opacity-50 shadow-lg shadow-cyan-600/25"
                 >
                   {briefLoading ? t("briefGenerating") : t("generateHealthBrief")}
                 </button>
@@ -626,30 +626,30 @@ export function AstronautPortal({
 
               {/* Brief Display */}
               {briefError && (
-                <div className="mb-5 rounded-2xl border border-rose-500/40 bg-rose-950/40 p-4 text-xs text-rose-300 font-mono">
+                <div className="mb-5 rounded-2xl border border-rose-500/40 bg-rose-950/40 p-4 text-sm text-rose-300 font-mono">
                   {briefError}
                 </div>
               )}
 
               {briefText ? (
-                <div className="mb-6 rounded-2xl border border-cyan-500/30 bg-slate-900/90 p-5 font-mono text-sm leading-relaxed text-slate-200 whitespace-pre-line shadow-inner">
+                <div className="mb-6 rounded-2xl border border-cyan-500/30 bg-slate-900/90 p-6 font-mono text-base sm:text-lg leading-relaxed text-slate-100 whitespace-pre-line shadow-inner">
                   {briefText}
                 </div>
               ) : (
-                <div className="mb-6 rounded-2xl border border-slate-800 bg-slate-900/40 p-5 text-center font-mono text-xs text-slate-400">
+                <div className="mb-6 rounded-2xl border border-slate-800 bg-slate-900/40 p-6 text-center font-mono text-sm text-slate-400">
                   {t("noBriefYet")}
                 </div>
               )}
 
               {/* Interactive AI Chat */}
               <div className="border-t border-slate-800 pt-5">
-                <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200 mb-3">
+                <h4 className="text-sm font-mono font-bold uppercase tracking-wider text-slate-200 mb-3">
                   {t("askAboutVitals")}
                 </h4>
 
                 <div className="space-y-3 mb-4 max-h-72 overflow-y-auto">
                   {chatMessages.length === 0 ? (
-                    <div className="text-xs font-mono text-slate-400 italic">
+                    <div className="text-sm font-mono text-slate-400 italic">
                       {locale === "bn"
                         ? "আপনার কার্ডিওভাসকুলার রিকভারি, ঘুম বা হাইড্রেশন বৃদ্ধি সম্পর্কে প্রশ্ন করুন।"
                         : "Ask questions like \"How is my cardiovascular recovery?\" or \"Should I increase hydration?\""}
@@ -658,10 +658,10 @@ export function AstronautPortal({
                     chatMessages.map((msg, idx) => (
                       <div
                         key={idx}
-                        className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed ${
+                        className={`p-4 rounded-2xl text-sm sm:text-base leading-relaxed ${
                           msg.role === "user"
-                            ? "bg-cyan-950/60 border border-cyan-500/30 text-cyan-200 ml-8"
-                            : "bg-slate-900 border border-slate-800 text-slate-100 mr-8"
+                            ? "bg-cyan-950/60 border border-cyan-500/30 text-cyan-200 ml-8 font-medium"
+                            : "bg-slate-900 border border-slate-800 text-slate-100 mr-8 font-medium"
                         }`}
                       >
                         <span className="font-mono text-xs font-bold text-slate-400 uppercase block mb-1">
@@ -672,12 +672,12 @@ export function AstronautPortal({
                     ))
                   )}
                   {chatStreaming && (
-                    <div className="text-xs font-mono text-cyan-400 animate-pulse">
+                    <div className="text-sm font-mono text-cyan-400 animate-pulse">
                       {locale === "bn" ? "এআই উত্তর তৈরি করছে..." : "AI is generating reply..."}
                     </div>
                   )}
                   {chatError && (
-                    <div className="text-xs font-mono text-rose-400">
+                    <div className="text-sm font-mono text-rose-400">
                       {chatError}
                     </div>
                   )}
@@ -689,11 +689,11 @@ export function AstronautPortal({
                     value={aiInput}
                     onChange={(e) => setAiInput(e.target.value)}
                     placeholder={t("askPlaceholder")}
-                    className="flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none font-mono"
+                    className="flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm sm:text-base text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none font-mono"
                   />
                   <button
                     type="submit"
-                    className="rounded-xl bg-cyan-600 px-5 py-2.5 font-mono text-xs font-bold text-white hover:bg-cyan-500 transition shadow-md shadow-cyan-600/30"
+                    className="rounded-xl bg-cyan-600 px-6 py-3 font-mono text-sm font-bold text-white hover:bg-cyan-500 transition shadow-md shadow-cyan-600/30"
                   >
                     {t("send")}
                   </button>

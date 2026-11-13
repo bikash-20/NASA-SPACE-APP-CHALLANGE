@@ -66,21 +66,21 @@ export function Timeline24hChart({ crew, className = "" }: Timeline24hChartProps
       <div className="mb-4 flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-2">
         <div className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-          <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
+          <h3 className="font-mono text-sm sm:text-base font-bold uppercase tracking-wider text-slate-200">
             {t("timelineTitle")}
           </h3>
         </div>
-        <div className="flex items-center gap-4 text-xs font-mono font-semibold">
+        <div className="flex items-center gap-4 text-xs sm:text-sm font-mono font-bold">
           <div className="flex items-center gap-2 text-rose-400">
-            <span className="inline-block h-2 w-4 rounded-full bg-rose-500" />
+            <span className="inline-block h-2.5 w-4 rounded-full bg-rose-500" />
             <span>{locale === "bn" ? "হৃদস্পন্দন (BPM)" : "Heart Rate (BPM)"}</span>
           </div>
           <div className="flex items-center gap-2 text-cyan-300">
-            <span className="inline-block h-2 w-4 rounded-full bg-cyan-400" />
+            <span className="inline-block h-2.5 w-4 rounded-full bg-cyan-400" />
             <span>{t("glucose")}</span>
           </div>
           <div className="flex items-center gap-1.5 text-amber-300">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3" />
             </svg>
             <span>{t("mealEvents")}</span>
@@ -88,7 +88,7 @@ export function Timeline24hChart({ crew, className = "" }: Timeline24hChartProps
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-[#020617] p-3">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-[#020617] p-4">
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
           {/* Horizontal grid lines */}
           {[0.25, 0.5, 0.75].map((r) => (
@@ -121,7 +121,7 @@ export function Timeline24hChart({ crew, className = "" }: Timeline24hChartProps
                 x={pin.x}
                 y={paddingY - 8}
                 fill="#fde047"
-                fontSize="11"
+                fontSize="13"
                 fontFamily="monospace"
                 fontWeight="bold"
                 textAnchor="middle"
@@ -158,7 +158,7 @@ export function Timeline24hChart({ crew, className = "" }: Timeline24hChartProps
                 x={xPos}
                 y={height - 8}
                 fill="#94a3b8"
-                fontSize="11"
+                fontSize="13"
                 fontFamily="monospace"
                 fontWeight="bold"
                 textAnchor="middle"

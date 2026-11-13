@@ -142,11 +142,11 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
       <div className="mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-pulse" />
-          <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
+          <h3 className="font-mono text-sm sm:text-base font-bold uppercase tracking-wider text-slate-200">
             {t("bioScanTitle")}
           </h3>
         </div>
-        <span className="font-mono text-xs font-bold text-cyan-300">
+        <span className="font-mono text-xs sm:text-sm font-bold text-cyan-300">
           {t("scoping")}: {crew.n}
         </span>
       </div>
@@ -227,16 +227,16 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
         {/* Selected Sensor Telemetry Card & Organ List */}
         <div className="space-y-4">
           <div className="rounded-2xl border border-cyan-500/40 bg-cyan-950/30 p-4 shadow-md">
-            <div className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
+            <div className="text-xs sm:text-sm font-mono font-bold uppercase tracking-wider text-cyan-300">
               {t("activeSensorTelemetry")}
             </div>
-            <div className="text-base font-bold text-white mt-1">
+            <div className="text-lg sm:text-xl font-extrabold text-white mt-1.5">
               {current.name}
             </div>
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs">
-              <span className="font-mono text-slate-200 font-medium">{current.val}</span>
+            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="font-mono text-xs sm:text-sm text-slate-100 font-bold">{current.val}</span>
               <span
-                className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold ${
+                className={`rounded-md px-2.5 py-1 font-mono text-xs sm:text-sm font-bold ${
                   current.statusRaw === "Alert"
                     ? "bg-rose-950 text-rose-300 border border-rose-500/50"
                     : current.statusRaw === "Watch" || current.statusRaw === "Elevated"
@@ -249,13 +249,13 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
             </div>
           </div>
 
-          <div className="space-y-2 text-xs sm:text-sm">
+          <div className="space-y-2.5 text-sm sm:text-base">
             {nodes.slice(0, 5).map((n) => (
               <button
                 key={n.id}
                 type="button"
                 onClick={() => setActiveNode(n.id)}
-                className={`w-full flex items-center justify-between rounded-xl px-3.5 py-2.5 transition text-left border ${
+                className={`w-full flex items-center justify-between rounded-xl px-4 py-3 transition text-left border ${
                   activeNode === n.id
                     ? "bg-slate-900 text-white font-bold border-cyan-400 shadow-sm"
                     : "text-slate-300 hover:bg-slate-900/60 hover:text-white border-slate-800"
@@ -266,9 +266,9 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
                     className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: n.color }}
                   />
-                  <span className="truncate">{n.name}</span>
+                  <span className="truncate font-semibold">{n.name}</span>
                 </div>
-                <span className="font-mono text-xs font-semibold text-slate-400">
+                <span className="font-mono text-xs sm:text-sm font-bold text-slate-300">
                   {n.status}
                 </span>
               </button>

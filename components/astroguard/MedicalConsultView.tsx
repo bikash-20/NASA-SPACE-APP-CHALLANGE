@@ -58,12 +58,12 @@ export function MedicalConsultView({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-white">{doctorName}</h3>
-              <span className="rounded-md bg-slate-800 px-2 py-0.5 font-mono text-xs font-semibold text-rose-300 border border-slate-700">
+              <h3 className="text-lg sm:text-xl font-extrabold text-white">{doctorName}</h3>
+              <span className="rounded-md bg-slate-800 px-2.5 py-1 font-mono text-xs sm:text-sm font-bold text-rose-300 border border-slate-700">
                 {doctorCallSign} · {t("chiefSurgeonRole")}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 font-medium mt-0.5">
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-mono text-emerald-400 font-bold mt-1">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>
                 {locale === "bn"
@@ -79,7 +79,7 @@ export function MedicalConsultView({
           <button
             type="button"
             onClick={() => onStartCall("audio")}
-            className="flex h-10 px-3 items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-950/60 font-mono text-xs font-bold text-cyan-300 hover:bg-cyan-900/70 transition shadow"
+            className="flex h-10 px-3.5 items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-950/60 font-mono text-xs sm:text-sm font-bold text-cyan-300 hover:bg-cyan-900/70 transition shadow"
             title={t("startVoiceCall")}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -90,7 +90,7 @@ export function MedicalConsultView({
           <button
             type="button"
             onClick={() => onStartCall("video")}
-            className="flex h-10 px-3 items-center gap-1.5 rounded-xl border border-purple-500/40 bg-purple-950/60 font-mono text-xs font-bold text-purple-300 hover:bg-purple-900/70 transition shadow"
+            className="flex h-10 px-3.5 items-center gap-1.5 rounded-xl border border-purple-500/40 bg-purple-950/60 font-mono text-xs sm:text-sm font-bold text-purple-300 hover:bg-purple-900/70 transition shadow"
             title={t("startVideoUplink")}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -102,7 +102,7 @@ export function MedicalConsultView({
           <button
             type="button"
             onClick={onTriggerSos}
-            className="flex items-center gap-1.5 rounded-xl border border-rose-500/60 bg-rose-600/30 px-3.5 py-2 font-mono text-xs font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-600/50 shadow-lg shadow-rose-950/40 transition animate-pulse"
+            className="flex items-center gap-1.5 rounded-xl border border-rose-500/60 bg-rose-600/30 px-4 py-2 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-600/50 shadow-lg shadow-rose-950/40 transition animate-pulse"
           >
             <svg className="w-4 h-4 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
@@ -125,10 +125,10 @@ export function MedicalConsultView({
                 <circle cx="20" cy="10" r="2" />
               </svg>
             </div>
-            <div className="text-sm font-mono text-slate-300 font-semibold">
+            <div className="text-base font-mono text-slate-200 font-bold">
               {t("medicalChannelOpenWith")} {doctorName}.
             </div>
-            <div className="text-xs font-mono text-slate-400">
+            <div className="text-xs sm:text-sm font-mono text-slate-300">
               {t("sendVoiceToConsult")}
             </div>
           </div>
@@ -141,7 +141,7 @@ export function MedicalConsultView({
               return (
                 <div
                   key={m.id}
-                  className="mx-auto my-3 max-w-lg rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-2.5 text-center font-mono text-xs font-bold text-rose-300 shadow"
+                  className="mx-auto my-3 max-w-lg rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-2.5 text-center font-mono text-xs sm:text-sm font-bold text-rose-300 shadow"
                 >
                   ⚠ {m.text} ({m.timestamp})
                 </div>
@@ -155,14 +155,14 @@ export function MedicalConsultView({
                   isAstronaut ? "items-end" : "items-start"
                 }`}
               >
-                <div className="flex items-center gap-2 text-xs font-mono text-slate-400 mb-1">
-                  <span className="font-semibold text-slate-300">{m.senderName}</span>
+                <div className="flex items-center gap-2 text-xs sm:text-sm font-mono text-slate-300 mb-1">
+                  <span className="font-bold text-slate-200">{m.senderName}</span>
                   <span>·</span>
                   <span>{m.timestamp}</span>
                 </div>
 
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-md ${
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-base leading-relaxed shadow-md ${
                     isAstronaut
                       ? "bg-cyan-600 text-white rounded-tr-none font-medium"
                       : "bg-slate-900 text-slate-100 rounded-tl-none border border-slate-700"
@@ -178,8 +178,8 @@ export function MedicalConsultView({
                         {playingVoiceId === m.id ? "⏸" : "▶"}
                       </button>
                       <div>
-                        <div className="font-bold text-sm">{t("voiceDispatch")}</div>
-                        <div className="flex items-center gap-2 font-mono text-xs opacity-90">
+                        <div className="font-bold text-base">{t("voiceDispatch")}</div>
+                        <div className="flex items-center gap-2 font-mono text-xs sm:text-sm opacity-90">
                           <span>0:00 / 0:{m.voiceNoteDuration}</span>
                           {playingVoiceId === m.id && (
                             <span className="text-emerald-300 animate-pulse font-bold">
@@ -207,7 +207,7 @@ export function MedicalConsultView({
         <button
           type="button"
           onClick={onSendVoiceNote}
-          className="flex h-11 px-3.5 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 font-mono text-xs font-bold text-cyan-300 hover:bg-slate-800 transition"
+          className="flex h-11 px-4 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 font-mono text-xs sm:text-sm font-bold text-cyan-300 hover:bg-slate-800 transition"
           title={t("voiceNote")}
         >
           <svg className="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -223,12 +223,12 @@ export function MedicalConsultView({
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder={t("typeConsultPlaceholder")}
-          className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+          className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-base text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
         />
 
         <button
           type="submit"
-          className="rounded-xl bg-cyan-600 px-5 py-2.5 font-mono text-xs font-bold text-white hover:bg-cyan-500 transition shadow-lg shadow-cyan-600/30"
+          className="rounded-xl bg-cyan-600 px-6 py-3 font-mono text-xs sm:text-sm font-bold text-white hover:bg-cyan-500 transition shadow-lg shadow-cyan-600/30"
         >
           {t("send")}
         </button>

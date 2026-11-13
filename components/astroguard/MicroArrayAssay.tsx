@@ -122,33 +122,33 @@ export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) 
     <div
       className={`rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-xl font-sans ${className}`}
     >
-      <div className="mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-2">
         <div className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
-          <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
+          <h3 className="font-mono text-sm sm:text-base font-bold uppercase tracking-wider text-slate-200">
             {t("biomarkerTitle")}
           </h3>
         </div>
-        <span className="font-mono text-xs font-semibold text-cyan-300">
+        <span className="font-mono text-xs sm:text-sm font-semibold text-cyan-300">
           {t("biomarkerSubtitle")}
         </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Vitamins */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
-          <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-3 border-b border-slate-800/80 pb-2">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5">
+          <div className="text-sm font-mono font-bold uppercase tracking-wider text-slate-200 mb-3.5 border-b border-slate-800/80 pb-2.5">
             {t("keyVitamins")}
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {vitamins.map((v) => (
               <div key={v.name} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs sm:text-sm">
-                  <span className="text-white font-semibold">{v.name}</span>
+                <div className="flex items-center justify-between text-sm sm:text-base">
+                  <span className="text-white font-bold">{v.name}</span>
                   <div className="flex items-center gap-2.5">
-                    <span className="font-mono text-xs text-slate-300 font-medium">{v.val}</span>
+                    <span className="font-mono text-xs sm:text-sm text-slate-200 font-semibold">{v.val}</span>
                     <span
-                      className={`rounded px-2 py-0.5 font-mono text-[11px] font-bold ${
+                      className={`rounded-md px-2.5 py-0.5 font-mono text-xs font-bold ${
                         v.status === "DEFICIT"
                           ? "bg-rose-950 text-rose-300 border border-rose-500/50"
                           : v.status === "OPTIMAL"
@@ -160,7 +160,7 @@ export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) 
                     </span>
                   </div>
                 </div>
-                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-2.5 w-full rounded-full bg-slate-800 overflow-hidden">
                   <div
                     className={`h-full rounded-full bg-gradient-to-r ${v.color}`}
                     style={{ width: `${v.pct}%` }}
@@ -172,19 +172,19 @@ export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) 
         </div>
 
         {/* Minerals */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
-          <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-3 border-b border-slate-800/80 pb-2">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5">
+          <div className="text-sm font-mono font-bold uppercase tracking-wider text-slate-200 mb-3.5 border-b border-slate-800/80 pb-2.5">
             {t("essentialMinerals")}
           </div>
-          <div className="space-y-3.5">
+          <div className="space-y-4">
             {minerals.map((m) => (
               <div key={m.name} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs sm:text-sm">
-                  <span className="text-white font-semibold">{m.name}</span>
+                <div className="flex items-center justify-between text-sm sm:text-base">
+                  <span className="text-white font-bold">{m.name}</span>
                   <div className="flex items-center gap-2.5">
-                    <span className="font-mono text-xs text-slate-300 font-medium">{m.val}</span>
+                    <span className="font-mono text-xs sm:text-sm text-slate-200 font-semibold">{m.val}</span>
                     <span
-                      className={`rounded px-2 py-0.5 font-mono text-[11px] font-bold ${
+                      className={`rounded-md px-2.5 py-0.5 font-mono text-xs font-bold ${
                         m.status === "WATCH"
                           ? "bg-amber-950 text-amber-300 border border-amber-500/50"
                           : m.status === "OPTIMAL"
@@ -196,7 +196,7 @@ export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) 
                     </span>
                   </div>
                 </div>
-                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-2.5 w-full rounded-full bg-slate-800 overflow-hidden">
                   <div
                     className={`h-full rounded-full bg-gradient-to-r ${m.color}`}
                     style={{ width: `${m.pct}%` }}
