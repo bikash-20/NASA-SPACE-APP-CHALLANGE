@@ -8,6 +8,29 @@ that calls out things an AI coding assistant should know.
 
 ## [Unreleased]
 
+## 2026-11-13 — Full System Audit & Dynamic Cross-Dashboard Telemetry Synchronization
+
+### Summary
+Full end-to-end system audit eliminating all static/hardcoded telemetry figures across subcomponents,
+guaranteeing real-time dynamic reactive synchronization between Mission Control demo triggers, the 3 individual
+astronaut portals (`crew-0`, `crew-1`, `crew-2`), and the Chief Flight Surgeon Operations Hub (`doctor`).
+
+### Added & Enhanced
+- **Dynamic Cross-Dashboard Scenario Propagation**:
+  - Toggling scenario presets (Cardiac Strain, Sleep Debt, Solar Storm) or launching the Guided Demo from Mission Control immediately updates the shared simulation loop.
+  - When switching to that astronaut's portal, their vitals strip, Lead-II ECG waveform, 24H Timeline, BioScan anatomical nodes, and active alarm notification badge react dynamically in real time.
+- **Zero-Hardcoding Dynamic Hemodynamics**:
+  - Replaced static BP (124/82) and Respiration (18 Br/min) in `BioScanBody.tsx` and `DoctorHub.tsx` with dynamic physiological formulas scaled to real-time Heart Rate, SpO₂, and Autonomic Stress Index.
+  - Added whole-body **Dosimetry & Cellular Radiation** sensor node to the Bio-Scan 2D silhouette that turns amber/rose during solar particle events.
+- **Unified Real-Time Clinical Triage Queue**:
+  - `DoctorHub.tsx` dynamically merges deterministic rule violations from `state.alerts` into the triage queue alongside SOS emergency transmissions, providing instant triage counters and direct surgeon action links (`Voice Call`, `Video Uplink`, `Flag to Control`).
+- **Dynamic Biomarkers & Electrophysiology**:
+  - `MicroArrayAssay.tsx` dynamically shifts vitamin (B-Complex, Vitamin C, Vitamin E) and mineral (Magnesium, Calcium) profiles based on sleep deficits and radiation rates.
+  - `ECGMonitor.tsx` dynamically recalibrates PR, QRS, and QTc intervals based on current heart rate.
+  - `MacroGauges.tsx` dynamically computes Tissue Hydration Index and Metabolic Status based on consumed intake.
+- **Space-Grade Iconography**:
+  - Eliminated all cartoon emojis, replacing them with accessible, lightweight SVG NASA-grade icons across all modals, sensor cards, and consult threads.
+
 ## 2026-11-13 — AstroGuard Multi-Role Expansion & Tele-Health Operations Platform
 
 ### Summary

@@ -1,25 +1,99 @@
 "use client";
 
+import type { Crew } from "@/lib/types";
+
 interface MicroArrayAssayProps {
+  crew?: Crew;
   className?: string;
 }
 
-export function MicroArrayAssay({ className = "" }: MicroArrayAssayProps) {
+export function MicroArrayAssay({ crew, className = "" }: MicroArrayAssayProps) {
+  const isSleepDeficit = crew ? crew.sleep < 5.5 : false;
+  const isHighStress = crew ? crew.stress > 55 : false;
+  const isRadiationSurge = crew ? crew.rate > 0.5 || crew.dose > 120 : false;
+  const crewOffset = crew ? (crew.id === 0 ? 0 : crew.id === 1 ? -4 : 5) : 0;
+
   const vitamins = [
-    { name: "Vitamin A", val: "1800 IU", pct: 72, status: "ACTIVE", color: "from-amber-500 to-yellow-400" },
-    { name: "B-Complex", val: "12 mg", pct: 60, status: "ACTIVE", color: "from-amber-500 to-yellow-400" },
-    { name: "Vitamin C", val: "75 mg", pct: 90, status: "OPTIMAL", color: "from-emerald-500 to-teal-400" },
-    { name: "Vitamin D3", val: "600 IU", pct: 35, status: "DEFICIT", color: "from-rose-500 to-amber-500" },
-    { name: "Vitamin E", val: "9 mg", pct: 55, status: "ACTIVE", color: "from-amber-500 to-yellow-400" },
-    { name: "Vitamin K", val: "50 mcg", pct: 65, status: "ACTIVE", color: "from-amber-500 to-yellow-400" },
+    {
+      name: "Vitamin A",
+      val: `${1750 + crewOffset * 25} IU`,
+      pct: 70 + crewOffset,
+      status: "ACTIVE",
+      color: "from-amber-500 to-yellow-400",
+    },
+    {
+      name: "B-Complex",
+      val: isSleepDeficit ? "7.2 mg" : `${(12 + crewOffset * 0.4).toFixed(1)} mg`,
+      pct: isSleepDeficit ? 36 : Math.min(100, 60 + crewOffset),
+      status: isSleepDeficit ? "DEFICIT" : "ACTIVE",
+      color: isSleepDeficit ? "from-rose-500 to-amber-500" : "from-amber-500 to-yellow-400",
+    },
+    {
+      name: "Vitamin C",
+      val: isRadiationSurge ? "92 mg" : `${75 + crewOffset} mg`,
+      pct: isRadiationSurge ? 95 : Math.min(100, 88 + crewOffset),
+      status: "OPTIMAL",
+      color: "from-emerald-500 to-teal-400",
+    },
+    {
+      name: "Vitamin D3",
+      val: `${550 + crewOffset * 15} IU`,
+      pct: 35 + crewOffset,
+      status: "DEFICIT",
+      color: "from-rose-500 to-amber-500",
+    },
+    {
+      name: "Vitamin E",
+      val: isRadiationSurge ? "14 mg" : `${(9 + crewOffset * 0.3).toFixed(1)} mg`,
+      pct: isRadiationSurge ? 85 : Math.min(100, 55 + crewOffset),
+      status: isRadiationSurge ? "ACTIVE DEFENSE" : "ACTIVE",
+      color: isRadiationSurge ? "from-cyan-500 to-emerald-400" : "from-amber-500 to-yellow-400",
+    },
+    {
+      name: "Vitamin K",
+      val: `${50 + crewOffset * 2} mcg`,
+      pct: 65 + crewOffset,
+      status: "ACTIVE",
+      color: "from-amber-500 to-yellow-400",
+    },
   ];
 
   const minerals = [
-    { name: "Iron (Fe)", val: "5.5 mg", pct: 75, status: "OK", color: "from-amber-500 to-yellow-400" },
-    { name: "Calcium (Ca)", val: "620 mg", pct: 45, status: "WATCH", color: "from-amber-500 to-orange-400" },
-    { name: "Magnesium (Mg)", val: "230 mg", pct: 80, status: "OK", color: "from-amber-500 to-yellow-400" },
-    { name: "Zinc (Zn)", val: "6.2 mg", pct: 70, status: "OK", color: "from-amber-500 to-yellow-400" },
-    { name: "Potassium (K)", val: "1950 mg", pct: 88, status: "OPTIMAL", color: "from-emerald-500 to-teal-400" },
+    {
+      name: "Iron (Fe)",
+      val: `${(5.5 + crewOffset * 0.2).toFixed(1)} mg`,
+      pct: 75 + crewOffset,
+      status: "OK",
+      color: "from-amber-500 to-yellow-400",
+    },
+    {
+      name: "Calcium (Ca)",
+      val: `${620 + crewOffset * 20} mg`,
+      pct: 45 + crewOffset,
+      status: "WATCH",
+      color: "from-amber-500 to-orange-400",
+    },
+    {
+      name: "Magnesium (Mg)",
+      val: isHighStress ? "165 mg" : `${230 + crewOffset * 8} mg`,
+      pct: isHighStress ? 48 : Math.min(100, 80 + crewOffset),
+      status: isHighStress ? "WATCH" : "OK",
+      color: isHighStress ? "from-amber-500 to-orange-400" : "from-amber-500 to-yellow-400",
+    },
+    {
+      name: "Zinc (Zn)",
+      val: `${(6.2 + crewOffset * 0.2).toFixed(1)} mg`,
+      pct: 70 + crewOffset,
+      status: "OK",
+      color: "from-amber-500 to-yellow-400",
+    },
+    {
+      name: "Potassium (K)",
+      val: `${1950 + crewOffset * 40} mg`,
+      pct: Math.min(100, 88 + crewOffset),
+      status: "OPTIMAL",
+      color: "from-emerald-500 to-teal-400",
+    },
   ];
 
   return (

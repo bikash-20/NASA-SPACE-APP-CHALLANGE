@@ -79,14 +79,22 @@ export function AstronautPortal({
   });
 
   const [aiInput, setAiInput] = useState("");
-  const [consumedCalories, setConsumedCalories] = useState(1350);
-  const [proteinPct, setProteinPct] = useState(51);
+  const [consumedCalories, setConsumedCalories] = useState(1350 + crew.id * 120);
+  const [proteinPct, setProteinPct] = useState(51 + crew.id * 4);
   const [sosSentToast, setSosSentToast] = useState(false);
 
   // Filter messages to this astronaut ONLY (strict user isolation)
   const isolatedMessages = consultMessages.filter(
     (m) => m.crewIndex === crew.id
   );
+
+  const doctorTransmissions = isolatedMessages.filter(
+    (m) => m.senderRole === "doctor"
+  );
+
+  // Active deterministic rule alerts for this specific crew member (0=stable, 1=watch, 2=alert)
+  const activeCrewAlerts = crew.R?.filter((r) => r.lv > 0) || [];
+  const totalNotifications = doctorTransmissions.length + activeCrewAlerts.length;
 
   const handleScanMeal = (item: NutritionItem) => {
     setConsumedCalories((prev) => Math.min(2600, prev + item.caloriesKcal));
@@ -119,10 +127,6 @@ export function AstronautPortal({
     onAskAi(aiInput.trim());
     setAiInput("");
   };
-
-  const doctorTransmissions = isolatedMessages.filter(
-    (m) => m.senderRole === "doctor"
-  );
 
   return (
     <div className="min-h-screen bg-[#050914] text-slate-100 flex flex-col md:flex-row font-sans">
@@ -341,19 +345,19 @@ export function AstronautPortal({
                 type="button"
                 onClick={() => setShowNotifications(!showNotifications)}
                 className={`relative flex h-10 w-10 items-center justify-center rounded-xl border transition ${
-                  doctorTransmissions.length > 0
+                  totalNotifications > 0
                     ? "border-cyan-500/60 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/60 shadow-md shadow-cyan-950"
                     : "border-slate-800 bg-slate-900 text-slate-300 hover:text-white"
                 }`}
-                title="View Doctor Notifications"
+                title="View Telemetry & Medical Notifications"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                   <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
-                {doctorTransmissions.length > 0 && (
+                {totalNotifications > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-[11px] font-bold text-slate-950 ring-2 ring-slate-950 animate-pulse">
-                    {doctorTransmissions.length}
+                    {totalNotifications}
                   </span>
                 )}
               </button>
@@ -362,7 +366,7 @@ export function AstronautPortal({
                 <div className="fixed sm:absolute inset-x-4 sm:inset-x-auto sm:right-0 top-20 sm:top-12 z-50 w-auto sm:w-96 rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-2xl space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                     <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                      Surgeon Transmissions ({doctorTransmissions.length})
+                      Notifications &amp; Alarms ({totalNotifications})
                     </span>
                     <button
                       type="button"
@@ -373,33 +377,60 @@ export function AstronautPortal({
                     </button>
                   </div>
                   <div className="max-h-72 overflow-y-auto space-y-2">
-                    {doctorTransmissions.length === 0 ? (
-                      <div className="text-center py-4 text-xs font-mono text-slate-400 italic">
-                        No medical transmissions. Telemetry nominal.
-                      </div>
-                    ) : (
-                      doctorTransmissions.map((msg) => (
-                        <div
-                          key={msg.id}
-                          onClick={() => {
-                            setActiveTab("consult");
-                            setShowNotifications(false);
-                          }}
-                          className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900/90 p-3 hover:border-cyan-500/40 transition text-left"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-xs font-bold text-cyan-300">
-                              Dr. Evelyn Vance
-                            </span>
-                            <span className="font-mono text-[10px] text-slate-400">
-                              {msg.timestamp}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-200 mt-1 line-clamp-2">
-                            {msg.text}
-                          </p>
+                    {/* Active Rule Alerts */}
+                    {activeCrewAlerts.map((alt, idx) => (
+                      <div
+                        key={`rule-${idx}`}
+                        className={`rounded-xl border p-3 text-left space-y-1 ${
+                          alt.lv === 2
+                            ? "border-rose-500/50 bg-rose-950/40"
+                            : "border-amber-500/50 bg-amber-950/30"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`font-mono text-xs font-bold ${
+                              alt.lv === 2 ? "text-rose-300" : "text-amber-300"
+                            }`}
+                          >
+                            {alt.lv === 2 ? "CRITICAL ALARM" : "TELEMETRY WATCH"}: {alt.n}
+                          </span>
+                          <span className="font-mono text-[10px] text-slate-400">Live</span>
                         </div>
-                      ))
+                        <p className="text-xs text-slate-200">
+                          {alt.why || `Threshold crossed: ${alt.th}`}
+                        </p>
+                      </div>
+                    ))}
+
+                    {/* Surgeon Transmissions */}
+                    {doctorTransmissions.map((msg) => (
+                      <div
+                        key={msg.id}
+                        onClick={() => {
+                          setActiveTab("consult");
+                          setShowNotifications(false);
+                        }}
+                        className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900/90 p-3 hover:border-cyan-500/40 transition text-left"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-xs font-bold text-cyan-300">
+                            Dr. Evelyn Vance
+                          </span>
+                          <span className="font-mono text-[10px] text-slate-400">
+                            {msg.timestamp}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-200 mt-1 line-clamp-2">
+                          {msg.text}
+                        </p>
+                      </div>
+                    ))}
+
+                    {totalNotifications === 0 && (
+                      <div className="text-center py-4 text-xs font-mono text-slate-400 italic">
+                        No medical transmissions or telemetry alarms. Status nominal.
+                      </div>
                     )}
                   </div>
                 </div>
@@ -414,8 +445,13 @@ export function AstronautPortal({
 
         {/* SOS Confirmation Banner */}
         {sosSentToast && (
-          <div className="rounded-2xl border border-rose-500 bg-rose-950/80 p-4 text-center font-mono text-sm text-rose-200 font-bold shadow-xl animate-in slide-in-from-top">
-            ⚠ CRITICAL EMERGENCY SOS DISPATCHED TO FLIGHT SURGEON &amp; MISSION CONTROL! Telemetry stream priority elevated.
+          <div className="flex items-center justify-center gap-2 rounded-2xl border border-rose-500 bg-rose-950/80 p-4 text-center font-mono text-sm text-rose-200 font-bold shadow-xl animate-in slide-in-from-top">
+            <svg className="w-5 h-5 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>CRITICAL EMERGENCY SOS DISPATCHED TO FLIGHT SURGEON &amp; MISSION CONTROL! Telemetry priority elevated.</span>
           </div>
         )}
 
@@ -434,8 +470,20 @@ export function AstronautPortal({
                   </span>
                   <span className="text-xs font-mono text-slate-400">BPM</span>
                 </div>
-                <span className="font-mono text-xs text-slate-400 mt-1 block">
-                  Baseline: {crew.bhr} BPM
+                <span
+                  className={`font-mono text-xs mt-1 block font-semibold ${
+                    crew.hr > crew.bhr * 1.3
+                      ? "text-rose-400"
+                      : crew.hr > crew.bhr * 1.15
+                      ? "text-amber-400"
+                      : "text-slate-400"
+                  }`}
+                >
+                  {crew.hr > crew.bhr * 1.3
+                    ? "Elevated Watch"
+                    : crew.hr > crew.bhr * 1.15
+                    ? "Mild Exertion"
+                    : `Baseline: ${crew.bhr} BPM`}
                 </span>
               </div>
 
@@ -448,8 +496,16 @@ export function AstronautPortal({
                     {crew.spo2.toFixed(1)}%
                   </span>
                 </div>
-                <span className="font-mono text-xs text-emerald-400 font-semibold mt-1 block">
-                  Optimal Diffusion
+                <span
+                  className={`font-mono text-xs font-semibold mt-1 block ${
+                    crew.spo2 < 92
+                      ? "text-rose-400"
+                      : crew.spo2 < 95
+                      ? "text-amber-400"
+                      : "text-emerald-400"
+                  }`}
+                >
+                  {crew.spo2 < 92 ? "Hypoxic Alert" : crew.spo2 < 95 ? "Marginal Diffusion" : "Optimal Diffusion"}
                 </span>
               </div>
 
@@ -462,8 +518,12 @@ export function AstronautPortal({
                     {crew.sleep.toFixed(1)}h
                   </span>
                 </div>
-                <span className="font-mono text-xs text-slate-400 mt-1 block">
-                  3-Night Rolling
+                <span
+                  className={`font-mono text-xs font-semibold mt-1 block ${
+                    crew.sleep < 5.5 ? "text-amber-400" : "text-slate-400"
+                  }`}
+                >
+                  {crew.sleep < 5.5 ? "Deficit Watch" : "3-Night Rolling"}
                 </span>
               </div>
 
@@ -477,8 +537,12 @@ export function AstronautPortal({
                   </span>
                   <span className="text-xs font-mono text-slate-400">/100</span>
                 </div>
-                <span className="font-mono text-xs text-slate-400 mt-1 block">
-                  Autonomic Tone
+                <span
+                  className={`font-mono text-xs font-semibold mt-1 block ${
+                    crew.stress > 50 ? "text-amber-400" : "text-slate-400"
+                  }`}
+                >
+                  {crew.stress > 50 ? "Elevated Strain" : "Autonomic Balance"}
                 </span>
               </div>
 
@@ -492,8 +556,12 @@ export function AstronautPortal({
                   </span>
                   <span className="text-xs font-mono text-slate-400">mSv</span>
                 </div>
-                <span className="font-mono text-xs text-slate-400 mt-1 block">
-                  Rate: {crew.rate.toFixed(2)} mSv/h
+                <span
+                  className={`font-mono text-xs font-semibold mt-1 block ${
+                    crew.rate > 0.5 ? "text-amber-400" : "text-slate-400"
+                  }`}
+                >
+                  {crew.rate > 0.5 ? `SPE Surge · ${crew.rate.toFixed(2)} mSv/h` : `Rate: ${crew.rate.toFixed(2)} mSv/h`}
                 </span>
               </div>
             </div>
@@ -511,7 +579,7 @@ export function AstronautPortal({
             />
 
             {/* Micro-Array Assay (Vitamins & Minerals) */}
-            <MicroArrayAssay />
+            <MicroArrayAssay crew={crew} />
 
             {/* RFID Space-Meal Scanner */}
             <RfidMealScanner onScanItem={handleScanMeal} />

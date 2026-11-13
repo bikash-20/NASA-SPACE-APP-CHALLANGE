@@ -136,21 +136,32 @@ export function BioLinkView({
               </div>
 
               <div>
-                <div className="text-base font-bold text-white flex items-center gap-2">
-                  <span className="text-xl">
-                    {s.type === "watch"
-                      ? "⌚"
-                      : s.type === "patch" || s.type === "ecg"
-                      ? "🩹"
-                      : s.type === "meal"
-                      ? "🍽️"
-                      : s.type === "bp"
-                      ? "🫀"
-                      : "🩸"}
-                  </span>
+                <div className="text-base font-bold text-white flex items-center gap-2.5">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-950 border border-slate-800 text-cyan-400 shrink-0">
+                    {s.type === "watch" ? (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="7" />
+                        <polyline points="12 9 12 12 13.5 13.5" />
+                        <path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83" />
+                      </svg>
+                    ) : s.type === "patch" || s.type === "ecg" ? (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="6" width="20" height="12" rx="4" />
+                        <polyline points="6 12 9 12 11 9 13 15 15 12 18 12" />
+                      </svg>
+                    ) : s.type === "meal" ? (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 7.65l.77.78L12 20.66l7.65-7.65.77-.78a5.4 5.4 0 0 0 0-7.65z" />
+                      </svg>
+                    )}
+                  </div>
                   <span className="truncate">{s.name}</span>
                 </div>
-                <div className="font-mono text-xs text-slate-400 font-semibold mt-0.5">{s.code}</div>
+                <div className="font-mono text-xs text-slate-400 font-semibold mt-1">{s.code}</div>
               </div>
 
               <div className="rounded-xl border border-slate-800/80 bg-slate-900/80 p-3 font-mono text-xs space-y-1.5">

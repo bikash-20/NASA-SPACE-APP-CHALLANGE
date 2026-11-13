@@ -76,7 +76,9 @@ export function MedicalConsultView({
             className="flex h-10 px-3 items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-950/60 font-mono text-xs font-bold text-cyan-300 hover:bg-cyan-900/70 transition shadow"
             title="Start Voice Call"
           >
-            <span>📞</span>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
             <span className="hidden sm:inline">Voice Call</span>
           </button>
           <button
@@ -85,15 +87,23 @@ export function MedicalConsultView({
             className="flex h-10 px-3 items-center gap-1.5 rounded-xl border border-purple-500/40 bg-purple-950/60 font-mono text-xs font-bold text-purple-300 hover:bg-purple-900/70 transition shadow"
             title="Start Video Tele-Health"
           >
-            <span>📹</span>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="23 7 16 12 23 17 23 7" />
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+            </svg>
             <span className="hidden sm:inline">Video Uplink</span>
           </button>
           <button
             type="button"
             onClick={onTriggerSos}
-            className="rounded-xl border border-rose-500/60 bg-rose-600/30 px-3.5 py-2 font-mono text-xs font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-600/50 shadow-lg shadow-rose-950/40 transition animate-pulse"
+            className="flex items-center gap-1.5 rounded-xl border border-rose-500/60 bg-rose-600/30 px-3.5 py-2 font-mono text-xs font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-600/50 shadow-lg shadow-rose-950/40 transition animate-pulse"
           >
-            🚨 SOS
+            <svg className="w-4 h-4 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>SOS</span>
           </button>
         </div>
       </div>
@@ -102,7 +112,13 @@ export function MedicalConsultView({
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
         {messages.length === 0 ? (
           <div className="text-center py-16 space-y-2">
-            <span className="text-3xl block">🩺</span>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" />
+                <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4" />
+                <circle cx="20" cy="10" r="2" />
+              </svg>
+            </div>
             <div className="text-sm font-mono text-slate-300 font-semibold">
               Medical Tele-Health channel open with {doctorName}.
             </div>
@@ -188,7 +204,11 @@ export function MedicalConsultView({
           className="flex h-11 px-3.5 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 font-mono text-xs font-bold text-cyan-300 hover:bg-slate-800 transition"
           title="Send Voice Dispatch"
         >
-          <span>🎙️</span>
+          <svg className="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+            <line x1="12" y1="19" x2="12" y2="22" />
+          </svg>
           <span className="hidden sm:inline">Voice Note</span>
         </button>
 

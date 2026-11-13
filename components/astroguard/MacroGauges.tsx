@@ -134,9 +134,19 @@ export function MacroGauges({
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-300">
           <span>Remaining: <strong className="text-white">{maxCalories - caloriesKcal} kcal</strong></span>
-          <span className="text-cyan-300 font-semibold">Tissue Hydration Index: 77.2%</span>
-          <span className="rounded-md bg-emerald-950 px-2 py-0.5 text-emerald-300 font-bold border border-emerald-500/40">
-            METABOLIC NOMINAL
+          <span className="text-cyan-300 font-semibold">
+            Tissue Hydration Index: {(76.0 + (waterPct > 50 ? (waterPct - 50) * 0.14 : 0) - (calPct > 80 ? 0.8 : 0)).toFixed(1)}%
+          </span>
+          <span
+            className={`rounded-md px-2 py-0.5 font-bold border ${
+              calPct < 40
+                ? "bg-amber-950 text-amber-300 border-amber-500/40"
+                : calPct > 90
+                ? "bg-cyan-950 text-cyan-300 border-cyan-500/40"
+                : "bg-emerald-950 text-emerald-300 border-emerald-500/40"
+            }`}
+          >
+            {calPct < 40 ? "CALORIE DEFICIT" : calPct > 90 ? "METABOLIC PEAK" : "METABOLIC NOMINAL"}
           </span>
         </div>
       </div>

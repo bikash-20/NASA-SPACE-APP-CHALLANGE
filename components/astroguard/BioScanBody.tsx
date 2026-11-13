@@ -11,6 +11,19 @@ interface BioScanBodyProps {
 export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
   const [activeNode, setActiveNode] = useState<string>("cardiac");
 
+  // Dynamically compute hemodynamic and respiratory vitals based on crew telemetry
+  const sysBp = Math.round(116 + (crew.hr - 65) * 0.42 + crew.stress * 0.22);
+  const diaBp = Math.round(74 + (crew.hr - 65) * 0.2 + crew.stress * 0.12);
+  const respRate = Math.round(
+    14 + (crew.hr - 60) * 0.08 + (crew.spo2 < 96 ? (96 - crew.spo2) * 1.2 : 0)
+  );
+  const dynGlucose = Math.round(92 + (crew.hr - 65) * 0.35 + crew.stress * 0.22);
+  const dynHydration = (
+    78.5 -
+    (crew.hr > 85 ? (crew.hr - 85) * 0.08 : 0) -
+    crew.stress * 0.04
+  ).toFixed(1);
+
   const nodes = [
     {
       id: "neuro",
@@ -18,9 +31,9 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
       cx: 100,
       cy: 42,
       r: 6,
-      status: crew.sleep < 5.5 ? "Watch" : "Nominal",
-      color: crew.sleep < 5.5 ? "#f59e0b" : "#10b981",
-      val: `Sleep: ${crew.sleep.toFixed(1)}h · Stress: ${Math.round(crew.stress)}`,
+      status: crew.sleep < 5.5 ? "Watch" : crew.stress > 65 ? "Elevated" : "Nominal",
+      color: crew.sleep < 5.5 ? "#f59e0b" : crew.stress > 65 ? "#f43f5e" : "#10b981",
+      val: `Sleep: ${crew.sleep.toFixed(1)}h · Stress: ${Math.round(crew.stress)}/100`,
     },
     {
       id: "respiratory",
@@ -28,9 +41,9 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
       cx: 100,
       cy: 88,
       r: 7,
-      status: crew.spo2 < 94 ? "Alert" : "Nominal",
-      color: crew.spo2 < 94 ? "#ef4444" : "#10b981",
-      val: `SpO₂: ${crew.spo2.toFixed(1)}% · Resp: 16 Br/min`,
+      status: crew.spo2 < 92 ? "Alert" : crew.spo2 < 95 ? "Watch" : "Optimal",
+      color: crew.spo2 < 92 ? "#ef4444" : crew.spo2 < 95 ? "#f59e0b" : "#10b981",
+      val: `SpO₂: ${crew.spo2.toFixed(1)}% · Resp: ${respRate} Br/min`,
     },
     {
       id: "cardiac",
@@ -40,7 +53,7 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
       r: 8,
       status: crew.hr > 105 ? "Alert" : crew.hr > 85 ? "Watch" : "Optimal",
       color: crew.hr > 105 ? "#ef4444" : crew.hr > 85 ? "#f59e0b" : "#10b981",
-      val: `Heart Rate: ${Math.round(crew.hr)} BPM · BP: 120/80`,
+      val: `Heart Rate: ${Math.round(crew.hr)} BPM · BP: ${sysBp}/${diaBp}`,
     },
     {
       id: "gut",
@@ -48,9 +61,19 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
       cx: 100,
       cy: 142,
       r: 6,
-      status: "Nominal",
-      color: "#06b6d4",
-      val: `Glucose: 94 mg/dL · Hydration: 77.2%`,
+      status: crew.stress > 55 ? "Watch" : "Nominal",
+      color: crew.stress > 55 ? "#f59e0b" : "#06b6d4",
+      val: `Glucose: ${dynGlucose} mg/dL · Hydration: ${dynHydration}%`,
+    },
+    {
+      id: "dosimetry",
+      name: "Dosimetry & Cellular Radiation",
+      cx: 100,
+      cy: 175,
+      r: 6,
+      status: crew.dose > 150 ? "Alert" : crew.rate > 0.5 ? "Watch" : "Nominal",
+      color: crew.dose > 150 ? "#ef4444" : crew.rate > 0.5 ? "#f59e0b" : "#8b5cf6",
+      val: `30D Dose: ${crew.dose.toFixed(0)} mSv · Rate: ${crew.rate.toFixed(2)} mSv/h`,
     },
     {
       id: "muscle-r",
@@ -191,7 +214,7 @@ export function BioScanBody({ crew, className = "" }: BioScanBodyProps) {
           </div>
 
           <div className="space-y-2 text-xs sm:text-sm">
-            {nodes.slice(0, 4).map((n) => (
+            {nodes.slice(0, 5).map((n) => (
               <button
                 key={n.id}
                 type="button"

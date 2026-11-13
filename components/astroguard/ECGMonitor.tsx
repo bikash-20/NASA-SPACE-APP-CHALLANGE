@@ -159,6 +159,11 @@ export function ECGMonitor({
     ? "Sinus Bradycardia"
     : "Normal Sinus Rhythm";
 
+  // Dynamic electrophysiological intervals scaled to current heart rate
+  const dynPR = Math.max(110, Math.min(220, Math.round(160 - (heartRate - 60) * 0.45)));
+  const dynQRS = Math.max(75, Math.min(110, Math.round(84 + (heartRate > 100 ? (heartRate - 100) * 0.1 : 0))));
+  const dynQTc = Math.max(340, Math.min(480, Math.round(415 - (heartRate - 60) * 0.65)));
+
   return (
     <div
       className={`rounded-2xl border border-emerald-500/30 bg-slate-950 p-4 shadow-xl backdrop-blur-md ${className}`}
@@ -175,7 +180,7 @@ export function ECGMonitor({
         <div className="flex flex-wrap items-center gap-3">
           {!isCompact && (
             <span className="font-mono text-xs text-slate-300 font-medium">
-              PR: <strong className="text-white">142ms</strong> · QRS: <strong className="text-white">86ms</strong> · QTc: <strong className="text-white">412ms</strong>
+              PR: <strong className="text-white">{dynPR}ms</strong> · QRS: <strong className="text-white">{dynQRS}ms</strong> · QTc: <strong className="text-white">{dynQTc}ms</strong>
             </span>
           )}
           <span

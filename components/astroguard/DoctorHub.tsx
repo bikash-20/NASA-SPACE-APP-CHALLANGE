@@ -96,10 +96,33 @@ export function DoctorHub({
     setReplyText("");
   };
 
-  const criticalCount = incidents.filter((i) => i.severity === "critical").length;
-  const warningCount = incidents.filter((i) => i.severity === "warning").length;
+  // Dynamically merge rule-based simulation alerts into unified clinical triage queue
+  const dynamicRuleIncidents: TriageIncident[] = alerts.map((a, idx) => {
+    const c = crewMembers[a.i] || crewMembers[0];
+    const isCritical = a.lv === 2;
+    return {
+      id: `rule-alert-${a.i}-${a.n}-${idx}`,
+      crewIndex: a.i,
+      crewName: c.n,
+      callSign: `AST-00${a.i + 1}`,
+      title: `${isCritical ? "CRITICAL TELEMETRY ALARM" : "ADVISORY WATCH"}: ${a.n} (${c.n})`,
+      detail: a.why
+        ? `${a.why}. Deterministic rule validation threshold: ${a.th}.`
+        : `Threshold crossed: ${a.th}. Immediate telemetry monitoring recommended.`,
+      severity: isCritical ? "critical" : "warning",
+      timestamp: "Active Sim",
+      isSos: false,
+      flaggedToMissionControl: true,
+      isReadByDoctor: false,
+    };
+  });
 
-  const filteredIncidents = incidents.filter((i) => {
+  const allTriageIncidents = [...dynamicRuleIncidents, ...incidents];
+
+  const criticalCount = allTriageIncidents.filter((i) => i.severity === "critical").length;
+  const warningCount = allTriageIncidents.filter((i) => i.severity === "warning").length;
+
+  const filteredIncidents = allTriageIncidents.filter((i) => {
     if (filterSeverity === "all") return true;
     return i.severity === filterSeverity;
   });
@@ -107,6 +130,19 @@ export function DoctorHub({
   const crewMessages = consultMessages.filter(
     (m) => m.crewIndex === selectedCrewIdx
   );
+
+  // Dynamic physiological derivations for currently selected crew member
+  const sysBp = Math.round(116 + (selectedCrew.hr - 65) * 0.42 + selectedCrew.stress * 0.22);
+  const diaBp = Math.round(74 + (selectedCrew.hr - 65) * 0.2 + selectedCrew.stress * 0.12);
+  const mapBp = Math.round(diaBp + (sysBp - diaBp) / 3);
+  const respRate = Math.round(
+    14 + (selectedCrew.hr - 60) * 0.08 + (selectedCrew.spo2 < 96 ? (96 - selectedCrew.spo2) * 1.2 : 0)
+  );
+  const bodyTemp = (
+    36.8 +
+    (selectedCrew.hr > 90 ? (selectedCrew.hr - 90) * 0.015 : 0) +
+    (selectedCrew.dose > 120 ? 0.3 : 0)
+  ).toFixed(1);
 
   return (
     <div className="min-h-screen bg-[#050914] text-slate-100 flex flex-col font-sans">
@@ -385,7 +421,9 @@ export function DoctorHub({
                   {crewMembers.map((c, idx) => {
                     const isSelected = selectedCrewIdx === idx;
                     const cAlerts = alerts.filter((a) => a.i === idx).length;
-                    const isAlert = c.hr > 105 || c.spo2 < 94;
+                    const hasCritical = c.r?.some((lv) => lv === 2) || c.hr > 115 || c.spo2 < 90;
+                    const hasWatch = c.r?.some((lv) => lv === 1) || cAlerts > 0 || c.hr > 90 || c.spo2 < 94;
+                    const statusLabel = hasCritical ? "CRITICAL" : hasWatch ? "WATCH" : "NOMINAL";
 
                     return (
                       <div
@@ -403,12 +441,14 @@ export function DoctorHub({
                           </span>
                           <span
                             className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-wider ${
-                              isAlert
+                              hasCritical
                                 ? "bg-rose-950 text-rose-300 border border-rose-500/40"
+                                : hasWatch
+                                ? "bg-amber-950 text-amber-300 border border-amber-500/40"
                                 : "bg-emerald-950 text-emerald-300 border border-emerald-500/40"
                             }`}
                           >
-                            {isAlert ? "ELEVATED" : "NOMINAL"}
+                            {statusLabel}
                           </span>
                         </div>
                         <div className="font-mono text-xs text-slate-400 mt-0.5">
@@ -460,16 +500,23 @@ export function DoctorHub({
                     <button
                       type="button"
                       onClick={() => handleStartCall(selectedCrewIdx, "audio")}
-                      className="rounded-xl border border-cyan-500/40 bg-cyan-950/60 px-3.5 py-1.5 font-mono text-xs font-bold text-cyan-300 hover:bg-cyan-900 transition shadow"
+                      className="flex items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-950/60 px-3.5 py-1.5 font-mono text-xs font-bold text-cyan-300 hover:bg-cyan-900 transition shadow"
                     >
-                      📞 Voice Call
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                      </svg>
+                      <span>Voice Call</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleStartCall(selectedCrewIdx, "video")}
-                      className="rounded-xl border border-purple-500/40 bg-purple-950/60 px-3.5 py-1.5 font-mono text-xs font-bold text-purple-300 hover:bg-purple-900 transition shadow"
+                      className="flex items-center gap-1.5 rounded-xl border border-purple-500/40 bg-purple-950/60 px-3.5 py-1.5 font-mono text-xs font-bold text-purple-300 hover:bg-purple-900 transition shadow"
                     >
-                      📹 Video Uplink
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="23 7 16 12 23 17 23 7" />
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                      </svg>
+                      <span>Video Uplink</span>
                     </button>
                   </div>
                 </div>
@@ -484,8 +531,16 @@ export function DoctorHub({
                       {Math.round(selectedCrew.hr)}{" "}
                       <span className="text-xs font-medium text-slate-400">BPM</span>
                     </div>
-                    <span className="font-mono text-xs text-amber-400 font-semibold mt-1 block">
-                      {selectedCrew.hr > 100 ? "Elevated Watch" : "Resting"}
+                    <span
+                      className={`font-mono text-xs font-semibold mt-1 block ${
+                        selectedCrew.hr > 105
+                          ? "text-rose-400"
+                          : selectedCrew.hr > 85
+                          ? "text-amber-400"
+                          : "text-emerald-400"
+                      }`}
+                    >
+                      {selectedCrew.hr > 105 ? "Tachycardia Alert" : selectedCrew.hr > 85 ? "Elevated Watch" : "Resting Baseline"}
                     </span>
                   </div>
 
@@ -496,8 +551,16 @@ export function DoctorHub({
                     <div className="text-2xl sm:text-3xl font-extrabold font-mono text-cyan-400">
                       {selectedCrew.spo2.toFixed(1)}%
                     </div>
-                    <span className="font-mono text-xs text-emerald-400 font-semibold mt-1 block">
-                      Optimal Diffusion
+                    <span
+                      className={`font-mono text-xs font-semibold mt-1 block ${
+                        selectedCrew.spo2 < 92
+                          ? "text-rose-400"
+                          : selectedCrew.spo2 < 95
+                          ? "text-amber-400"
+                          : "text-emerald-400"
+                      }`}
+                    >
+                      {selectedCrew.spo2 < 92 ? "Hypoxic Alert" : selectedCrew.spo2 < 95 ? "Marginal Diffusion" : "Optimal Diffusion"}
                     </span>
                   </div>
 
@@ -506,11 +569,11 @@ export function DoctorHub({
                       Blood Pressure
                     </span>
                     <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-100">
-                      124/82{" "}
+                      {sysBp}/{diaBp}{" "}
                       <span className="text-xs font-medium text-slate-400">mmHg</span>
                     </div>
                     <span className="font-mono text-xs text-slate-400 font-semibold mt-1 block">
-                      MAP ~96 mmHg
+                      MAP ~{mapBp} mmHg
                     </span>
                   </div>
 
@@ -519,11 +582,15 @@ export function DoctorHub({
                       Respiration / Temp
                     </span>
                     <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-100">
-                      18{" "}
+                      {respRate}{" "}
                       <span className="text-xs font-medium text-slate-400">Br/min</span>
                     </div>
-                    <span className="font-mono text-xs text-emerald-400 font-semibold mt-1 block">
-                      37.0°C · Normothermic
+                    <span
+                      className={`font-mono text-xs font-semibold mt-1 block ${
+                        parseFloat(bodyTemp) > 37.3 ? "text-amber-400" : "text-emerald-400"
+                      }`}
+                    >
+                      {bodyTemp}°C · {parseFloat(bodyTemp) > 37.3 ? "Thermal Drift" : "Normothermic"}
                     </span>
                   </div>
                 </div>
@@ -559,7 +626,7 @@ export function DoctorHub({
                         : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
                     }`}
                   >
-                    All · {incidents.length}
+                    All · {allTriageIncidents.length}
                   </button>
                   <button
                     type="button"
@@ -623,16 +690,23 @@ export function DoctorHub({
                       <button
                         type="button"
                         onClick={() => handleStartCall(inc.crewIndex, "audio")}
-                        className="rounded-xl border border-cyan-500/40 bg-cyan-950/60 px-3 py-1.5 font-mono text-xs font-bold text-cyan-300 hover:bg-cyan-900 transition shadow"
+                        className="flex items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-950/60 px-3 py-1.5 font-mono text-xs font-bold text-cyan-300 hover:bg-cyan-900 transition shadow"
                       >
-                        📞 Voice Call
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                        </svg>
+                        <span>Voice Call</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleStartCall(inc.crewIndex, "video")}
-                        className="rounded-xl border border-purple-500/40 bg-purple-950/60 px-3 py-1.5 font-mono text-xs font-bold text-purple-300 hover:bg-purple-900 transition shadow"
+                        className="flex items-center gap-1.5 rounded-xl border border-purple-500/40 bg-purple-950/60 px-3 py-1.5 font-mono text-xs font-bold text-purple-300 hover:bg-purple-900 transition shadow"
                       >
-                        📹 Video Call
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="23 7 16 12 23 17 23 7" />
+                          <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                        </svg>
+                        <span>Video Uplink</span>
                       </button>
                       <button
                         type="button"
@@ -717,16 +791,23 @@ export function DoctorHub({
                   <button
                     type="button"
                     onClick={() => handleStartCall(selectedCrewIdx, "audio")}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-500/40 bg-cyan-950/60 text-cyan-300 hover:bg-cyan-900"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-500/40 bg-cyan-950/60 text-cyan-300 hover:bg-cyan-900 transition"
+                    title="Start Encrypted Voice Call"
                   >
-                    📞
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleStartCall(selectedCrewIdx, "video")}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-purple-500/40 bg-purple-950/60 text-purple-300 hover:bg-purple-900"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-purple-500/40 bg-purple-950/60 text-purple-300 hover:bg-purple-900 transition"
+                    title="Start Encrypted Video Uplink"
                   >
-                    📹
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="23 7 16 12 23 17 23 7" />
+                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                    </svg>
                   </button>
                 </div>
               </div>

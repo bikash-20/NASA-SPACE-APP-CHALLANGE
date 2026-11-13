@@ -25,7 +25,6 @@ import { MissionTimeline } from "@/components/MissionTimeline";
 import { CrewComparison } from "@/components/CrewComparison";
 import { TabbedPanel, type TabKey } from "@/components/TabbedPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { QuickRoleBar } from "@/components/astroguard/QuickRoleBar";
 import { AuthModal } from "@/components/astroguard/AuthModal";
 import { LoginPage } from "@/components/astroguard/LoginPage";
 import { AstronautPortal } from "@/components/astroguard/AstronautPortal";
