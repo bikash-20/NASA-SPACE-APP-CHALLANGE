@@ -32,16 +32,16 @@ documented and tested — do not weaken it.
 | Tailwind | 3.4 | small custom token system |
 | framer-motion | 11.11 | all motion, gated by `prefers-reduced-motion` |
 | recharts | 2.13 | Sparkline only |
-| Vitest | 2.1 | `lib/**/*.test.ts` |
-| Node test | built-in | `tests/simulation.test.cjs` |
-| OpenRouter | — | free-tier cascade, server-only |
+| Vitest | 2.1 | `lib/**/*.test.ts` (38 tests) |
+| Node test | built-in | `tests/simulation.test.cjs` (18 tests) |
+| OpenRouter | — | free-tier cascade, server-only + resilient edge fallback |
 
 ## Folder layout (the mental model)
 
 ```
 app/
   layout.tsx           # Inter + JetBrains Mono fonts, MotionConfig
-  page.tsx             # THE BRAIN. useReducer + tick loop + network calls
+  page.tsx             # THE BRAIN. Role routing + useReducer + tick loop + LLM streaming
   globals.css          # all the .desktop-* responsive rules
   api/brief/route.ts   # non-streaming LLM brief, max 24 KiB
   api/chat/route.ts    # streaming LLM chat over SSE, max 64 KiB
@@ -56,10 +56,27 @@ components/            # one file per panel/control
   ServiceWorkerRegistration.tsx
   ui/                  # tiny design system: Panel, Button, Sparkline,
                        #   ProgressBar, BarChart (smooth sleep line)
+  astroguard/          # Space-grade AstroGuard expansion suite:
+    LoginPage.tsx      # Full-screen auth landing page with 5 exposed 1-click profiles
+    AstronautPortal.tsx# Astronaut console (collapsible nav, telemetry, AI copilot, consult)
+    DoctorHub.tsx      # Flight surgeon operations hub (triage queue, ECG, tele-health, fleet)
+    ECGMonitor.tsx     # Canvas Lead-II real-time waveform monitor (HR synchronized)
+    MacroGauges.tsx    # Circular progress rings for Protein, Fats, Fiber, Water & Basal reserve
+    MicroArrayAssay.tsx# Spectrometry biomarker profiling for 6 vitamins & 5 minerals
+    RfidMealScanner.tsx# Interactive galley meal packs with real-time RFID sync
+    Timeline24hChart.tsx# 24H spline chart comparing Heart Rate vs. Glucose with meal pins
+    BioScanBody.tsx    # 2D wireframe human body silhouette with glowing organ nodes
+    BioLinkView.tsx    # BLE/USB IoT mesh device manager with RSSI, battery, and PIN pairing
+    MedicalConsultView.tsx# Tele-health encrypted chat, audio/video uplink, SOS dispatch
+    CallModal.tsx      # Simulated encrypted video/audio tele-presence modal
+    AuthModal.tsx      # Demo credentials inspector modal
 
 hooks/                 # useMediaQuery, useStickyScroll
 
 lib/
+  astroGuardTypes.ts   # AstroRole, AstroUser, IoTSensorDevice, ConsultMessage, TriageIncident
+  astroGuardData.ts    # Default IoT mesh, nutrition items, triage incidents, initial consults
+  astroGuard.test.ts   # Vitest suite verifying credentials, privacy isolation & IoT config
   types.ts             # Crew, Alert, RuleResult, VitalsHistory, ChatMessage
   simulation.ts        # mkCrew, step (the tick), clock — seeded, immutable
   rules.ts             # evalRules(c) → 5 RuleResult rows (the AUTHORITY)
@@ -136,7 +153,7 @@ Fix:
 ## How to test
 
 ```bash
-npm run test        # 25 vitest + 18 node tests
+npm run test        # 38 vitest + 18 node tests (56 total, all passing)
 npm run build       # next build (also type-checks)
 python3 scripts/check_desktop_layout.py   # Playwright layout, needs dev server
 ```

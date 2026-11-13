@@ -17,26 +17,63 @@ The simulation, AI risk score, and every alert are computed locally in the brows
 ## Table of Contents
 
 1. [What this project does](#what-this-project-does)
-2. [System vision and prototype scope](docs/system-vision.md)
-3. [Core design principle: rules decide, AI advises](#core-design-principle-rules-decide-ai-advises)
-4. [Quick start](#quick-start)
-5. [Deployment to Vercel](#deployment-to-vercel)
-6. [The crew and the simulation model](#the-crew-and-the-simulation-model)
-7. [Alert rules engine](#alert-rules-engine)
-8. [Deterministic AI risk score](#deterministic-ai-risk-score)
-9. [Alert lifecycle, hysteresis, and merging](#alert-lifecycle-hysteresis-and-merging)
-10. [Server-side: LLM cascade and routes](#server-side-llm-cascade-and-routes)
-11. [Data flow end-to-end](#data-flow-end-to-end)
-12. [Architecture and folder layout](#architecture-and-folder-layout)
-13. [UI: components and responsive layout](#ui-components-and-responsive-layout)
-14. [State management](#state-management)
-15. [Theming, animation, and accessibility](#theming-animation-and-accessibility)
-16. [Environment variables and secrets](#environment-variables-and-secrets)
-17. [Tech stack](#tech-stack)
-18. [Local development scripts](#local-development-scripts)
-19. [Operational notes](#operational-notes)
-20. [Limitations and design choices](#limitations-and-design-choices)
-21. [License](#license)
+2. [AstroGuard: Autonomous Multi-Tenant Architecture](#astroguard-autonomous-multi-tenant-architecture)
+3. [System vision and prototype scope](docs/system-vision.md)
+4. [Core design principle: rules decide, AI advises](#core-design-principle-rules-decide-ai-advises)
+5. [Quick start & Demo Credentials](#quick-start)
+6. [Deployment to Vercel](#deployment-to-vercel)
+7. [The crew and the simulation model](#the-crew-and-the-simulation-model)
+8. [Alert rules engine](#alert-rules-engine)
+9. [Deterministic AI risk score](#deterministic-ai-risk-score)
+10. [Alert lifecycle, hysteresis, and merging](#alert-lifecycle-hysteresis-and-merging)
+11. [Server-side: LLM cascade and routes](#server-side-llm-cascade-and-routes)
+12. [Data flow end-to-end](#data-flow-end-to-end)
+13. [Architecture and folder layout](#architecture-and-folder-layout)
+14. [UI: components and responsive layout](#ui-components-and-responsive-layout)
+15. [State management](#state-management)
+16. [Theming, animation, and accessibility](#theming-animation-and-accessibility)
+17. [Environment variables and secrets](#environment-variables-and-secrets)
+18. [Tech stack](#tech-stack)
+19. [Local development scripts](#local-development-scripts)
+20. [Operational notes](#operational-notes)
+21. [Limitations and design choices](#limitations-and-design-choices)
+22. [License](#license)
+
+---
+
+## AstroGuard: Autonomous Multi-Tenant Architecture
+
+AstroGuard extends the core simulation into a fully featured space-flight medical operations ecosystem, providing isolated views with role-based access control, clinical triage workflows, and comprehensive biometric tracking:
+
+### 1. Dedicated Multi-Role Consoles
+
+- **Astronaut Portals (`crew-0`, `crew-1`, `crew-2`)**: Each astronaut accesses a private mission console with collapsible sticky navigation, dedicated telemetry, private tele-health channels with the flight surgeon, and their own AI Copilot.
+- **Flight Surgeon Medical Operations Hub (`doctor`)**: Dr. Evelyn Vance oversees the entire crew roster, viewing real-time clinical triage signals (`Critical`, `Warning`, `Nominal`), live Lead-II ECG monitors, fleet-wide IoT wearable status, and initiating encrypted voice/video calls.
+- **Mission Control Admin (`admin`)**: Flight Operations Director oversees the 3-crew fleet overview with the original deterministic 5-rule engine, AI risk scoring, scenario injection, and interactive timeline.
+
+### 2. Exposed 1-Click Evaluation Credentials
+
+The login gateway presents pre-configured 1-click evaluation profiles for instant testing without manual typing:
+
+| Profile | Role | Identifier | Email | Password |
+|---|---|---|---|---|
+| **Cdr. Amara Okafor** | Mission Commander | `AST-001` | `amara@ares.nasa.gov` | `amara123` |
+| **Dr. Lin Zhao** | Flight Surgeon & Science Specialist | `AST-002` | `lin@ares.nasa.gov` | `lin123` |
+| **Eng. Rafi Ahmed** | Systems & Avionics Engineer | `AST-003` | `rafi@ares.nasa.gov` | `rafi123` |
+| **Dr. Evelyn Vance** | Chief Flight Surgeon | `MED-002` | `doctor@ares.nasa.gov` | `flightdoc` |
+| **Flight Operations Director** | Mission Operations Director | `FLIGHT-01` | `flight@ares.nasa.gov` | `missioncontrol` |
+
+### 3. Space-Grade Clinical Telemetry & Diagnostics
+
+- **Real-Time Lead-II ECG Waveform Canvas (`ECGMonitor.tsx`)**: Renders a dynamic 50 mm/s cardiac rhythm line synchronized with instantaneous heart rate, computing real-time interval diagnostics (PR: 142ms, QRS: 86ms, QTc: 412ms) and rhythm classifications (Normal Sinus Rhythm, Sinus Tachycardia).
+- **Macro & Metabolic Reserve HUD (`MacroGauges.tsx`)**: High-contrast circular progress rings tracking Protein, Healthy Fats, Fiber, and Water targets against actual consumption, alongside a Basal Reserve energy bar (kcal).
+- **Micro-Array Biomarker Assay (`MicroArrayAssay.tsx`)**: Spectrometry profiling for 6 essential vitamins (A, B-Complex, C, D3, E, K) and 5 essential minerals (Iron, Calcium, Magnesium, Zinc, Potassium) with operational status markers.
+- **Interactive Galley RFID Meal Scanner (`RfidMealScanner.tsx`)**: Simulated space galley scanner where triggering an RFID nutrient pack (e.g. *Hydration & Electrolyte Mix Pack*, *High-Protein & Healthy Fats Stew*) immediately updates systemic caloric and protein reserves in real time.
+- **24H Multi-Variate Timeline Chart (`Timeline24hChart.tsx`)**: Dual-axis spline chart correlating 24-hour Heart Rate trends against Glucose curves with meal ingestion pins.
+- **2D BioScan Body Map (`BioScanBody.tsx`)**: Interactive human silhouette displaying glowing sensor nodes for neurological, respiratory, cardiac, metabolic, and muscular health.
+- **IoT Bio-Link Gateway (`BioLinkView.tsx`)**: Mesh network manager monitoring 6 on-body and habitat IoT devices (Smartwatch, Hemodynamic BP Cuff, Bio-Patch Array, Continuous Glucose Monitor, RFID Meal Reader) with RSSI signal strength, battery levels, live telemetry payload streams, and secure PIN pairing.
+- **Tele-Health & Emergency SOS (`MedicalConsultView.tsx`, `CallModal.tsx`)**: Private consultation channel between crew and flight surgeon with messaging, voice note audio playback, simulated encrypted video/audio calling, and a high-priority Emergency SOS broadcast.
+- **OpenRouter AI Copilot with Resilient Edge Fallback**: Connects directly to OpenRouter free models via `/api/chat` and `/api/brief`. If upstream network connectivity is absent or API keys are unconfigured, it automatically falls back to an edge telemetry-grounded clinical synthesis based on the astronaut's real-time vitals snapshot.
 
 ---
 
@@ -299,7 +336,21 @@ nasa-space-app/
 │     └─ chat/route.ts          # Streaming LLM chat over SSE.
 │
 ├─ components/
-│  ├─ TopBar.tsx                # Title, mission clock, scenarios, AI toggle, play/pause, 1×/2×/4×.
+│  ├─ astroguard/               # AstroGuard multi-tenant space-health suite
+│  │  ├─ LoginPage.tsx          # Full-screen auth gateway with 5 exposed 1-click profiles
+│  │  ├─ AstronautPortal.tsx    # Astronaut console (collapsible nav, vitals, consult, copilot)
+│  │  ├─ DoctorHub.tsx          # Flight surgeon operations hub (triage feed, ECG, calls, fleet)
+│  │  ├─ ECGMonitor.tsx         # Canvas Lead-II waveform monitor (HR synchronized, PR/QRS/QTc)
+│  │  ├─ MacroGauges.tsx        # Circular progress rings (Protein, Fats, Fiber, Water, Energy)
+│  │  ├─ MicroArrayAssay.tsx    # Spectrometry biomarker profiling (Vitamins A-K, Minerals)
+│  │  ├─ RfidMealScanner.tsx    # Interactive galley meal reader with real-time reserve sync
+│  │  ├─ Timeline24hChart.tsx   # 24H dual-axis spline chart (HR vs. Glucose + meal pins)
+│  │  ├─ BioScanBody.tsx        # 2D wireframe human body silhouette with glowing organ nodes
+│  │  ├─ BioLinkView.tsx        # BLE/USB IoT mesh device gateway manager (RSSI & battery)
+│  │  ├─ MedicalConsultView.tsx # Tele-health messaging, audio notes & Emergency SOS dispatch
+│  │  ├─ CallModal.tsx          # Simulated encrypted video/audio tele-presence modal
+│  │  └─ AuthModal.tsx          # Credentials inspection & login modal
+│  ├─ TopBar.tsx                # Title, clock, scenarios, AI toggle, play/pause, Sign Out.
 │  ├─ Pipeline.tsx              # 6-step strip (Simulate → Baseline → AI score → Rules → Alert → Brief).
 │  ├─ CrewList.tsx              # 3 layout variants: pills (sm), row (md), rail (lg+).
 │  ├─ VitalsCard.tsx            # 5 tiles: HR, SpO₂, Sleep, Stress, Radiation (sparklines + progress bars).

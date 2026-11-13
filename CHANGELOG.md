@@ -8,12 +8,57 @@ that calls out things an AI coding assistant should know.
 
 ## [Unreleased]
 
+## 2026-11-13 — AstroGuard Multi-Role Expansion & Tele-Health Operations Platform
+
+### Summary
+Comprehensive architectural expansion transforming the Crew Health Monitor prototype
+into the full **AstroGuard: Autonomous Crew Health & Tele-Health Operations Platform**.
+Introduces 5 authenticated multi-tenant consoles with strict privacy isolation, real-time
+Lead-II ECG canvas monitoring, metabolic and biomarker profiling, RFID space-meal intake
+tracking, IoT Bio-Link mesh management, and clinical triage with encrypted audio/video calling.
+
 ### Added
-- `AGENTS.md` — focused handoff doc for AI coding assistants. Read
-  this first; `README.md` is the product doc, `AUDIT.md` is the
-  original audit, this is the "what do I need to know to be
-  useful" doc.
-- `CHANGELOG.md` — this file.
+- **Multi-Role Authentication Gateway** (`components/astroguard/LoginPage.tsx`):
+  - 5 exposed 1-click evaluation profiles:
+    - `crew-0`: Commander Amara Okafor (`amara@ares.nasa.gov`)
+    - `crew-1`: Dr. Lin Zhao (`lin@ares.nasa.gov`)
+    - `crew-2`: Engineer Rafi Ahmed (`rafi@ares.nasa.gov`)
+    - `doctor`: Dr. Evelyn Vance (`doctor@ares.nasa.gov`)
+    - `admin`: Flight Operations Director (`flight@ares.nasa.gov`)
+  - Direct role-based authentication with form entry and 1-click loading.
+- **Dedicated Astronaut Portals** (`components/astroguard/AstronautPortal.tsx`):
+  - Collapsible sticky sidebar navigation (`w-72` to `w-20` icon rail) eliminating dead space on long scrolls.
+  - Live Lead-II ECG Canvas waveform generator with dynamic heart-rate synchronization (`ECGMonitor.tsx`).
+  - Macro & Metabolic Energy HUD with circular SVG progress rings and basal metabolic reserve bar (`MacroGauges.tsx`).
+  - Micro-Array Biomarker Assay tracking 6 key vitamins and 5 essential minerals (`MicroArrayAssay.tsx`).
+  - Interactive RFID Space-Meal Scanner syncing galley food packs to metabolic reserves (`RfidMealScanner.tsx`).
+  - 24H Timeline Spline Chart correlating Heart Rate and Glucose with meal ingestion markers (`Timeline24hChart.tsx`).
+  - 2D BioScan Wireframe Body Map with pulsing organ status nodes (`BioScanBody.tsx`).
+  - Bio-Link IoT Wearables Manager with BLE/USB signal RSSI, battery levels, live telemetry payload streams, and PIN pairing modal (`BioLinkView.tsx`).
+  - Encrypted Doctor Tele-Health channel with private messaging, audio notes, and simulated audio/video uplink (`MedicalConsultView.tsx`, `CallModal.tsx`).
+  - Critical Emergency SOS dispatch button broadcasting immediate clinical alerts to flight surgeon.
+  - Integrated AI Health Copilot utilizing OpenRouter `/api/chat` and `/api/brief` with intelligent physiological fallback when offline.
+  - Viewport-safe medical notification bell with transmission alerts.
+- **Dedicated Flight Surgeon Operations Hub** (`components/astroguard/DoctorHub.tsx`):
+  - Clinical Triage & Anomaly feed with real-time severity badges (`Critical`, `Warning`, `Nominal`).
+  - Interactive Assigned Astronaut Roster with 1-click patient scoping and vital summaries.
+  - Live high-resolution ECG canvas monitor with rhythm diagnosis.
+  - Triage response actions: `Voice Call`, `Video Uplink`, and `Flag to Mission Control`.
+  - Viewport-safe notification center with unread message and SOS incident dropdown.
+  - Biometric fleet status oversight for all paired IoT wearables.
+- **Mission Control Admin Dashboard**:
+  - Seamless integration of original 3-crew fleet overview with deterministic 5-rule engine, AI risk scoring, and top-bar sign-out button.
+- **New Types & Data Structures** (`lib/astroGuardTypes.ts`, `lib/astroGuardData.ts`):
+  - Comprehensive type definitions for `AstroRole`, `AstroUser`, `IoTSensorDevice`, `ConsultMessage`, `TriageIncident`, and `NutritionItem`.
+- **Vitest Test Suite** (`lib/astroGuard.test.ts`):
+  - 4 automated unit tests verifying credential integrity, multi-tenant isolation, doctor unread counts, and IoT device configuration.
+  - Total test count expanded to **56 passing tests** (38 Vitest + 18 Node).
+
+### Changed
+- `app/page.tsx`: Role-based route rendering, per-crew AI Copilot scoping, and resilient fallback handling.
+- `components/TopBar.tsx`: Added direct `Sign Out [→` button returning back to the gateway.
+- Clean space-grade UI: Replaced all colorful emojis with NASA-grade SVG icons, status badges, and monogram rings.
+- Notification dropdown positioning: Fixed viewport cutoff with `fixed sm:absolute inset-x-4 sm:inset-x-auto sm:right-0 top-20 sm:top-12 z-50`.
 
 ## 2026-10-14 — `ab82111` — Specific cascade errors instead of generic warning
 

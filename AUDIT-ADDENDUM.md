@@ -8,19 +8,24 @@ original audit:
 | --- | --- | --- |
 | `80302ff` | 2026-10-13 | Spec-driven responsive desktop refactor (UI only) |
 | `ab82111` | 2026-10-14 | Specific cascade errors instead of generic warning (LLM) |
+| `846bb4e` | 2026-11-13 | AstroGuard Multi-Role Expansion: 5 isolated portals, Lead-II ECG canvas, RFID nutrition, IoT Bio-Link mesh, tele-health consultations |
 
 The original `AUDIT.md` is still accurate for the parts of the code
 it covered. This file only documents what changed.
 
 ## Updated headline numbers
 
-| Metric | Before addendum | After addendum |
-| --- | --- | --- |
-| Test count | 23 vitest + 14 node | 25 vitest + 18 node |
-| Bundle size (dashboard route) | 177 kB / 280 kB First Load | 178 kB / 280 kB First Load |
-| Cascade error modes | 1 (generic `Error`) | 5 typed `CascadeError` kinds |
-| User-facing error messages on brief/chat failure | 1 (generic) | 6 (5 specific + 1 generic fallback) |
-| Cascade env vars | 1 (`OPENROUTER_API_KEY`) | 3 (`OPENROUTER_API_KEY`, `OPENROUTER_MAX_PRICE_PER_1K`, `OPENROUTER_MODEL`) |
+| Metric | Before addendum | After addendum | Current (AstroGuard) |
+| --- | --- | --- | --- |
+| Test count | 23 vitest + 14 node | 25 vitest + 18 node | **38 vitest + 18 node (56 total)** |
+| Dedicated Role Portals | 1 (single view) | 1 (single view) | **5 authenticated portals** (3 astronauts, 1 doctor, 1 admin) |
+| Real-time ECG Monitors | Sparkline | Sparkline | **Canvas Lead-II dynamic ECG wave generator** |
+| Nutrition & Biomarker HUD | None | None | **Macro circular gauges + Micro-array assay + RFID galley sync** |
+| Tele-Health Communication | Chat only | Chat only | **Encrypted direct consults, simulated audio/video uplink, SOS dispatch** |
+| IoT Wearables Management | None | None | **BLE/USB mesh gateway manager with RSSI, battery & live streams** |
+| Cascade error modes | 1 (generic `Error`) | 5 typed `CascadeError` kinds | 5 typed kinds + resilient autonomous edge fallback |
+| User-facing error messages on brief/chat failure | 1 (generic) | 6 (5 specific + 1 generic fallback) | Telemetry-grounded synthesis fallback (no crash) |
+| Cascade env vars | 1 (`OPENROUTER_API_KEY`) | 3 (`OPENROUTER_API_KEY`, `OPENROUTER_MAX_PRICE_PER_1K`, `OPENROUTER_MODEL`) | 3 + offline autonomous telemetry engine |
 
 Build is clean. All tests pass. The audit's "Ship it" verdict is
 unchanged.
