@@ -78,7 +78,7 @@ export function MacroGauges({
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
         {macros.map((m) => {
-          const radius = 32;
+          const radius = 38;
           const circ = 2 * Math.PI * radius;
           const strokeDashoffset = circ - (m.pct / 100) * circ;
 
@@ -87,22 +87,27 @@ export function MacroGauges({
               key={m.label}
               className="flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-sm"
             >
-              <div className="relative flex items-center justify-center">
-                <svg className="w-22 h-22 transform -rotate-90">
+              <div className="relative flex items-center justify-center w-28 h-28 my-1">
+                <svg
+                  className="w-28 h-28 transform -rotate-90"
+                  viewBox="0 0 100 100"
+                  width="112"
+                  height="112"
+                >
                   <circle
-                    cx="44"
-                    cy="44"
+                    cx="50"
+                    cy="50"
                     r={radius}
                     stroke="rgba(51, 65, 85, 0.4)"
-                    strokeWidth="5"
+                    strokeWidth="7"
                     fill="transparent"
                   />
                   <circle
-                    cx="44"
-                    cy="44"
+                    cx="50"
+                    cy="50"
                     r={radius}
                     stroke={m.stroke}
-                    strokeWidth="5"
+                    strokeWidth="7"
                     strokeDasharray={circ}
                     strokeDashoffset={strokeDashoffset}
                     strokeLinecap="round"
@@ -110,14 +115,16 @@ export function MacroGauges({
                     className="transition-all duration-700 ease-out"
                   />
                 </svg>
-                <span className="absolute font-mono text-base font-bold text-white">
-                  {formatNumber(m.pct)}%
-                </span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="font-mono text-xl sm:text-2xl font-extrabold text-white">
+                    {formatNumber(m.pct)}%
+                  </span>
+                </div>
               </div>
-              <span className="mt-2.5 text-base font-bold text-white text-center">
+              <span className="mt-3 text-base sm:text-lg font-extrabold text-white text-center">
                 {m.label}
               </span>
-              <span className="font-mono text-xs sm:text-sm text-slate-200 font-semibold mt-0.5">
+              <span className="font-mono text-xs sm:text-sm text-slate-300 font-bold mt-1 text-center">
                 {m.detail}
               </span>
             </div>
