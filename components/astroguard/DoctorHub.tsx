@@ -115,8 +115,10 @@ export function DoctorHub({
         <div className="mx-auto flex max-w-[1680px] w-full flex-wrap items-center justify-between gap-3">
           {/* Brand & Doctor Info */}
           <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-600 to-purple-700 text-xl font-bold text-white shadow-md shadow-rose-600/30">
-              ⚕️
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-600 to-purple-700 text-white shadow-md shadow-rose-600/30">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -144,7 +146,9 @@ export function DoctorHub({
                   : "text-slate-300 hover:text-white hover:bg-slate-800"
               }`}
             >
-              <span>🩺</span>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
               <span>Clinical Triage</span>
             </button>
 
@@ -160,7 +164,9 @@ export function DoctorHub({
                   : "text-slate-300 hover:text-white hover:bg-slate-800"
               }`}
             >
-              <span>💬</span>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
               <span>Tele-Health</span>
               {unreadMessages.length > 0 && (
                 <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-[10px] text-white animate-pulse">
@@ -178,7 +184,9 @@ export function DoctorHub({
                   : "text-slate-300 hover:text-white hover:bg-slate-800"
               }`}
             >
-              <span>📡</span>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" />
+              </svg>
               <span>IoT Wearables</span>
             </button>
           </nav>
@@ -197,7 +205,10 @@ export function DoctorHub({
                 }`}
                 title="View Notifications"
               >
-                <span className="text-base">🔔</span>
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
                 {totalNotifications > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-[11px] font-bold text-white ring-2 ring-slate-950 animate-bounce">
                     {totalNotifications}
@@ -205,9 +216,9 @@ export function DoctorHub({
                 )}
               </button>
 
-              {/* Notification Dropdown */}
+              {/* Notification Dropdown - Viewport safe (never cuts off left) */}
               {showNotifications && (
-                <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-2xl space-y-3">
+                <div className="fixed sm:absolute inset-x-4 sm:inset-x-auto sm:right-0 top-20 sm:top-12 z-50 w-auto sm:w-96 rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-2xl space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                     <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
                       Notifications ({totalNotifications})
@@ -240,7 +251,7 @@ export function DoctorHub({
                           >
                             <div className="flex items-center justify-between text-xs">
                               <span className="font-bold text-cyan-300">
-                                💬 Message from {m.senderName}
+                                Transmission from {m.senderName}
                               </span>
                               <span className="font-mono text-[11px] text-slate-400">
                                 {m.timestamp}
@@ -264,7 +275,7 @@ export function DoctorHub({
                           >
                             <div className="flex items-center justify-between text-xs">
                               <span className="font-bold text-rose-300">
-                                🚨 {inc.title}
+                                ALERT: {inc.title}
                               </span>
                               <span className="font-mono text-[11px] text-slate-400">
                                 {inc.timestamp}
@@ -682,7 +693,9 @@ export function DoctorHub({
                         {cUnread} new
                       </span>
                     ) : (
-                      <span className="text-base text-slate-500">💬</span>
+                      <svg className="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
                     )}
                   </button>
                 );

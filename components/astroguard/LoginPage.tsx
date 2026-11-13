@@ -41,8 +41,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       {/* Top Header */}
       <header className="mx-auto w-full max-w-6xl flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-2xl shadow-lg shadow-cyan-500/25">
-            🛡️
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
@@ -116,17 +118,17 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${u.avatarBg} text-lg font-bold text-white shadow-md`}
+                          className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${u.avatarBg} text-sm font-extrabold font-mono text-white shadow-md tracking-wider`}
                         >
                           {isDoctor
-                            ? "👩🏼‍⚕️"
+                            ? "EV"
                             : isAdmin
-                            ? "🛰️"
+                            ? "MC"
                             : roleKey === "crew-0"
-                            ? "👩🏾‍🚀"
+                            ? "AO"
                             : roleKey === "crew-1"
-                            ? "👨🏻‍🚀"
-                            : "👨🏽‍🚀"}
+                            ? "LZ"
+                            : "RA"}
                         </div>
                         <div>
                           <h4 className="text-base font-bold text-white leading-tight">

@@ -142,8 +142,10 @@ export function AstronautPortal({
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-xl shadow-lg shadow-cyan-500/25 shrink-0">
-                🛡️
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 shrink-0">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
               </div>
               {!sidebarCollapsed && (
                 <div>
@@ -176,14 +178,18 @@ export function AstronautPortal({
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
                   ? "justify-center p-3"
-                  : "gap-3.5 px-4 py-3 text-sm font-semibold"
+                  : "gap-3 px-3.5 py-2.5 text-xs font-semibold"
               } ${
                 activeTab === "dashboard"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
-              <span className="text-base">📊</span>
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
               {!sidebarCollapsed && <span>Mission Telemetry</span>}
             </button>
 
@@ -194,14 +200,17 @@ export function AstronautPortal({
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
                   ? "justify-center p-3"
-                  : "gap-3.5 px-4 py-3 text-sm font-semibold"
+                  : "gap-3 px-3.5 py-2.5 text-xs font-semibold"
               } ${
                 activeTab === "ai"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
-              <span className="text-base">🧠</span>
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+              </svg>
               {!sidebarCollapsed && <span>AI Health Copilot</span>}
             </button>
 
@@ -212,15 +221,17 @@ export function AstronautPortal({
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
                   ? "justify-center p-3 relative"
-                  : "justify-between px-4 py-3 text-sm font-semibold"
+                  : "justify-between px-3.5 py-2.5 text-xs font-semibold"
               } ${
                 activeTab === "consult"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
-              <div className="flex items-center gap-3.5">
-                <span className="text-base">💬</span>
+              <div className="flex items-center gap-3">
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
                 {!sidebarCollapsed && <span>Doctor Tele-Health</span>}
               </div>
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
@@ -233,14 +244,16 @@ export function AstronautPortal({
               className={`w-full flex items-center rounded-xl transition ${
                 sidebarCollapsed
                   ? "justify-center p-3"
-                  : "gap-3.5 px-4 py-3 text-sm font-semibold"
+                  : "gap-3 px-3.5 py-2.5 text-xs font-semibold"
               } ${
                 activeTab === "biolink"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 font-bold"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
-              <span className="text-base">📡</span>
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" />
+              </svg>
               {!sidebarCollapsed && <span>Bio-Link (IoT Wearables)</span>}
             </button>
           </nav>
@@ -316,9 +329,10 @@ export function AstronautPortal({
             <button
               type="button"
               onClick={handleSosClick}
-              className="rounded-xl border border-rose-500/60 bg-rose-600/30 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-600/50 shadow-lg shadow-rose-950/50 transition animate-pulse"
+              className="rounded-xl border border-rose-500/60 bg-rose-600/30 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-600/50 shadow-lg shadow-rose-950/50 transition flex items-center gap-1.5"
             >
-              🚨 Emergency SOS
+              <span className="h-2 w-2 rounded-full bg-rose-400 animate-ping" />
+              <span>EMERGENCY SOS</span>
             </button>
 
             {/* Medical Notifications Bell */}
@@ -333,7 +347,10 @@ export function AstronautPortal({
                 }`}
                 title="View Doctor Notifications"
               >
-                <span className="text-base">🔔</span>
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
                 {doctorTransmissions.length > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-[11px] font-bold text-slate-950 ring-2 ring-slate-950 animate-pulse">
                     {doctorTransmissions.length}
@@ -342,7 +359,7 @@ export function AstronautPortal({
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-2xl space-y-3">
+                <div className="fixed sm:absolute inset-x-4 sm:inset-x-auto sm:right-0 top-20 sm:top-12 z-50 w-auto sm:w-96 rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-2xl space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                     <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
                       Surgeon Transmissions ({doctorTransmissions.length})
@@ -514,7 +531,10 @@ export function AstronautPortal({
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-5">
                 <div>
                   <h3 className="text-lg font-bold text-white flex items-center gap-2.5">
-                    <span>🧠</span>
+                    <svg className="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="4" />
+                      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                    </svg>
                     <span>AstroGuard Physiological Copilot</span>
                   </h3>
                   <p className="text-xs text-slate-300 font-medium mt-0.5">
@@ -527,7 +547,7 @@ export function AstronautPortal({
                   disabled={briefLoading}
                   className="rounded-xl bg-cyan-600 px-5 py-2.5 font-mono text-xs font-bold text-white hover:bg-cyan-500 transition disabled:opacity-50 shadow-lg shadow-cyan-600/25"
                 >
-                  {briefLoading ? "Generating Brief..." : "⚡ Generate Health Brief"}
+                  {briefLoading ? "Generating Brief..." : "Generate Health Brief"}
                 </button>
               </div>
 
